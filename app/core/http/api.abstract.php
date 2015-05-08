@@ -11,19 +11,11 @@
 | presented in version 1.0, with a long term goal to create a 
 | solid back-bone for the Checkmates application.
 |
+| This file provides an abstract interface for resources to implement
+| when creating endpoints for the service. This adheres to good 
+| design practice.
+|
 | @author - Alex Sims (Checkmates CTO)
-|
-*/
-
-require_once("");
-
-/*
-|--------------------------------------------------------------------------
-| Abstract Interface
-|--------------------------------------------------------------------------
-|
-| Provides an abstract interface for resources to implement when creating
-| endpoints for the service. This adheres to good design practice.
 |
 */
 
@@ -144,7 +136,7 @@ abstract class API
     |
     */
     
-    public function callResource()
+    public function _callResource()
     {
         if ((int)method_exists($this, $this->endpoint) > 0)
             return $this->_setResponse($this{$this->endpoint}($this->args));
