@@ -2,8 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a98be491-8ca3-4559-8d21-4a3b571dd347" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/core/conf/conf.php" afterPath="$PROJECT_DIR$/app/core/conf/conf.php" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/core/conf/notifications.php" afterPath="$PROJECT_DIR$/app/core/conf/notifications.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/core/models/Database.php" afterPath="$PROJECT_DIR$/app/core/models/Database.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/core/http/api.abstract.php" afterPath="$PROJECT_DIR$/app/core/http/api.abstract.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/core/conf/database.php" afterPath="$PROJECT_DIR$/app/core/conf/database.php" />
     </list>
     <ignored path="Checkmates V2 API.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -80,8 +81,8 @@
       <file leaf-file-name="api.abstract.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/core/http/api.abstract.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-16.965517" vertical-offset="4648" max-vertical-offset="5840">
-              <caret line="257" column="4" selection-start-line="257" selection-start-column="4" selection-end-line="257" selection-end-column="4" />
+            <state vertical-scroll-proportion="-193.10345" vertical-offset="0" max-vertical-offset="6560">
+              <caret line="280" column="30" selection-start-line="280" selection-start-column="30" selection-end-line="280" selection-end-column="30" />
               <folding>
                 <element signature="e#7#709#0#PHP" expanded="true" />
               </folding>
@@ -92,9 +93,21 @@
       <file leaf-file-name="database.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/core/conf/database.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-22.758621" vertical-offset="0" max-vertical-offset="1380">
-              <caret line="33" column="52" selection-start-line="33" selection-start-column="52" selection-end-line="33" selection-end-column="52" />
+            <state vertical-scroll-proportion="-26.896551" vertical-offset="0" max-vertical-offset="1380">
+              <caret line="39" column="6" selection-start-line="39" selection-start-column="6" selection-end-line="39" selection-end-column="6" />
               <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="Database.php" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/app/core/models/Database.php">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.21967769" vertical-offset="81" max-vertical-offset="1360">
+              <caret line="17" column="24" selection-start-line="17" selection-start-column="24" selection-end-line="17" selection-end-column="24" />
+              <folding>
+                <element signature="e#7#367#0#PHP" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -121,14 +134,12 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="notifications.php" pinned="false" current-in-tab="true">
+      <file leaf-file-name="notifications.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/core/conf/notifications.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.7214765" vertical-offset="0" max-vertical-offset="1192">
-              <caret line="43" column="2" selection-start-line="43" selection-start-column="2" selection-end-line="43" selection-end-column="2" />
-              <folding>
-                <element signature="e#7#157#0#PHP" expanded="true" />
-              </folding>
+            <state vertical-scroll-proportion="-2.7586207" vertical-offset="0" max-vertical-offset="980">
+              <caret line="4" column="33" selection-start-line="4" selection-start-column="33" selection-end-line="4" selection-end-column="33" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -150,23 +161,23 @@
         <option value="$PROJECT_DIR$/app/core/models/User.php" />
         <option value="$PROJECT_DIR$/app/core/models/APIKey.php" />
         <option value="$PROJECT_DIR$/handler.php" />
-        <option value="$PROJECT_DIR$/app/core/models/Database.php" />
         <option value="$PROJECT_DIR$/app/core/http/handler.php" />
         <option value="$PROJECT_DIR$/.htaccess" />
         <option value="$PROJECT_DIR$/app/core/conf/loader.php" />
         <option value="$PROJECT_DIR$/app/core/conf/constants.php" />
-        <option value="$PROJECT_DIR$/app/core/conf/database.php" />
         <option value="$PROJECT_DIR$/app/core/conf/init.php" />
         <option value="$PROJECT_DIR$/app/core/conf/app.php" />
         <option value="$PROJECT_DIR$/app/core/http/handlers/user.endpoint.php" />
         <option value="$PROJECT_DIR$/app/core/http/handlers/user.handler.php" />
         <option value="$PROJECT_DIR$/index.php" />
-        <option value="$PROJECT_DIR$/app/core/http/api.abstract.php" />
         <option value="$PROJECT_DIR$/app/core/http/api.implementation.php" />
         <option value="$PROJECT_DIR$/app/core/http/endpoints/user.endpoint.php" />
         <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/app/core/conf/conf.php" />
         <option value="$PROJECT_DIR$/app/core/conf/notifications.php" />
+        <option value="$PROJECT_DIR$/app/core/http/api.abstract.php" />
+        <option value="$PROJECT_DIR$/app/core/conf/database.php" />
+        <option value="$PROJECT_DIR$/app/core/models/Database.php" />
       </list>
     </option>
   </component>
@@ -250,6 +261,10 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="core" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="models" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -476,14 +491,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/core/models/Database.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-3.4482758" vertical-offset="0" max-vertical-offset="380">
-          <caret line="5" column="59" selection-start-line="5" selection-start-column="59" selection-end-line="5" selection-end-column="59" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/.htaccess">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="220">
@@ -497,32 +504,6 @@
         <state vertical-scroll-proportion="-20.689655" vertical-offset="0" max-vertical-offset="880">
           <caret line="30" column="1" selection-start-line="30" selection-start-column="1" selection-end-line="30" selection-end-column="1" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/core/conf/app.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-6.8965516" vertical-offset="0" max-vertical-offset="1240">
-          <caret line="10" column="18" selection-start-line="10" selection-start-column="18" selection-end-line="10" selection-end-column="18" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/core/conf/database.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-22.758621" vertical-offset="0" max-vertical-offset="1380">
-          <caret line="33" column="52" selection-start-line="33" selection-start-column="52" selection-end-line="33" selection-end-column="52" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/core/http/api.abstract.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-16.965517" vertical-offset="4648" max-vertical-offset="5840">
-          <caret line="257" column="4" selection-start-line="257" selection-start-column="4" selection-end-line="257" selection-end-column="4" />
-          <folding>
-            <element signature="e#7#709#0#PHP" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -571,6 +552,14 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/app/core/conf/notifications.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-2.7586207" vertical-offset="0" max-vertical-offset="980">
+          <caret line="4" column="33" selection-start-line="4" selection-start-column="33" selection-end-line="4" selection-end-column="33" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/app/core/conf/conf.php">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-22.758621" vertical-offset="0" max-vertical-offset="1180">
@@ -581,12 +570,38 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/core/conf/notifications.php">
+    <entry file="file://$PROJECT_DIR$/app/core/conf/app.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.7214765" vertical-offset="0" max-vertical-offset="1192">
-          <caret line="43" column="2" selection-start-line="43" selection-start-column="2" selection-end-line="43" selection-end-column="2" />
+        <state vertical-scroll-proportion="-6.8965516" vertical-offset="0" max-vertical-offset="1240">
+          <caret line="10" column="18" selection-start-line="10" selection-start-column="18" selection-end-line="10" selection-end-column="18" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/core/http/api.abstract.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-193.10345" vertical-offset="0" max-vertical-offset="6560">
+          <caret line="280" column="30" selection-start-line="280" selection-start-column="30" selection-end-line="280" selection-end-column="30" />
           <folding>
-            <element signature="e#7#157#0#PHP" expanded="true" />
+            <element signature="e#7#709#0#PHP" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/core/conf/database.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-26.896551" vertical-offset="0" max-vertical-offset="1380">
+          <caret line="39" column="6" selection-start-line="39" selection-start-column="6" selection-end-line="39" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/core/models/Database.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.21967769" vertical-offset="81" max-vertical-offset="1360">
+          <caret line="17" column="24" selection-start-line="17" selection-start-column="24" selection-end-line="17" selection-end-column="24" />
+          <folding>
+            <element signature="e#7#367#0#PHP" expanded="true" />
           </folding>
         </state>
       </provider>

@@ -24,7 +24,7 @@ return
 	|
 	*/
 
-    'db_name' => conf(DB_NAME, 'checkmates'),
+    'db_name' => conf(DB_NAME, 'kinekt'),
 
     /*
 	|--------------------------------------------------------------------------
@@ -35,7 +35,7 @@ return
 	|
 	*/
 
-    'db_user'  => conf(DB_USER, 'checkmates'),
+    'db_user'  => conf(DB_USER, 'root'),
 
     /*
 	|--------------------------------------------------------------------------
@@ -46,7 +46,7 @@ return
 	|
 	*/
 
-    'db_pass'  => conf(DB_PASS, 'topSecret'),
+    'db_pass'  => conf(DB_PASS, 'werquin1'),
 
     /*
 	|--------------------------------------------------------------------------
