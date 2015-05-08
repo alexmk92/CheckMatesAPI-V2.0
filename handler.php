@@ -1,5 +1,11 @@
 <?php
-	
+
+// Enable error logging for now
+ini_set('display_errors',1);
+error_reporting(E_ALL);
+
+include './app/core/http/api.implementation.php';
+
 /*
 |--------------------------------------------------------------------------
 | Checkmates API V2.0
@@ -34,7 +40,7 @@ if (!array_key_exists('HTTP_ORIGIN', $_SERVER))
 try
 {
 	$API = new CheckmatesAPI($_REQUEST['request'], $_SERVER['HTTP_ORIGIN']);
-	echo $CheckmatesAPI->_callResource();
+	echo $API->_callResource();
 } 
 catch (Exception $e)
 {

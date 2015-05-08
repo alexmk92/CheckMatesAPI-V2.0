@@ -1,5 +1,5 @@
 <?php
-    
+
 /*
 |--------------------------------------------------------------------------
 | Checkmates API V2.0
@@ -57,7 +57,7 @@ abstract class API
     --------------------------------------------------------------------------
     | Constructor: __construct
     --------------------------------------------------------------------------
-    | Allows for CORS (proxy bypass) to assemble and pre-process the data recieved,
+    | Allows for CORS (proxy bypass) to assemble and pre-process the data received,
     | any other header information is set here, note that this information is 
     | only default parameters, this can be amended.
     |
@@ -67,7 +67,7 @@ abstract class API
     {
         /*
         * Enable Cross Origin Resource Sharing (CORS) to allow clients to connect to
-        * the reosurce from multiple clients, without this our API is blocked from
+        * the resource from multiple clients, without this our API is blocked from
         * other domains.
         */
         header("Access-Control-Allow-Origin: *");
@@ -127,7 +127,7 @@ abstract class API
     |
     | Checks to see whether the concrete class implementation exists within
     | our API, if it does then delegate the request to the handler, 
-    | otheriwse return a 404 response to the caller.
+    | otherwise return a 404 response to the caller.
     |
     | This is the one public interface available to our API, as it is the
     | only facade which the user needs to be exposed too.
@@ -165,7 +165,7 @@ abstract class API
     
     private function _setResponse($data, $statusCode = 200)
     {
-        header("HTTP/1.1 " . $status . " " . $this->_getStatus($status));
+        header("HTTP/1.1 " . $statusCode . " " . $this->_getStatus($statusCode));
         return json_encode($data);
     }
     
@@ -180,14 +180,14 @@ abstract class API
     |
     | This method is called recursively to sanitise each value.
     |
-    | @param $data : Either an array or object to unmap or have any tags 
+    | @param $data : Either an array or object to un-map or have any tags
     |                stripped to ensure the data is secure
     |
     */
     
     private function _sanitiseResource($data)
     {
-        // create ouput array
+        // create output array
         $outputResource = Array();
         
         // check if we are on the array, if so then for each key call this
@@ -235,6 +235,6 @@ abstract class API
         );
         
         // Return the correct messages, assert based on the input code given
-        return ($message[$errCode]) ? $message[$code] : $message[500];
+        return ($message[$errCode]) ? $message[$errCode] : $message[500];
     }
 }

@@ -1,5 +1,5 @@
-<?php 
-	
+<?php
+
 /*
 |--------------------------------------------------------------------------
 | Checkmates API V2.0
@@ -15,6 +15,8 @@
 */
 
 require_once 'api.abstract.php';
+include './app/core/models/User.php';
+include './app/core/models/APIKey.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -65,19 +67,19 @@ class CheckmatesAPI extends API
 		* default here we need an API key and a User to authenticate
 		*/
 		
-		$User   = new models\User();
-		$APIKey = new models\APIKey();
+		$User   = new Models\User();
+		$APIKey = new Models\APIKey();
 		
 		/*
 		* Ensure that our request can be validated by checking the request header
 		* for a valid API key and session token
 		*/
 		
-		if(!array_key_exists('apiKey', $this->request))
+		if(!array_key_exists('apiKey', $request))
 			throw new Exception('No API Key provided for this resource');
-		else if (!$APIKey->verifyKey($this->request['apiKey'], $origin))
+		else if (!$APIKey->verifyKey($request['apiKey'], $origin))
 			throw new Exception('This API Key is not valid');
-		else if (array_key_exists('token', $this->request) && !$User->get('token', $this->request['token']))
+		else if (array_key_exists('token', $request) && !$User->get('token', $request['token']))
 			throw new Exception('The token provided by the user was invalid');
 			
 		/*
