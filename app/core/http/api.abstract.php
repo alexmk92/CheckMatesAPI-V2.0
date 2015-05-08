@@ -235,7 +235,26 @@ abstract class API
         }
         return $outputResource;
     }
-    
+
+    /*
+    |--------------------------------------------------------------------------
+    | Get Info
+    |--------------------------------------------------------------------------
+    |
+    | Returns all info of the request parameters so we can utilise them in
+    | the endpoint
+    |
+    */
+    public function _getInfo()
+    {
+        return array (
+                        'endpoint' => $this->endpoint,
+                        'verb' => $this->verb,
+                        'args' => $this->args,
+                        'method' => $this->method,
+                        'file' => $this->file
+                     );
+    }
     
     /*
     |--------------------------------------------------------------------------

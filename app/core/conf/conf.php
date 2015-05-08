@@ -11,10 +11,21 @@
 |
 */
 
+/*
+ * Database configuration
+ */
+
 define(DB_HOST, '146.185.147.142');
 define(DB_NAME, 'root');
 define(DB_USER, 'root');
 define(DB_PASS, 'test');
+
+/*
+ * Notification server configuration
+ */
+
+define(ANDROID_CERT_PATH, './public/certificates/iOS.cert');
+define(IOS_CERT_PATH, './public/certificates/android.cert');
 
 /*
 |--------------------------------------------------------------------------
@@ -22,7 +33,7 @@ define(DB_PASS, 'test');
 |--------------------------------------------------------------------------
 |
 | Tests the value of the constant, if its null or empty then return a
-| default value specified by the client (called in database.php)
+| default value specified by the client.
 |
 */
 

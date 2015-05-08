@@ -93,19 +93,9 @@ class CheckmatesAPI extends API
 
 
     protected function User() {
-        $method = strtoupper($this->method);
-
-        switch($method)
-        {
-            case 'GET':
-                break;
-            case 'PUT':
-                break;
-            case 'POST':
-                break;
-            case 'DELETE':
-                break;
-        }
+        require "./app/core/http/endpoints/user.endpoint.php";
+        $userHandler = new Endpoints\User($this);
+        $userHandler->_handleRequest();
     }
 
 }
