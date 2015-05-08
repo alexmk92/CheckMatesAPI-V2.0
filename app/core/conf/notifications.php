@@ -19,8 +19,9 @@ return [
 	*/
 
     'iOS' => [
-        'certificate' => conf(IOS_CERT_PATH, 'unset')
-
+        'certificate'   => conf(IOS_CERT_PATH,   'unset'),
+        'password'      => conf(IOS_CERT_PASS,   'unset'),
+        'signingServer' => conf(IOS_CERT_SERVER, 'unset')
     ],
 
     /*
@@ -35,7 +36,9 @@ return [
     */
 
     'Android' => [
-        'certificate' => conf(ANDROID_CERT_PATH, 'unset')
+        'certificate' => conf(ANDROID_CERT_PATH, 'unset'),
+        'apiKey'      => conf(ANDROID_API_KEY,   'unset'),
+        'pushURL'     => conf(ANDROID_PUSH_URL,  'unset')
     ],
 
 ];

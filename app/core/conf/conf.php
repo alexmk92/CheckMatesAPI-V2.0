@@ -15,7 +15,7 @@
  * Database configuration
  */
 
-define(DB_HOST, '146.185.147.142');
+define(DB_HOST, 'http://52.10.110.77/kinekt/');
 define(DB_NAME, 'root');
 define(DB_USER, 'root');
 define(DB_PASS, 'test');
@@ -25,7 +25,12 @@ define(DB_PASS, 'test');
  */
 
 define(ANDROID_CERT_PATH, './public/certificates/iOS.cert');
-define(IOS_CERT_PATH, './public/certificates/android.cert');
+define(ANDROID_API_KEY,   'AIzaSyBgqhtPTbtxjZ9mxAr7xThiCiR5qT4oRzg');
+define(ANDROID_PUSH_URL,  'http://android.googleapis.com/gcm/send');
+
+define(IOS_CERT_PATH,     './public/certificates/android.cert');
+define(IOS_CERT_PASS,     'kinektmates15');
+define(IOS_CERT_SERVER,   'ssl://gateway.push.apple.com');
 
 /*
 |--------------------------------------------------------------------------
