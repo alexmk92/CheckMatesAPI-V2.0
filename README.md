@@ -1,0 +1,1 @@
+V2.0 of the Checkmates API
