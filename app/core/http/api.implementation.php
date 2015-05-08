@@ -14,9 +14,9 @@
 |
 */
 
-require_once 'api.abstract.php';
-include './app/core/models/User.php';
-include './app/core/models/APIKey.php';
+require 'api.abstract.php';
+require './app/core/models/User.php';
+require './app/core/models/APIKey.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -74,7 +74,7 @@ class CheckmatesAPI extends API
 		* Ensure that our request can be validated by checking the request header
 		* for a valid API key and session token
 		*/
-		
+
 		if(!array_key_exists('apiKey', $request))
 			throw new Exception('No API Key provided for this resource');
 		else if (!$APIKey->verifyKey($request['apiKey'], $origin))

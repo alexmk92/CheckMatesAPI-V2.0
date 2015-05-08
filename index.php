@@ -1,10 +1,10 @@
 <?php
 
-// Enable error logging for now
-ini_set('display_errors',1);
-error_reporting(E_ALL);
 
-include './app/core/http/api.implementation.php';
+
+require './app/core/conf/loader.php';
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +24,8 @@ include './app/core/http/api.implementation.php';
 | payload back to the client which can be worked with.
 |
 */
+
+require './app/core/http/api.implementation.php';
 
 if (!array_key_exists('HTTP_ORIGIN', $_SERVER))
 {
