@@ -2,6 +2,7 @@
 
 return
 [
+
     /*
 	|--------------------------------------------------------------------------
 	| Application Debugging
@@ -13,51 +14,44 @@ return
 	|
 	*/
 
-    'debug' => false,
+    'debug' => true,
 
     /*
 	|--------------------------------------------------------------------------
-	| Database Host IP
+	| Application Request Endpoints
 	|--------------------------------------------------------------------------
 	|
-	| The IP to which the host resides.  This will be used to connect to
-    | the database so that information can be stored.
+	| Defines a map of HTTP Handlers which will be extended from the api
+    | implementation file.
 	|
 	*/
 
-    'db_host'  => '146.185.147.142',
+    'handlers' => [
+        'User'     => 'user.handler.php',
+        'Key'      => 'key.endpoint.php',
+        'Message'  => 'message.endpoint.php',
+        'Checkin'  => 'checkin.endpoint.php'
+    ],
 
     /*
-	|--------------------------------------------------------------------------
-	| Database Name
-	|--------------------------------------------------------------------------
-	|
-	| The name of the Database that the application should connect to
-	|
-	*/
+    |--------------------------------------------------------------------------
+    | Application Resource Managers
+    |--------------------------------------------------------------------------
+    |
+    | Defines a map of resource managers.  A resource manager is responsible
+    | for conversing with the database, whereas a HTTP handler is responsible
+    | for invoking a method on the manager.
+    |
+    | The system has been architected this way to prevent the model from
+    | being too bloated.
+    |
+    */
 
-    'db_name' => '',
-
-    /*
-	|--------------------------------------------------------------------------
-	| Database Username
-	|--------------------------------------------------------------------------
-	|
-	| The username required to log into the database
-	|
-	*/
-
-    'db_user'  => '',
-
-    /*
-	|--------------------------------------------------------------------------
-	| Database Password
-	|--------------------------------------------------------------------------
-	|
-	| The password required to log into the database
-	|
-	*/
-
-    'db_pass'  => '',
+    'managers' => [
+        'User'    => 'UserManager.php',
+        'Key'     => 'KeyManager.php',
+        'Message' => 'MessageManager.php',
+        'Checkin' => 'CheckinManager.php'
+    ],
 
 ];

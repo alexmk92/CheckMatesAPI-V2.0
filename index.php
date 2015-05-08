@@ -1,10 +1,6 @@
 <?php
 
-
-
-require './app/core/conf/loader.php';
-
-
+require './app/core/conf/init.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -29,7 +25,7 @@ require './app/core/http/api.implementation.php';
 
 if (!array_key_exists('HTTP_ORIGIN', $_SERVER))
 {
-	$_SERVER['HTTP_ORIGIN'] == $_SERVER['SERVER_NAME'];
+	$_SERVER['HTTP_ORIGIN'] = $_SERVER['SERVER_NAME'];
 }
 
 /*
@@ -41,8 +37,8 @@ if (!array_key_exists('HTTP_ORIGIN', $_SERVER))
 
 try
 {
-	$API = new CheckmatesAPI($_REQUEST['request'], $_SERVER['HTTP_ORIGIN']);
-	echo $API->_callResource();
+	$API = new CheckmatesAPI(ucfirst($_REQUEST['request']), $_SERVER['HTTP_ORIGIN']);
+	echo json_encode(Array('payload' => json_decode($API->_callResource())));
 } 
 catch (Exception $e)
 {

@@ -2,6 +2,52 @@
 
 return
 [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Database Host IP
+    |--------------------------------------------------------------------------
+    |
+    | The IP to which the host resides.  This will be used to connect to
+    | the database so that information can be stored.
+    |
+    */
+
+    'db_host'  => conf(DB_HOST, 'localhost'),
+
+    /*
+	|--------------------------------------------------------------------------
+	| Database Name
+	|--------------------------------------------------------------------------
+	|
+	| The name of the Database that the application should connect to
+	|
+	*/
+
+    'db_name' => conf(DB_NAME, 'checkmates'),
+
+    /*
+	|--------------------------------------------------------------------------
+	| Database Username
+	|--------------------------------------------------------------------------
+	|
+	| The username required to log into the database
+	|
+	*/
+
+    'db_user'  => conf(DB_USER, 'checkmates'),
+
+    /*
+	|--------------------------------------------------------------------------
+	| Database Password
+	|--------------------------------------------------------------------------
+	|
+	| The password required to log into the database
+	|
+	*/
+
+    'db_pass'  => conf(DB_PASS, 'topSecret'),
+
     /*
 	|--------------------------------------------------------------------------
 	| PDO Style
@@ -14,25 +60,5 @@ return
 	*/
 
     'fetch' => PDO::FETCH_ASSOC,
-
-    /*
-	|--------------------------------------------------------------------------
-	| Client
-	|--------------------------------------------------------------------------
-	|
-	| Initialises the MySQL Client we will be using to connect to the database
-	|
-	*/
-
-    'client' => [
-        'db_driver' => 'mysql',
-        'db_host'   => '',
-        'db_name'   => '',
-        'db_user'   => '',
-        'db_pass'   => '',
-        'charset'   => 'utf8',
-        'prefix'    => '',
-        'schema'    => 'public'
-    ],
 
 ];

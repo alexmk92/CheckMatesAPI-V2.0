@@ -12,7 +12,7 @@
 | solid back-bone for the Checkmates application.
 |
 | This file provides an abstract interface for resources to implement
-| when creating endpoints for the service. This adheres to good 
+| when creating handlers for the service. This adheres to good
 | design practice.
 |
 | @author - Alex Sims (Checkmates CTO)
@@ -63,7 +63,7 @@ abstract class API
     |
     | @param $request - The request resource sent to the server.
     */
-    public function __construct($request)
+    public function __construct(&$request)
     {
         /*
         * Enable Cross Origin Resource Sharing (CORS) to allow clients to connect to
@@ -73,7 +73,14 @@ abstract class API
         header("Access-Control-Allow-Origin: *");
         header("Access-Control-Allow-Methods: *");
         header("Content-Type: application/json");
-        
+
+       /*
+        * Set the key specified in the request sent from the client
+        */
+
+        if(array_key_exists('HTTP_APIKEY', $_SERVER))
+            $_REQUEST['apiKey'] = $_SERVER['HTTP_APIKEY'];
+
         /*
         * Get an array of all arguments sent from the request, from this
         * we can determine the endpoint and delegate to the resource handler
@@ -82,7 +89,7 @@ abstract class API
         $this->endpoint = array_shift($this->args);
         if(array_key_exists(0, $this->args) && !is_numeric($this->args[0]))
             $this->verb = array_shift($this->args);
-            
+
         /*
         * PUT and DELETE requests are hidden within the $_POST object and therefore need
         * to be retrieved from the HTTP_X_HTTP_METHOD key so we can expose them to
@@ -118,6 +125,12 @@ abstract class API
             default: 
                 $this->_setResponse('Invalid Method', 405); break;
         }
+
+       /*
+        * Reset the request object and write it back to the caller
+        */
+
+        $request = $_REQUEST;
     }
     
     /*
@@ -138,10 +151,15 @@ abstract class API
     
     public function _callResource()
     {
-        if ((int)method_exists($this, $this->endpoint) > 0)
-            return $this->_setResponse($this{$this->endpoint}($this->args));
-        else
-            return $this->_setResponse("The Endpoint: $this->endpoint is invalid", 404);
+        // Check if the endpoint exists in the application by testing if this
+        // method instance has an endpoint stub with the given name
+        if ((int)method_exists($this, $this->endpoint) > 0) {
+            $data = $this->{$this->endpoint}($this->args);
+            return $this->_setResponse($data);
+        }
+
+        // By default, return an error that the endpoint doesn't exist.
+        return $this->_setResponse("The Endpoint: $this->endpoint does not exist.", 404);
     }
     
     /*
@@ -166,7 +184,17 @@ abstract class API
     private function _setResponse($data, $statusCode = 200)
     {
         header("HTTP/1.1 " . $statusCode . " " . $this->_getStatus($statusCode));
-        return json_encode($data);
+
+        if (isset($data['responseCode']))
+            $statusCode = $data['responseCode'];
+
+        // Set the response object
+        $response = array(
+                            'response' => $statusCode . " : " . $this->_getStatus($statusCode),
+                            'data' => $data
+                         );
+
+        return json_encode($response);
     }
     
     /*

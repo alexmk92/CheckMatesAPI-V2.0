@@ -1,8 +1,10 @@
 <?php
 
+require 'conf.php';
+
 /*
 |--------------------------------------------------------------------------
-| Loader
+| Init
 |--------------------------------------------------------------------------
 |
 | Initialises the application by getting configuration files and setting
