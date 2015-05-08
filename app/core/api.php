@@ -27,7 +27,7 @@ require_once("");
 |
 */
 
-abstract class CheckmatesAPI
+abstract class API
 {
     /*
     * Property: Method
