@@ -26,6 +26,12 @@ class User
     |
     | Retrieves all users at a specific location within a given radius.
     |
+    | @param $lat    - The latitude of the geo-location point
+    | @param $long   - The longitude of the geo-location point
+    | @param $radius - Radius of search in km, capped at 200.
+    | @param $limit  - The maximum amount of users to be returned as a result
+    |                  of the query.
+    |
     | @return $data - The JSON encoded array containing all results from the
     |                 query.
     |
@@ -35,7 +41,8 @@ class User
     {
         $DB = Database::getInstance();
 
-        $data = Array(":entity_id" => 10);
+        $data = Array(":lat" => $lat, ":long" => $long, "radius" => $radius, "limit" => $limit);
+
         $query = "SELECT * FROM entity WHERE entity_id = :entity_id";
 
         return $DB->fetchAll($query, $data);
@@ -60,7 +67,10 @@ class User
         $DB = Database::getInstance();
 
         $data = Array(":entity_id" => $userId);
-        $query = "SELECT * FROM friends WHERE Entity_Id1 = :entity_id OR Entity_Id2 = :entity_id";
+        $query = "SELECT fid, entity_id1, entity_id2, category
+                  FROM friends
+                  WHERE Entity_Id1 = :entity_id
+                  OR Entity_Id2 = :entity_id";
 
         return $DB->fetchAll($query, $data);
     }
@@ -86,7 +96,9 @@ class User
         $data = Array(":entity_id" => $userId);
         $query = "SELECT * FROM friend_requests WHERE req_receiver = :entity_id";
 
-        return $DB->fetchAll($query, $data);
+        $requests = $DB->fetchAll($query, $data);
+
+        $query = "SELECT * FROM ";
     }
 
     /*
@@ -156,5 +168,10 @@ class User
         $query = "SELECT * FROM entity WHERE entity_id = :entity_id OR fb_id = :entity_id";
 
         return $DB->fetch($query, $data);
+    }
+
+    public static function signUp($args)
+    {
+
     }
 }

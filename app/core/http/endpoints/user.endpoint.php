@@ -147,7 +147,7 @@ class User
         {
             return \Handlers\User::getFavoritePlaces($this->args[0]);
         }
-        // throe an exception for no handler found
+        // throw an exception if no handler found
         else
         {
             throw new \Exception("No handler found for the GET resource of this URI, please check the documentation.");
@@ -166,7 +166,11 @@ class User
 
     private function _PUT()
     {
-        echo "YEAH";
+        // /api/v2/User/location/lat/long
+        if(count($this->args) == 2 && $this->verb == "location")
+        {
+
+        }
     }
 
     /*

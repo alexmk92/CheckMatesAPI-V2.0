@@ -26,7 +26,7 @@ class Database
     |--------------------------------------------------------------------------
     |
     | Declare any local variable which the class should access
-    | $instance   - the single instanciated instance of the class (signleton)
+    | $instance   - the single instanciated instance of the class (singleton)
     | $connection - the connection to the database
     |
     */
@@ -49,6 +49,8 @@ class Database
         // Create the connection
         $conn = include "./app/core/conf/database.php";
         $this->connection = new \PDO('mysql:host='.$conn['db_host'].'; dbname='.$conn['db_name'].';charset=utf8', $conn['db_user'], $conn['db_pass']);
+
+        $this->connection->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE , $conn['fetch']);
 
         // Set the error mode.
         if($debug)

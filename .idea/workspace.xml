@@ -2,15 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a98be491-8ca3-4559-8d21-4a3b571dd347" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/core/http/api.push.server.php" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/core/http/api.abstract.php" afterPath="$PROJECT_DIR$/app/core/http/api.abstract.php" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/core/http/api.implementation.php" afterPath="$PROJECT_DIR$/app/core/http/api.implementation.php" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/index.php" afterPath="$PROJECT_DIR$/index.php" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/core/conf/notifications.php" afterPath="$PROJECT_DIR$/app/core/conf/notifications.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/core/models/Database.php" afterPath="$PROJECT_DIR$/app/core/models/Database.php" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/core/http/endpoints/user.endpoint.php" afterPath="$PROJECT_DIR$/app/core/http/endpoints/user.endpoint.php" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/core/http/handlers/user.handler.php" afterPath="$PROJECT_DIR$/app/core/http/handlers/user.handler.php" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="Checkmates V2 API.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -44,15 +38,16 @@
             <file leaf-file-name="user.handler.php" pinned="false" current-in-tab="true">
               <entry file="file://$PROJECT_DIR$/app/core/http/handlers/user.handler.php">
                 <provider selected="true" editor-type-id="text-editor">
-                  <state vertical-scroll-proportion="-1.821735" vertical-offset="2251" max-vertical-offset="3300">
-                    <caret line="17" column="0" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
+                  <state vertical-scroll-proportion="0.4280267" vertical-offset="1071" max-vertical-offset="3640">
+                    <caret line="76" column="0" selection-start-line="76" selection-start-column="0" selection-end-line="76" selection-end-column="0" />
                     <folding>
-                      <marker date="1431207382000" expanded="true" signature="1090:1139" placeholder="SELECT * FRO..entity..." />
-                      <marker date="1431207382000" expanded="true" signature="1798:1876" placeholder="SELECT * FRO..friends..." />
-                      <marker date="1431207382000" expanded="true" signature="2555:2616" placeholder="SELECT * FRO..friend_requests..." />
-                      <marker date="1431207382000" expanded="true" signature="3297:3371" placeholder="SELECT * FRO..favorites..." />
-                      <marker date="1431207382000" expanded="true" signature="3880:3900" placeholder="SELECT * FRO..entity..." />
-                      <marker date="1431207382000" expanded="true" signature="4537:4608" placeholder="SELECT * FRO..entity..." />
+                      <marker date="1431208278000" expanded="true" signature="1453:1502" placeholder="SELECT * FRO..entity..." />
+                      <marker date="1431208278000" expanded="true" signature="2161:2329" placeholder="SELECT fid, ..friends..." />
+                      <marker date="1431208278000" expanded="true" signature="3008:3069" placeholder="SELECT * FRO..friend_requests..." />
+                      <marker date="1431208278000" expanded="true" signature="3142:3155" placeholder="SELECT * FRO..." />
+                      <marker date="1431208278000" expanded="true" signature="3791:3865" placeholder="SELECT * FRO..favorites..." />
+                      <marker date="1431208278000" expanded="true" signature="4374:4394" placeholder="SELECT * FRO..entity..." />
+                      <marker date="1431208278000" expanded="true" signature="5031:5102" placeholder="SELECT * FRO..entity..." />
                     </folding>
                   </state>
                 </provider>
@@ -89,11 +84,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="user.endpoint.php" pinned="false" current-in-tab="true">
+      <file leaf-file-name="user.endpoint.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/core/http/endpoints/user.endpoint.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.4295302" vertical-offset="2108" max-vertical-offset="4220">
-              <caret line="131" column="9" selection-start-line="131" selection-start-column="9" selection-end-line="131" selection-end-column="9" />
+            <state vertical-scroll-proportion="-8.0" vertical-offset="2348" max-vertical-offset="4300">
+              <caret line="129" column="63" selection-start-line="129" selection-start-column="63" selection-end-line="129" selection-end-column="63" />
               <folding />
             </state>
           </provider>
@@ -148,36 +143,32 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Database.php" pinned="false" current-in-tab="false">
+      <file leaf-file-name="Database.php" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/core/models/Database.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-17.896551" vertical-offset="3381" max-vertical-offset="4560">
-              <caret line="195" column="0" selection-start-line="195" selection-start-column="0" selection-end-line="195" selection-end-column="0" />
+            <state vertical-scroll-proportion="-2.2400339" vertical-offset="3421" max-vertical-offset="4600">
+              <caret line="39" column="37" selection-start-line="39" selection-start-column="37" selection-end-line="39" selection-end-column="37" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="conf.php" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/core/conf/conf.php">
+      <file leaf-file-name="app.php" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/core/conf/app.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-13.793103" vertical-offset="0" max-vertical-offset="1180">
-              <caret line="20" column="27" selection-start-line="20" selection-start-column="27" selection-end-line="20" selection-end-column="27" />
-              <folding>
-                <element signature="e#7#373#0#PHP" expanded="true" />
-              </folding>
+            <state vertical-scroll-proportion="-2.0689654" vertical-offset="0" max-vertical-offset="1240">
+              <caret line="3" column="1" selection-start-line="3" selection-start-column="1" selection-end-line="3" selection-end-column="1" />
+              <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="notifications.php" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/core/conf/notifications.php">
+      <file leaf-file-name="database.php" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/core/conf/database.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-22.758621" vertical-offset="0" max-vertical-offset="1020">
-              <caret line="33" column="29" selection-start-line="33" selection-start-column="29" selection-end-line="33" selection-end-column="29" />
-              <folding>
-                <element signature="e#7#157#0#PHP" expanded="true" />
-              </folding>
+            <state vertical-scroll-proportion="-1.7931035" vertical-offset="328" max-vertical-offset="1560">
+              <caret line="19" column="62" selection-start-line="19" selection-start-column="62" selection-end-line="19" selection-end-column="62" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -215,9 +206,9 @@
         <option value="$PROJECT_DIR$/index.php" />
         <option value="$PROJECT_DIR$/app/core/http/api.implementation.php" />
         <option value="$PROJECT_DIR$/app/core/http/api.abstract.php" />
-        <option value="$PROJECT_DIR$/app/core/models/Database.php" />
         <option value="$PROJECT_DIR$/app/core/http/endpoints/user.endpoint.php" />
         <option value="$PROJECT_DIR$/app/core/http/handlers/user.handler.php" />
+        <option value="$PROJECT_DIR$/app/core/models/Database.php" />
       </list>
     </option>
   </component>
@@ -539,22 +530,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/core/conf/database.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-13.103448" vertical-offset="0" max-vertical-offset="1560">
-          <caret line="19" column="62" selection-start-line="19" selection-start-column="62" selection-end-line="19" selection-end-column="62" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/core/conf/app.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-0.009409752" vertical-offset="71" max-vertical-offset="1240">
-          <caret line="3" column="1" selection-start-line="3" selection-start-column="1" selection-end-line="3" selection-end-column="1" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/core/conf/conf.php">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-13.793103" vertical-offset="0" max-vertical-offset="1180">
@@ -632,34 +607,51 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/core/models/Database.php">
+    <entry file="file://$PROJECT_DIR$/app/core/http/handlers/user.handler.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-17.896551" vertical-offset="3381" max-vertical-offset="4560">
-          <caret line="195" column="0" selection-start-line="195" selection-start-column="0" selection-end-line="195" selection-end-column="0" />
-          <folding />
+        <state vertical-scroll-proportion="0.4280267" vertical-offset="1071" max-vertical-offset="3640">
+          <caret line="76" column="0" selection-start-line="76" selection-start-column="0" selection-end-line="76" selection-end-column="0" />
+          <folding>
+            <marker date="1431208278000" expanded="true" signature="1453:1502" placeholder="SELECT * FRO..entity..." />
+            <marker date="1431208278000" expanded="true" signature="2161:2329" placeholder="SELECT fid, ..friends..." />
+            <marker date="1431208278000" expanded="true" signature="3008:3069" placeholder="SELECT * FRO..friend_requests..." />
+            <marker date="1431208278000" expanded="true" signature="3142:3155" placeholder="SELECT * FRO..." />
+            <marker date="1431208278000" expanded="true" signature="3791:3865" placeholder="SELECT * FRO..favorites..." />
+            <marker date="1431208278000" expanded="true" signature="4374:4394" placeholder="SELECT * FRO..entity..." />
+            <marker date="1431208278000" expanded="true" signature="5031:5102" placeholder="SELECT * FRO..entity..." />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/core/http/endpoints/user.endpoint.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.4295302" vertical-offset="2108" max-vertical-offset="4220">
-          <caret line="131" column="9" selection-start-line="131" selection-start-column="9" selection-end-line="131" selection-end-column="9" />
+        <state vertical-scroll-proportion="-8.0" vertical-offset="2348" max-vertical-offset="4300">
+          <caret line="129" column="63" selection-start-line="129" selection-start-column="63" selection-end-line="129" selection-end-column="63" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/core/http/handlers/user.handler.php">
+    <entry file="file://$PROJECT_DIR$/app/core/conf/app.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-1.821735" vertical-offset="2251" max-vertical-offset="3300">
-          <caret line="17" column="0" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
-          <folding>
-            <marker date="1431207382000" expanded="true" signature="1090:1139" placeholder="SELECT * FRO..entity..." />
-            <marker date="1431207382000" expanded="true" signature="1798:1876" placeholder="SELECT * FRO..friends..." />
-            <marker date="1431207382000" expanded="true" signature="2555:2616" placeholder="SELECT * FRO..friend_requests..." />
-            <marker date="1431207382000" expanded="true" signature="3297:3371" placeholder="SELECT * FRO..favorites..." />
-            <marker date="1431207382000" expanded="true" signature="3880:3900" placeholder="SELECT * FRO..entity..." />
-            <marker date="1431207382000" expanded="true" signature="4537:4608" placeholder="SELECT * FRO..entity..." />
-          </folding>
+        <state vertical-scroll-proportion="-2.0689654" vertical-offset="0" max-vertical-offset="1240">
+          <caret line="3" column="1" selection-start-line="3" selection-start-column="1" selection-end-line="3" selection-end-column="1" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/core/conf/database.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-1.7931035" vertical-offset="328" max-vertical-offset="1560">
+          <caret line="19" column="62" selection-start-line="19" selection-start-column="62" selection-end-line="19" selection-end-column="62" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/core/models/Database.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-2.2400339" vertical-offset="3421" max-vertical-offset="4600">
+          <caret line="39" column="37" selection-start-line="39" selection-start-column="37" selection-end-line="39" selection-end-column="37" />
+          <folding />
         </state>
       </provider>
     </entry>
