@@ -91,9 +91,47 @@ class CheckmatesAPI extends API
 
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Endpoint: User
+    |--------------------------------------------------------------------------
+    |
+    | Handle the request in a new User endpoint.
+    |
+    */
 
     protected function User() {
         require "./app/core/http/endpoints/user.endpoint.php";
+        $userHandler = new Endpoints\User($this);
+        $userHandler->_handleRequest();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Endpoint: Message
+    |--------------------------------------------------------------------------
+    |
+    | Handle the request in a new Message endpoint.
+    |
+    */
+
+    protected function Message() {
+        require "./app/core/http/endpoints/message.endpoint.php";
+        $userHandler = new Endpoints\User($this);
+        $userHandler->_handleRequest();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Endpoint: Checkin
+    |--------------------------------------------------------------------------
+    |
+    | Handle the request in a new Checkin endpoint.
+    |
+    */
+
+    protected function Checkin() {
+        require "./app/core/http/endpoints/checkin.endpoint.php";
         $userHandler = new Endpoints\User($this);
         $userHandler->_handleRequest();
     }

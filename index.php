@@ -1,6 +1,7 @@
 <?php
 
 require './app/core/conf/init.php';
+require './app/core/models/Database.php';
 
 /*
 |--------------------------------------------------------------------------

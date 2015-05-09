@@ -15,10 +15,10 @@
  * Database configuration
  */
 
-define(DB_HOST, 'http://52.10.110.77/kinekt/');
-define(DB_NAME, 'root');
+define(DB_HOST, 'localhost');
+define(DB_NAME, 'kinekt');
 define(DB_USER, 'root');
-define(DB_PASS, 'test');
+define(DB_PASS, '7O5VZJit9S');
 
 /*
  * Notification server configuration
