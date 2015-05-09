@@ -103,7 +103,7 @@ class CheckmatesAPI extends API
     protected function User() {
         require "./app/core/http/endpoints/user.endpoint.php";
         $userHandler = new Endpoints\User($this);
-        $userHandler->_handleRequest();
+        return $userHandler->_handleRequest();
     }
 
     /*

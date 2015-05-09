@@ -16,7 +16,7 @@ All user requests are documented here:
 * All users can be retrieved via`/api/v2/User`
 * A specific user can be retrieved via `/api/v2/User/{userId}`, in extension to this, a list of user Id's can
 be sent to retrieve multiple users.
-* Users can be retrieved within a radius around a location by using GET via `/api/v2/User/{long}/{lat}/{radius}/{limit}`, it should
+* Users can be retrieved within a radius around a location by using GET via `/api/v2/User/at-location/{long}/{lat}/{radius}/{limit}`, it should
 be noted that `{limit}` is an optional parameter, if this is not specified a default of 50 users will be returned.
 * All friends of a specific user can be retrieved by: `/api/v2/User/friends/{userId}`
 

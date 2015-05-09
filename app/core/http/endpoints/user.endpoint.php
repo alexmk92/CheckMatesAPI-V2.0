@@ -3,6 +3,12 @@
 namespace Endpoints;
 
 /*
+* Ensure we include the reference to the handler for this object.
+*/
+
+require "./app/core/http/handlers/user.handler.php";
+
+/*
 |--------------------------------------------------------------------------
 | User Endpoint
 |--------------------------------------------------------------------------
@@ -26,16 +32,32 @@ class User
     |
     */
 
-    private $allUsersTemplate        = "/User/{limit}";
-    private $specificUserTemplate    = "/User/{userId}";
-    private $usersAtLocationTemplate = "/User/{lat}/{long}/{radius}/{limit}";
+    private $allUsersTemplate;
+    private $userFriendsTemplate;
+    private $specificUserTemplate;
+    private $usersAtLocationTemplate;
+    private $userFavoritePlace;
 
     /*
-     * Property: Info
-     * All info sent in the URI, once here we know we are authenticated
+     * Property: Verb
+     * The verb for the resource
      */
 
-    private $info;
+    private $verb;
+
+    /*
+    * Property: Args
+    * Any extra arguments to filter the request
+    */
+
+    private $args;
+
+    /*
+    * Property: Args
+    * The method for this request
+    */
+
+    private $method;
 
     /*
     |--------------------------------------------------------------------------
@@ -49,7 +71,11 @@ class User
 
     function __construct(\API $sender)
     {
-        $this->info = $sender->_getInfo();
+        // Extract info from payload into the encapsulated variables.
+        $info = $sender->_getInfo();
+        $this->verb   = $info['verb'];
+        $this->args   = $info['args'];
+        $this->method = $info['method'];
     }
 
     /*
@@ -64,9 +90,9 @@ class User
     function _handleRequest()
     {
         // Delegate to the correct template matching method
-        switch($this->info['method'])
+        switch($this->method)
         {
-            case "GET"    : $this->_GET();
+            case "GET"    : return $this->_GET();
                 break;
             case "PUT"    : $this->_PUT();
                 break;
@@ -91,7 +117,41 @@ class User
 
     private function _GET()
     {
-
+        // /api/v2/User - Returns all users in the system
+        if(count($this->args) == 0 && $this->verb == "")
+        {
+            return \Handlers\User::getAll();
+        }
+        // /api/v2/User/{userId} - Returns the user
+        else if(count($this->args) == 1 && $this->verb == "")
+        {
+            return \Handlers\User::get($this->args[0]);
+        }
+        // /api/v2/User/at-location/{lat}/{long}/{radius}/{limit} - Returns list of users at location
+        else if(count($this->args) == 4 && $this->verb == "at-location")
+        {
+            return \Handlers\User::getUsersAtLocation($this->args[0], $this->args[1], $this->args[2], $this->args[3]);
+        }
+        // /api/v2/User/friends/{userId} - Returns the friends of the user
+        else if(count($this->args) == 1 && $this->verb == "friends")
+        {
+            return \Handlers\User::getFriends($this->args[0]);
+        }
+        // /api/v2/User/friend-requests/{userId} - Returns the requests for the user
+        else if(count($this->args) == 1 && $this->verb == "friend-requests")
+        {
+            return \Handlers\User::getFriendRequests($this->args[0]);
+        }
+        // /api/v2/User/favorite-place/{userId} - Returns users favorite places
+        else if(count($this->args) == 1 && $this->verb == "favorite-places")
+        {
+            return \Handlers\User::getFavoritePlaces($this->args[0]);
+        }
+        // throe an exception for no handler found
+        else
+        {
+            throw new \Exception("No handler found for the GET resource of this URI, please check the documentation.");
+        }
     }
 
     /*
@@ -106,7 +166,7 @@ class User
 
     private function _PUT()
     {
-
+        echo "YEAH";
     }
 
     /*
@@ -121,7 +181,12 @@ class User
 
     private function _POST()
     {
+        // Get the payload and decode it to a PHP array, set true to ensure assoc behaviour.
+        $payload = json_decode(file_get_contents('php://input'), true);
 
+        // Perform template match and then handle the correct query.
+
+        var_dump($this->info);
     }
 
     /*

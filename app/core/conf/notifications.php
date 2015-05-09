@@ -19,6 +19,7 @@ return [
 	*/
 
     'iOS' => [
+        'serverType'    => 'APPLE',
         'certificate'   => conf(IOS_CERT_PATH,   'unset'),
         'password'      => conf(IOS_CERT_PASS,   'unset'),
         'signingServer' => conf(IOS_CERT_SERVER, 'unset')
@@ -36,6 +37,7 @@ return [
     */
 
     'Android' => [
+        'serverType'  => 'ANDROID',
         'certificate' => conf(ANDROID_CERT_PATH, 'unset'),
         'apiKey'      => conf(ANDROID_API_KEY,   'unset'),
         'pushURL'     => conf(ANDROID_PUSH_URL,  'unset')

@@ -120,7 +120,7 @@ abstract class API
                 $this->_sanitiseResource($_GET);
                 $this->file = file_get_contents("php://input"); break;
             case 'POST': 
-                $this->_sanitiseResource($_POST); break;            
+                $this->_sanitiseResource($_POST); break;
             case 'DELETE': break;
             default: 
                 $this->_setResponse('Invalid Method', 405); break;
@@ -155,6 +155,7 @@ abstract class API
         // method instance has an endpoint stub with the given name
         if ((int)method_exists($this, $this->endpoint) > 0) {
             $data = $this->{$this->endpoint}($this->args);
+           // var_dump($data);
             return $this->_setResponse($data);
         }
 
@@ -191,7 +192,7 @@ abstract class API
         // Set the response object
         $response = array(
                             'response' => $statusCode . " : " . $this->_getStatus($statusCode),
-                            'data' => $data
+                            'data' => json_decode($data)
                          );
 
         return json_encode($response);
