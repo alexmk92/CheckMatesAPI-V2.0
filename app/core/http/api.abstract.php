@@ -155,7 +155,6 @@ abstract class API
         // method instance has an endpoint stub with the given name
         if ((int)method_exists($this, $this->endpoint) > 0) {
             $data = $this->{$this->endpoint}($this->args);
-           // var_dump($data);
             return $this->_setResponse($data);
         }
 
@@ -184,15 +183,26 @@ abstract class API
     
     private function _setResponse($data, $statusCode = 200)
     {
-        header("HTTP/1.1 " . $statusCode . " " . $this->_getStatus($statusCode));
+        // Encode the message
+        $message = json_encode($data['message']);
 
-        if (isset($data['responseCode']))
-            $statusCode = $data['responseCode'];
+        // Check that a valid payload exists
+        if(!array_key_exists("payload", $data))
+            $payload = json_encode("No data available for this resource.");
+        else
+            $payload = json_encode($data['payload']);
+
+        // Set the error
+        if(isset($data['error']))
+            $statusCode = (int)$data['error'];
+
+        header("HTTP/1.1 " . $statusCode . " " . $this->_getStatus($statusCode));
 
         // Set the response object
         $response = array(
-                            'response' => $statusCode . " : " . $this->_getStatus($statusCode),
-                            'data' => json_decode($data)
+                            'error'   => $statusCode . " - " . $this->_getStatus($statusCode),
+                            'message' => json_decode($message),
+                            'data'    => json_decode($payload)
                          );
 
         return json_encode($response);

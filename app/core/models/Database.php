@@ -93,7 +93,7 @@ class Database
     public function fetch($query, $data = null)
     {
         $stmt = $this->prepareQuery($query, $data);
-        return  $this->serialise($stmt->fetchObject());
+        return  $stmt->fetchObject();
     }
 
     /*
@@ -111,7 +111,7 @@ class Database
     public function fetchAll($query, $data = null)
     {
         $stmt = $this->prepareQuery($query, $data);
-        return  $this->serialise($stmt->fetchAll());
+        return  $stmt->fetchAll();
     }
 
     /*
@@ -202,24 +202,4 @@ class Database
         $stmt->execute($data);
         return $stmt;
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Parse Result
-    |--------------------------------------------------------------------------
-    |
-    | Returns the object as either a JSON or XML object. For now this skeleton
-    | is a basic shell but will be expanded to provide XML formatting options.
-    |
-    | @param $data - The object to be serialised
-    |
-    */
-
-    private function serialise($data)
-    {
-        return json_encode($data);
-    }
-
-
-
 }

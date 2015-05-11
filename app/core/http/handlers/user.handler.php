@@ -97,6 +97,7 @@ class User
         $query = "SELECT * FROM friend_requests WHERE req_receiver = :entity_id";
 
         $requests = $DB->fetchAll($query, $data);
+        return $requests;
 
         $query = "SELECT * FROM ";
     }
@@ -170,8 +171,83 @@ class User
         return $DB->fetch($query, $data);
     }
 
-    public static function signUp($args)
-    {
+   /*
+   |--------------------------------------------------------------------------
+   | Login
+   |--------------------------------------------------------------------------
+   |
+   | Attempt to log the user into the system, if the account does not
+   | exist we create them in the system permitted that they are 18 or older
+   |
+   */
 
+    public static function login($args)
+    {
+        return self::signup($args);
+    }
+
+   /*
+   |--------------------------------------------------------------------------
+   | Sign Up
+   |--------------------------------------------------------------------------
+   |
+   | Creates a new user in the database, only if they are 18 or older.
+   |
+   | @param $args : The JSON payload sent to the server detailing the information
+   |                on this user.  An invalid insert will result in a 400 error
+   |                being returned to the client.
+   |
+   | @return $arr : An array containing either an error detailing what went
+   |                wrong with the request, or a payload holding all user info
+   |                to be manipulated by the client.
+   |
+   */
+
+    public static function signup($args)
+    {
+        // Check for users under 18
+        if (time() - strtotime($args['ent_dob']) <= 18 * 31536000 || $args['ent_dob'] == null)
+            return Array('error' => '400', 'message' => 'Bad request, you must be 18 years or older.');
+
+        // Check if the user already exists
+        $query = "SELECT fb_id FROM entity WHERE fb_id = :fbId";
+        $data  = Array(":fbId" => $args['ent_fbid']);
+
+        // If the user exists, throw an exception.
+        $res = Database::getInstance()->fetch($query, $data);
+
+        if($res)
+            return Array('error' => '400', 'message' => 'Whoops, there is already an account registered with this Facebook id.');
+
+        // We know our user is old enough, insert the new user.
+        $query = "INSERT IGNORE INTO entity(fb_id, first_name, last_name, email, profile_pic_url, sex, dob, about, create_dt, last_checkin_dt, image_urls, score)
+                  VALUES(:fbId, :firstName, :lastName, :email, :profilePic, :sex, :dob, :about, :createdAt, :lastCheckin, :images, :score)";
+
+        $data  = Array(
+            ':fbId'        => $args['ent_fbid'],
+            ':firstName'   => $args['ent_first_name'],
+            ':lastName'    => $args['ent_last_name'],
+            ':email'       => $args['ent_email'],
+            ':profilePic'  => $args['ent_pic_url'],
+            ':sex'         => $args['ent_sex'],
+            ':dob'         => $args['ent_dob'],
+            ':about'       => $args['ent_about'],
+            ':createdAt'   => date('Y-m-d H:i:s'),
+            ':lastCheckin' => date('Y-m-d H:i:s'),
+            ':images'      => $args['ent_images'],
+            ':score'       => 0
+        );
+
+        // Sign the user up and get their ID so we can insert their default preferences
+        $id = Database::getInstance()->insert($query, $data);
+
+        // Insert the user into the preferences table
+        $query = "INSERT INTO preferences(entity_id)
+                  VALUES(:entity_id)";
+
+        $data  = Array(':entity_id' => $id);
+        Database::getInstance()->insert($query, $data);
+
+        return Array('error' => '200', 'message' => 'The user was created successfully.', 'payload' => Array('entity_id' => $id, 'entity_data' => $args));
     }
 }

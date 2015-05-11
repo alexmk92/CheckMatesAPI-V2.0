@@ -117,8 +117,7 @@ class CheckmatesAPI extends API
 
     protected function Message() {
         require "./app/core/http/endpoints/message.endpoint.php";
-        $userHandler = new Endpoints\User($this);
-        $userHandler->_handleRequest();
+
     }
 
     /*
@@ -132,8 +131,7 @@ class CheckmatesAPI extends API
 
     protected function Checkin() {
         require "./app/core/http/endpoints/checkin.endpoint.php";
-        $userHandler = new Endpoints\User($this);
-        $userHandler->_handleRequest();
+
     }
 
 }

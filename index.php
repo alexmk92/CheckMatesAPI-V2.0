@@ -39,8 +39,7 @@ if (!array_key_exists('HTTP_ORIGIN', $_SERVER))
 try
 {
 	$API = new CheckmatesAPI(ucfirst($_REQUEST['request']), $_SERVER['HTTP_ORIGIN']);
-    //$API->_callResource();
-	echo json_encode(Array('payload' => json_decode($API->_callResource())));
+    echo $API->_callResource();
 } 
 catch (Exception $e)
 {

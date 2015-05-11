@@ -96,7 +96,7 @@ class User
                 break;
             case "PUT"    : $this->_PUT();
                 break;
-            case "POST"   : $this->_POST();
+            case "POST"   : return $this->_POST();
                 break;
             case "DELETE" : $this->_DELETE();
                 break;
@@ -120,7 +120,8 @@ class User
         // /api/v2/User - Returns all users in the system
         if(count($this->args) == 0 && $this->verb == "")
         {
-            return \Handlers\User::getAll();
+            $x = \Handlers\User::getAll();
+            var_dump($x);
         }
         // /api/v2/User/{userId} - Returns the user
         else if(count($this->args) == 1 && $this->verb == "")
@@ -188,9 +189,15 @@ class User
         // Get the payload and decode it to a PHP array, set true to ensure assoc behaviour.
         $payload = json_decode(file_get_contents('php://input'), true);
 
-        // Perform template match and then handle the correct query.
+        // Check for an invalid payload
+        if ($payload == null)
+            return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid User payload to the server.");
 
-        var_dump($this->info);
+        // Perform template match and then handle the correct query.
+        if(count($this->args) == 0 && $this->verb == "")
+        {
+            return \Handlers\User::login($payload);
+        }
     }
 
     /*
