@@ -16,6 +16,9 @@ use Models\Database;
 |
 */
 
+// Include the token object, this is responsible for secure sessions.
+require "./app/core/models/ManageToken.php";
+
 class User
 {
 
@@ -73,6 +76,33 @@ class User
                   OR Entity_Id2 = :entity_id";
 
         return $DB->fetchAll($query, $data);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Add Friends
+    |--------------------------------------------------------------------------
+    |
+    | Adds the friends in the given array to the database for this user.
+    |
+    | @param $userId - The ID for this user (must be kinekt ID)
+    |
+    | @return $data - The JSON encoded array containing all results from the
+    |                 query.
+    |
+    */
+
+    public static function addFriends($friends, $category)
+    {
+        // Creat an array of unique friends
+        $friends = array_filter(array_unique(explode(",", $friends)));
+        foreach ($friends as $friend)
+        {
+            // Insert the friend, INSERT IGNORE will ensure only a unique user is inserted
+            $query = "INSERT IGNORE INTO friends(entity_id1, entity_id2, category) VALUES(:entityA, :entityB, :category)";
+            $data = Array(":entityA" => , ":entityB" =>, ":category" => $category);
+        }
+
     }
 
     /*
@@ -183,7 +213,25 @@ class User
 
     public static function login($args)
     {
-        return self::signup($args);
+        // Ensure we have a valid object, if any of the major determinent factors are null then
+        // echo a 400 back to the user
+        if($args == null || $args['ent_fbid'] == '' || $args['ent_dev_id'] == null || $args['ent_push_token'] == null)
+            return Array('error' => '400', 'message' => "Sorry, no data was passed to the server.  Please ensure the user object is sent via JSON in the HTTP body");
+
+        // Create a new token
+        //$token = new \ManageToken();
+
+        // Check if the user already exists in the system, if they don't then sign them up to the system
+        $userExists = self::get($args['ent_fbid']);
+
+        if($userExists != false)
+        {
+            // Check if there are any mutual friends to add - we do that here instead of on sign up as every time
+            // we log in to the app more of our friends may have signed up to Facebook
+            self::addFriends($args['ent_friend']);
+        }
+        else
+            return self::signup($args);
     }
 
    /*
@@ -213,12 +261,6 @@ class User
         $query = "SELECT fb_id FROM entity WHERE fb_id = :fbId";
         $data  = Array(":fbId" => $args['ent_fbid']);
 
-        // If the user exists, throw an exception.
-        $res = Database::getInstance()->fetch($query, $data);
-
-        if($res)
-            return Array('error' => '400', 'message' => 'Whoops, there is already an account registered with this Facebook id.');
-
         // We know our user is old enough, insert the new user.
         $query = "INSERT IGNORE INTO entity(fb_id, first_name, last_name, email, profile_pic_url, sex, dob, about, create_dt, last_checkin_dt, image_urls, score)
                   VALUES(:fbId, :firstName, :lastName, :email, :profilePic, :sex, :dob, :about, :createdAt, :lastCheckin, :images, :score)";
@@ -240,6 +282,10 @@ class User
 
         // Sign the user up and get their ID so we can insert their default preferences
         $id = Database::getInstance()->insert($query, $data);
+
+        // If the user exists, throw an exception.
+        if($id == 0)
+            return Array('error' => '400', 'message' => "Whoops, there is already an account registered with the Facebook ID: ". $args['ent_fbid']);
 
         // Insert the user into the preferences table
         $query = "INSERT INTO preferences(entity_id)

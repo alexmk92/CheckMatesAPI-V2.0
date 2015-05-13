@@ -23,6 +23,7 @@ require "./app/core/http/handlers/user.handler.php";
 
 class User
 {
+
     /*
     |--------------------------------------------------------------------------
     | URI Templates
@@ -120,8 +121,7 @@ class User
         // /api/v2/User - Returns all users in the system
         if(count($this->args) == 0 && $this->verb == "")
         {
-            $x = \Handlers\User::getAll();
-            var_dump($x);
+            return \Handlers\User::getAll();
         }
         // /api/v2/User/{userId} - Returns the user
         else if(count($this->args) == 1 && $this->verb == "")

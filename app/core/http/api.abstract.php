@@ -183,19 +183,25 @@ abstract class API
     
     private function _setResponse($data, $statusCode = 200)
     {
-        // Encode the message
-        $message = json_encode($data['message']);
+        // Set default payload and message values
+        $payload = json_encode("No data available for this resource.");
+        $message = json_encode($data);
 
-        // Check that a valid payload exists
-        if(!array_key_exists("payload", $data))
-            $payload = json_encode("No data available for this resource.");
-        else
-            $payload = json_encode($data['payload']);
+        // This isn't an exception, set the message and payload appropriately
+        if(is_array($data)) {
+            // Encode the message
+            $message = json_encode($data['message']);
 
-        // Set the error
-        if(isset($data['error']))
-            $statusCode = (int)$data['error'];
+            // Check that a valid payload exists
+            if (array_key_exists("payload", $data))
+                $payload = json_encode($data['payload']);
 
+            // Set the error
+            if (isset($data['error']))
+                $statusCode = (int)$data['error'];
+        }
+
+        // Set the response header.
         header("HTTP/1.1 " . $statusCode . " " . $this->_getStatus($statusCode));
 
         // Set the response object

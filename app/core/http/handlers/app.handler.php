@@ -16,7 +16,5 @@ class App
 
         if (count($res) > 0 && $res)
             $res = Array('flag' => true, 'name' => $res['name']);
-
-        var_dump($res);
     }
 }
