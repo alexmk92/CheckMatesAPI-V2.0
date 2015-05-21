@@ -190,7 +190,8 @@ abstract class API
         // This isn't an exception, set the message and payload appropriately
         if(is_array($data)) {
             // Encode the message
-            $message = json_encode($data['message']);
+            if(array_key_exists("message", $data))
+                $message = json_encode($data['message']);
 
             // Check that a valid payload exists
             if (array_key_exists("payload", $data))

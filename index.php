@@ -43,6 +43,5 @@ try
 } 
 catch (Exception $e)
 {
-    echo "im at e";
 	echo json_encode(Array('error' => '404', 'message' => $e->getMessage(), 'payload' => "No available for this resource"));
 }

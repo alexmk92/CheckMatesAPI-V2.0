@@ -167,11 +167,19 @@ class User
 
     private function _PUT()
     {
+        // Get the payload and decode it to a PHP array, set true to ensure assoc behaviour.
+        $payload = json_decode(file_get_contents('php://input'), true);
+
+        // Check for an invalid payload
+        if ($payload == null)
+            return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid User payload to the server.");
+
         // /api/v2/User/location/lat/long
         if(count($this->args) == 2 && $this->verb == "location")
-        {
-
-        }
+            return \Handlers\User::updateLocation($payload);
+        // /api/v2/User/friends/requests/respond
+        if(count($this->args) == 2 && $this->verb == "friends")
+            return \Handlers\User::respondToFriendRequest($payload);
     }
 
     /*
@@ -193,11 +201,9 @@ class User
         if ($payload == null)
             return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid User payload to the server.");
 
-        // Perform template match and then handle the correct query.
+        // /api/v2/User/ Performs a login function, if the user does not exist they will be registered.
         if(count($this->args) == 0 && $this->verb == "")
-        {
             return \Handlers\User::login($payload);
-        }
     }
 
     /*

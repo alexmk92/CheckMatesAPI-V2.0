@@ -13,7 +13,8 @@
  * Used to generate different user tokens accross different devices
  * 
  */
-//require_once 'ConDB.php';
+
+require_once './app/core/models/Database.php';
 
 class ManageToken {
     /*
@@ -87,7 +88,7 @@ class ManageToken {
 
     public function __construct($expiryHrs = 720, $enc_char_len = 20, $date_format = "Y-m-d H:i:s") {
 
-        $this->db = new ConDB();
+        $this->db = \Models\Database::getInstance();
 
         $this->dateFormat = $date_format;
 
@@ -209,10 +210,18 @@ class ManageToken {
 
         if($push_token != '0')
             $push_string = ",push_token = '" . $push_token . "'";
-        
+
+        $query = "UPDATE user_sessions
+                  SET token = :token,
+                      expiry_gmt = :expiry,
+                      loggedIn = 1"
+
+
         $updateQry = "update user_sessions set token = '" . $token . "',expiry_gmt = '" . $gmt_exp_date . "',loggedIn = '1' ".$push_string." where oid = " . $obj_id . " and device = '" . $mac_addr . "'";
 
         mysql_query($updateQry, $this->db->conn);
+
+        var_dump(mysql_affected_rows());
         if (mysql_affected_rows() > 0) {
             return 1;
         } else {
