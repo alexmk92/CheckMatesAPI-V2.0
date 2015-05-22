@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="dataSourceStorage">
+  <data-source name="MySQL - kinekt@localhost" uuid="21c1972e-41ff-48ca-81e3-37a12e3208f0">
+    <database-info product="MySQL" version="5.5.37-0ubuntu0.14.04.1" jdbc-version="4.0" driver-name="MySQL Connector Java" driver-version="mysql-connector-java-5.1.35 ( Revision: 5fb9c5849535c13917c2cf9baaece6ef9693ef27 )">
+      <extra-name-characters>#@</extra-name-characters>
+      <identifier-quote-string>`</identifier-quote-string>
+    </database-info>
+    <case-sensitivity plain-identifiers="exact" quoted-identifiers="exact"/>
+    <schema name="" catalog="kinekt"/>
+    <table name="chatmessages" schema="" catalog="kinekt" type="TABLE">
+      <column name="mid" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="sender" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="receiver" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="message" sqlType="VARCHAR" precision="1500" scale="0" nullable="false" jdbcType="12"/>
+      <column name="msg_dt" sqlType="DATETIME" precision="19" scale="0" nullable="false" jdbcType="93"/>
+      <primary-key name="PRIMARY" columns="mid"/>
+    </table>
+    <table name="checkinArchive" schema="" catalog="kinekt" type="TABLE">
+      <column name="chkId" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="entityId" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="placeName" sqlType="VARCHAR" precision="100" scale="0" nullable="false" jdbcType="12"/>
+      <column name="placeLat" sqlType="VARCHAR" precision="50" scale="0" nullable="false" jdbcType="12"/>
+      <column name="placeLng" sqlType="VARCHAR" precision="50" scale="0" nullable="false" jdbcType="12"/>
+      <column name="Chk_Dt" sqlType="DATETIME" precision="19" scale="0" nullable="false" jdbcType="93"/>
+      <primary-key name="PRIMARY" columns="chkId"/>
+    </table>
+    <table name="checkin_comments" schema="" catalog="kinekt" type="TABLE">
+      <column name="Comment_Id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="Entity_Id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="Chk_Id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="Content" sqlType="VARCHAR" precision="500" scale="0" nullable="false" jdbcType="12"/>
+      <column name="Comment_Dt" sqlType="DATETIME" precision="19" scale="0" nullable="false" jdbcType="93"/>
+      <primary-key name="PRIMARY" columns="Comment_Id"/>
+    </table>
+    <table name="checkin_likes" schema="" catalog="kinekt" type="TABLE">
+      <column name="Like_Id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="Entity_Id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="Chk_Id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <primary-key name="PRIMARY" columns="Like_Id"/>
+    </table>
+    <table name="checkins" schema="" catalog="kinekt" type="TABLE">
+      <column name="Chk_Id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="Entity_Id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="Place_Name" sqlType="VARCHAR" precision="100" scale="0" nullable="false" jdbcType="12"/>
+      <column name="Place_Lat" sqlType="VARCHAR" precision="30" scale="0" nullable="false" jdbcType="12"/>
+      <column name="Place_Long" sqlType="VARCHAR" precision="30" scale="0" nullable="false" jdbcType="12"/>
+      <column name="Place_Country" sqlType="VARCHAR" precision="100" scale="0" nullable="false" jdbcType="12"/>
+      <column name="Place_Category" sqlType="VARCHAR" precision="100" scale="0" nullable="false" jdbcType="12"/>
+      <column name="Place_People" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="Place_Pic_Url" sqlType="VARCHAR" precision="200" scale="0" nullable="false" jdbcType="12"/>
+      <column name="Img_Url" sqlType="VARCHAR" precision="200" scale="0" nullable="false" jdbcType="12"/>
+      <column name="Message" sqlType="VARCHAR" precision="700" scale="0" nullable="false" jdbcType="12"/>
+      <column name="Tagged_Ids" sqlType="VARCHAR" precision="200" scale="0" nullable="false" jdbcType="12"/>
+      <column name="Chk_Dt" sqlType="DATETIME" precision="19" scale="0" nullable="false" jdbcType="93"/>
+      <primary-key name="PRIMARY" columns="Chk_Id"/>
+    </table>
+    <table name="dev_type" schema="" catalog="kinekt" type="TABLE">
+      <column name="dev_id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="name" sqlType="VARCHAR" precision="20" scale="0" nullable="false" jdbcType="12"/>
+      <primary-key name="PRIMARY" columns="dev_id"/>
+    </table>
+    <table name="entity" schema="" catalog="kinekt" type="TABLE">
+      <column name="Entity_Id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="Fb_Id" sqlType="VARCHAR" precision="100" scale="0" nullable="true" jdbcType="12"/>
+      <column name="First_Name" sqlType="VARCHAR" precision="50" scale="0" nullable="true" jdbcType="12"/>
+      <column name="Last_Name" sqlType="VARCHAR" precision="50" scale="0" nullable="true" jdbcType="12"/>
+      <column name="Email" sqlType="VARCHAR" precision="100" scale="0" nullable="true" jdbcType="12"/>
+      <column name="Profile_Pic_Url" sqlType="VARCHAR" precision="300" scale="0" nullable="true" jdbcType="12"/>
+      <column name="Sex" sqlType="TINYINT" precision="3" scale="0" nullable="true" jdbcType="-6" remarks="MS1tYWxlLCAyLWZlbWFsZQ=="/>
+      <column name="DOB" sqlType="DATE" precision="10" scale="0" nullable="true" jdbcType="91"/>
+      <column name="About" sqlType="VARCHAR" precision="700" scale="0" nullable="true" jdbcType="12"/>
+      <column name="Create_Dt" sqlType="DATE" precision="10" scale="0" nullable="true" jdbcType="91"/>
+      <column name="Last_CheckIn_Lat" sqlType="VARCHAR" precision="30" scale="0" nullable="false" jdbcType="12"/>
+      <column name="Last_CheckIn_Long" sqlType="VARCHAR" precision="30" scale="0" nullable="false" jdbcType="12"/>
+      <column name="Last_CheckIn_Place" sqlType="VARCHAR" precision="100" scale="0" nullable="true" jdbcType="12"/>
+      <column name="Last_CheckIn_Country" sqlType="VARCHAR" precision="100" scale="0" nullable="true" jdbcType="12"/>
+      <column name="Last_CheckIn_Dt" sqlType="DATETIME" precision="19" scale="0" nullable="true" jdbcType="93"/>
+      <column name="Score" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" def="MA=="/>
+      <column name="Score_Flag" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" def="MA==" remarks="Nz0w"/>
+      <column name="Image_Urls" sqlType="VARCHAR" precision="1500" scale="0" nullable="true" jdbcType="12" remarks="NSBpbWFnZXMgdXJscw=="/>
+      <primary-key name="PRIMARY" columns="Entity_Id"/>
+      <index name="Fb_Id" unique="true" columns="Fb_Id"/>
+    </table>
+    <table name="favorites" schema="" catalog="kinekt" type="TABLE">
+      <column name="Like_Id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="Entity_Id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="Place_Name" sqlType="VARCHAR" precision="100" scale="0" nullable="false" jdbcType="12"/>
+      <column name="Place_Pic_Url" sqlType="VARCHAR" precision="200" scale="0" nullable="false" jdbcType="12"/>
+      <primary-key name="PRIMARY" columns="Like_Id"/>
+    </table>
+    <table name="friend_requests" schema="" catalog="kinekt" type="TABLE">
+      <column name="Req_Id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="Req_Sender" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="Req_Receiver" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <primary-key name="PRIMARY" columns="Req_Id"/>
+    </table>
+    <table name="friends" schema="" catalog="kinekt" type="TABLE">
+      <column name="fid" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="Entity_Id1" sqlType="VARCHAR" precision="100" scale="0" nullable="false" jdbcType="12"/>
+      <column name="Entity_Id2" sqlType="VARCHAR" precision="100" scale="0" nullable="false" jdbcType="12"/>
+      <column name="Category" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" remarks="MS1mYWNlYm9vaywgMi1raW5la3QsIDMtZXZlcnlvbmUsIDQgLSBibG9jaw=="/>
+      <primary-key name="PRIMARY" columns="fid"/>
+    </table>
+    <table name="notifications" schema="" catalog="kinekt" type="TABLE">
+      <column name="notif_id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="notif_type" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" remarks="MS0gY2hlY2tJbiwgMi1tZXNzYWdlLCAzLXRhZywgNC1yZXF1ZXN0LCA1LW5ld2ZyaWVuZA=="/>
+      <column name="sender" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="receiver" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="message" sqlType="VARCHAR" precision="500" scale="0" nullable="false" jdbcType="12"/>
+      <column name="notif_dt" sqlType="DATETIME" precision="19" scale="0" nullable="false" jdbcType="93"/>
+      <column name="ref" sqlType="INT" precision="10" scale="0" nullable="true" jdbcType="4" def="MA==" remarks="d2hlbiBub3RpZlR5cGU9NiBvciA3IENoZWNrSW4gSWQ="/>
+      <primary-key name="PRIMARY" columns="notif_id"/>
+    </table>
+    <table name="preferences" schema="" catalog="kinekt" type="TABLE">
+      <column name="Entity_Id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="Pref_Facebook" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="MQ==" remarks="MS15ZXMsIDAtbm8="/>
+      <column name="Pref_Kinekt" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="MQ==" remarks="MS15ZXMsIDAtbm8="/>
+      <column name="Pref_Everyone" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="MQ==" remarks="MS15ZXMsIDAtbm8="/>
+      <column name="Pref_Sex" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="Mw==" remarks="MS1tYWxlLCAyLWZlbWFsZSwgMy1ib3Ro"/>
+      <column name="Pref_Lower_Age" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" def="MTg="/>
+      <column name="Pref_Upper_Age" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" def="NTA="/>
+      <column name="Pref_Chk_Exp" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="OA==" remarks="MSwgNCwgOA=="/>
+      <primary-key name="PRIMARY" columns="Entity_Id"/>
+    </table>
+    <table name="setting" schema="" catalog="kinekt" type="TABLE">
+      <column name="Entity_Id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="Pri_CheckIn" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="Mg==" remarks="MS1mcmllbmQsIDItZXZlcnlvbmU="/>
+      <column name="Pri_Visability" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="Mw==" remarks="MS01MDBLbSwyLWNvdW50cnksIDMtd29ybGR3aWRl"/>
+      <column name="Notif_Tag" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="MQ==" remarks="MS15ZXMsIDAtbm8="/>
+      <column name="Notif_Msg" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="MQ==" remarks="MS15ZXMsIDAtbm8="/>
+      <column name="Notif_New_Friend" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="MQ==" remarks="MS15ZXMsIDAtbm8="/>
+      <column name="Notif_Friend_Request" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="MQ==" remarks="MS15ZXMsIDAtbm8="/>
+      <column name="Notif_CheckIn_Activity" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="MQ==" remarks="MS15ZXMsIDAtbm8="/>
+    </table>
+    <table name="statusmessages" schema="" catalog="kinekt" type="TABLE">
+      <column name="sid" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="statusNumber" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="MA==" remarks="MS1zdWNjZXNzLCAxLWVycm9y"/>
+      <column name="statusMessage" sqlType="VARCHAR" precision="50" scale="0" nullable="false" jdbcType="12"/>
+      <primary-key name="PRIMARY" columns="sid"/>
+    </table>
+    <table name="tags" schema="" catalog="kinekt" type="TABLE">
+      <column name="checkin_id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="person_id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+    </table>
+    <table name="user_sessions" schema="" catalog="kinekt" type="TABLE">
+      <column name="sid" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="oid" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="token" sqlType="VARCHAR" precision="200" scale="0" nullable="false" jdbcType="12"/>
+      <column name="expiry_gmt" sqlType="DATETIME" precision="19" scale="0" nullable="false" jdbcType="93"/>
+      <column name="device" sqlType="VARCHAR" precision="100" scale="0" nullable="false" jdbcType="12"/>
+      <column name="type" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="push_token" sqlType="VARCHAR" precision="200" scale="0" nullable="false" jdbcType="12"/>
+      <column name="create_date_gmt" sqlType="DATETIME" precision="19" scale="0" nullable="false" jdbcType="93"/>
+      <column name="loggedIn" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="MQ=="/>
+      <primary-key name="PRIMARY" columns="sid"/>
+    </table>
+  </data-source>
+</component>

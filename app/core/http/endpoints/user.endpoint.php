@@ -95,11 +95,11 @@ class User
         {
             case "GET"    : return $this->_GET();
                 break;
-            case "PUT"    : $this->_PUT();
+            case "PUT"    : return $this->_PUT();
                 break;
             case "POST"   : return $this->_POST();
                 break;
-            case "DELETE" : $this->_DELETE();
+            case "DELETE" : return $this->_DELETE();
                 break;
             default       : throw new \Exception("Unsupported header type for resource: User");
                 break;

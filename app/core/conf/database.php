@@ -12,16 +12,6 @@ return
     |
     */
 
-    /*
-    |--------------------------------------------------------------------------
-    | Database Host IP
-    |--------------------------------------------------------------------------
-    |
-    | The IP to which the host resides.  This will be used to connect to
-    | the database so that information can be stored.
-    |
-    */
-
     'db_host'  => conf(DB_HOST, 'localhost'),
 
     /*

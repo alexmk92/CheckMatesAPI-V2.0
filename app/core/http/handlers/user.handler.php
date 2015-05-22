@@ -3,21 +3,21 @@
 namespace Handlers;
 use Models\Database;
 
-/*
-|--------------------------------------------------------------------------
-| User Handler
-|--------------------------------------------------------------------------
-|
-| Defines the implementation of a User handler, this is a simple interface
-| to converse with the Database.  It has been abstracted from the endpoint
-| implementation as there may be a large number of queries within the file.
-|
-| @author - Alex Sims (Checkmates CTO)
-|
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | User Handler
+    |--------------------------------------------------------------------------
+    |
+    | Defines the implementation of a User handler, this is a simple interface
+    | to converse with the Database.  It has been abstracted from the endpoint
+    | implementation as there may be a large number of queries within the file.
+    |
+    | @author - Alex Sims (Checkmates CTO)
+    |
+    */
 
-// Include the token object, this is responsible for secure sessions.
-require "./app/core/models/ManageToken.php";
+// Include the session handler object
+require "./app/core/http/handlers/session.handler.php";
 
 class User
 {
@@ -131,7 +131,6 @@ class User
         if($args["ent_sender_id"] == '' || $args["ent_response"] == '')
             return Array('error' => '400', 'message' => "Bad request, no credentials were sent in the request body.");
 
-
     }
 
     /*
@@ -219,8 +218,8 @@ class User
 
         // Everything was successful, print out the response
         $diff = ($fCount - $iCount) - $aCount;
-        $msg  = ($iCount == 0) ? "Oops, no users were added: " : "Success, the users were added: ";
-        return Array('error' => '200', 'message' => "{$msg} {$iCount} inserted, {$diff} duplicates. {$aCount} of your friends does not have a Kinekt account.");
+        $msg  = ($iCount == 0) ? "Oops, no users were added:" : "Success, the users were added:";
+        return Array('error' => '200', 'message' => "{$msg} out of {$fCount} friends, {$iCount} were inserted, {$diff} were duplicates and {$aCount} of your friends does not have a Kinekt account.");
     }
 
     /*
@@ -376,15 +375,21 @@ class User
             return Array('error' => '200', 'message' => 'The user with ID: '.$userId.' is already up to date and does not need modifying.');
     }
 
-   /*
-   |--------------------------------------------------------------------------
-   | Login
-   |--------------------------------------------------------------------------
-   |
-   | Attempt to log the user into the system, if the account does not
-   | exist we create them in the system permitted that they are 18 or older
-   |
-   */
+
+    private static function updateScore($entityId, $amount, $operator)
+    {
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Login
+    |--------------------------------------------------------------------------
+    |
+    | Attempt to log the user into the system, if the account does not
+    | exist we create them in the system permitted that they are 18 or older
+    |
+    */
 
     public static function login($args)
     {
@@ -398,7 +403,7 @@ class User
         if($userExists != false)
         {
             // Ensure we have a valid session
-            self::setSession($userExists->Entity_Id, $args);
+            Session::setSession($userExists->Entity_Id, $args);
 
             // Update the users details, this includes updating the ABOUT info and profile pictures,
             // We do this here as profile info may have changed on Facebook since the last login.
@@ -409,7 +414,8 @@ class User
 
             // Check if there are any mutual friends to add - we do that here instead of on sign up as every time
             // we log in to the app more of our friends may have signed up to the app through FB
-            $response = self::addFriends($args['ent_friend'], '1', $userExists->Entity_Id);
+            if($args["ent_friend"] != "")
+                $response = self::addFriends($args['ent_friend'], '1', $userExists->Entity_Id);
 
             // Override the payload as we are logging in, we don't want a list of all friends.
             $response["message"] = "You were logged in successfully, friends may have been updated: " . $response["message"];
@@ -419,56 +425,6 @@ class User
         }
         else
             return self::signup($args);
-    }
-
-   /*
-   |--------------------------------------------------------------------------
-   | Set Session
-   |--------------------------------------------------------------------------
-   |
-   | Checks the state of the current users session, if it has not been set
-   | a new one is set.  If the old session has expired then another token shall
-   | be set to replace the other.
-   |
-   | Tokens are checked once per session and are managed through the ManageToken
-   | class.
-   |
-   | @param $args - The user object who this session will belong to.
-   |
-   */
-
-    private static function setSession($entityId, $args)
-    {
-        $token     = new \ManageToken();
-
-        $pushToken = $args["ent_push_token"];
-        $devId     = $args["ent_dev_id"];
-        $devType   = $args["ent_device_type"];
-        $devName   = $devType == 1 ? "APPLE" : "ANDROID";
-
-        $query = "SELECT sid, token, expiry_gmt
-                  FROM user_sessions
-                  WHERE oid = :entityId
-                  AND device = :device";
-
-        $data   = Array("entityId" => $entityId, "device" => $devId);
-        $exists = Database::getInstance()->fetch($query, $data);
-
-        if($exists)
-        {
-            $x = $token->updateSessToken($entityId, $devId, $pushToken);
-
-            var_dump($x);
-        }
-        else
-        {
-            $x = $token->createSessToken($entityId, $devName, $devId, $pushToken);
-        }
-    }
-
-    private static function updateScore($entityId, $amount, $operator)
-    {
-
     }
 
    /*
@@ -524,14 +480,21 @@ class User
         if($id == 0)
             return Array('error' => '400', 'message' => "Whoops, there is already an account registered with the Facebook ID: ". $args['ent_fbid']);
 
+        // Everything went well, create a session for this user:
+        Session::setSession($id, $args);
+
+        // Add all of the friends this user has.
+        if($args["ent_friend"] != "")
+            self::addFriends($args["ent_friend"], 1, $id);
+
         // Insert the user into the preferences table
         $query = "INSERT INTO preferences(entity_id)
                   VALUES(:entity_id)";
 
         $data  = Array(':entity_id' => $id);
-        $res = Database::getInstance()->insert($query, $data);
+        Database::getInstance()->insert($query, $data);
 
-        if($res != 0)
+        if($id > 0)
             return Array('error' => '200', 'message' => 'The user was created successfully.', 'payload' => Array('entity_id' => $id, 'entity_data' => $args));
         else
             return Array('error' => '500', 'message' => 'There was an internal error when creating the user listed in the payload.  Please try again.', 'payload' => Array('entity_id' => $id, 'entity_data' => $args));

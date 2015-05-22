@@ -56,18 +56,6 @@ class ManageToken {
     private $dateFormat;
 
     /*
-     * variable: db_session_table
-     * Usage: Holds the table name for storing sessions
-     */
-    private $db_session_table = 'user_sessions';
-
-    /*
-     * variable: db_session_table
-     * Usage: Holds the table name for storing sessions
-     */
-    private $db_type_table = 'dev_type';
-
-    /*
      * variable: response_type
      * Usage: Defines the type of output, can be json or xml
      */
@@ -109,10 +97,10 @@ class ManageToken {
      *      getDeviceType() -->   Search db and get the device type id for the provided device name
      */
 
-    public function createSessToken($obj_id, $dev_name, $mac_addr, $push_token) {
+    public function createSessToken($obj_id, $dev_id, $mac_addr, $push_token) {
 
-        $this->user_device_type = $this->getDeviceType($dev_name);
-
+        $this->user_device_type = $dev_id;
+        //echo "device id {$dev_id}, object id {$obj_id}, mac addr {$mac_addr}, token {$push_token}";
         $this->sess_token = $this->garbler($mac_addr);
 
         $curr_time = time();
@@ -171,9 +159,17 @@ class ManageToken {
 
     public function validateSessToken($obj_id, $token) {
 
-        $getTokenQry = "select sid from " . $this->db_session_table . " where oid='" . $obj_id . "' and token = '" . $token . "'";
-        $getTokenRes = mysql_query($getTokenQry, $this->db->conn);
-        if (mysql_num_rows($getTokenRes) > 0) {
+        $query = "SELECT sid FROM user_sessions
+                  WHERE oid = :objId
+                  AND token = :token";
+
+        $data  = Array(":objId" => $obj_id, ":token" => $token);
+
+        $res = \Models\Database::getInstance()->fetchAll($query, $data);
+
+        var_dump($res);
+
+        if ($res != 0) {
             return 1;
         } else {
             return 0;
@@ -189,9 +185,21 @@ class ManageToken {
 
     public function revokeSessToken($obj_id, $token) {
 
-        $getTokenQry = "delete from " . $this->db_session_table . " where oid='" . $obj_id . "' and token = '" . $token . "'";
-        mysql_query($getTokenQry, $this->db->conn);
-        if (mysql_affected_rows() > 0) {
+        $query = "DELETE FROM user_sessions
+                  WHERE oid = :objId
+                  AND token = :token";
+
+        $data  = Array(":objId" => $obj_id, ":token" => $token);
+
+        //$getTokenQry = "delete from " . $this->db_session_table . " where oid='" . $obj_id . "' and token = '" . $token . "'";
+        //mysql_query($getTokenQry, $this->db->conn);
+
+        $res = \Models\Database::getInstance()->delete($query, $data);
+
+        echo "deleting";
+        var_dump($res);
+
+        if ($res > 0) {
             return 1;
         } else {
             return 0;
@@ -206,27 +214,36 @@ class ManageToken {
      * 
      */
 
-    private function update_in_db($obj_id, $token, $mac_addr, $gmt_exp_date, $push_token) {
-
+    private function update_in_db($obj_id, $token, $mac_addr, $gmt_exp_date, $push_token)
+    {
         if($push_token != '0')
-            $push_string = ",push_token = '" . $push_token . "'";
-
-        $query = "UPDATE user_sessions
+        {
+            $query = "UPDATE user_sessions
                   SET token = :token,
                       expiry_gmt = :expiry,
-                      loggedIn = 1"
+                      loggedIn = 1,
+                      push_token = :push_token
+                  WHERE oid = :objId
+                  AND   device = :macAddr";
 
+            $data = Array(
+                ":token"      => $token,
+                ":objId"      => $obj_id,
+                ":macAddr"    => $mac_addr,
+                ":push_token" => $push_token,
+                ":expiry"     => $gmt_exp_date
+            );
 
-        $updateQry = "update user_sessions set token = '" . $token . "',expiry_gmt = '" . $gmt_exp_date . "',loggedIn = '1' ".$push_string." where oid = " . $obj_id . " and device = '" . $mac_addr . "'";
+            $res = \Models\Database::getInstance()->update($query, $data);
 
-        mysql_query($updateQry, $this->db->conn);
-
-        var_dump(mysql_affected_rows());
-        if (mysql_affected_rows() > 0) {
-            return 1;
-        } else {
-            return 0; //$insertQry;
+            if ($res != 0) {
+                return 1;
+            } else {
+                return 0; //$insertQry;
+            }
         }
+
+        return 0;
     }
 
     /*
@@ -239,17 +256,23 @@ class ManageToken {
 
     private function insert_in_db($obj_id, $token, $mac_addr, $type, $gmt_date, $gmt_exp_date, $push_token) {
 
-        $insertQry = "insert into " . $this->db_session_table . "(oid,token,expiry_gmt,device,type,create_date_gmt,push_token) values(
-            " . $obj_id . ",
-                '" . $token . "',
-                    '" . $gmt_exp_date . "',
-                        '" . $mac_addr . "',
-                            '" . $type . "',
-                                '" . $gmt_date . "',
-                                    '" . $push_token . "')";
+        $query = "INSERT INTO user_sessions (oid, token, expiry_gmt, device, type, create_date_gmt, push_token)
+                  VALUES(:objId, :token, :expDate, :macAddr, :type, :gmtDate, :pushToken)";
 
-        mysql_query($insertQry, $this->db->conn);
-        if (mysql_insert_id() > 0) {
+
+        $data  = Array(
+            ":objId"     => $obj_id,
+            ":token"     => $token,
+            ":expDate"   => $gmt_exp_date,
+            ":macAddr"   => $mac_addr,
+            ":type"      => $type,
+            ":gmtDate"   => $gmt_date,
+            ":pushToken" => $push_token
+        );
+
+        $res = \Models\Database::getInstance()->insert($query, $data);
+
+        if ($res != 0) {
             return 1;
         } else {
             return 0; //$insertQry;
@@ -313,33 +336,6 @@ class ManageToken {
             $output.=sprintf("%02X", ord($c));
 
         return $output;
-    }
-
-    /*
-     * method name: getDeviceType
-     * Desc: Search db and get the device type id for the provided device name
-     * Input: Device name
-     * Output: Device id if available, else handles error through handleError() method
-     * 
-     * Uses methods: 
-     *      handleError() --> Ouputs the error string and stops the flow
-     * 
-     */
-
-    private function getDeviceType($dev_name) {
-
-        $getDeviceTypeQry = "select dev_id from " . $this->db_type_table . " where name = '" . $dev_name . "'";
-
-        $getDeviceTypeRes = mysql_query($getDeviceTypeQry, $this->db->conn);
-
-        if (mysql_num_rows($getDeviceTypeRes)) {
-
-            $deviteTypeRow = mysql_fetch_assoc($getDeviceTypeRes);
-
-            return $deviteTypeRow['dev_id'];
-        } else {
-            $this->handleError('Device type not found');
-        }
     }
 
     /*

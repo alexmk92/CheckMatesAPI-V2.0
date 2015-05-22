@@ -16,7 +16,6 @@
 
 require 'api.abstract.php';
 require './app/core/models/User.php';
-require './app/core/models/APIKey.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -68,7 +67,6 @@ class CheckmatesAPI extends API
         */
 
         $User   = new Models\User();
-        $APIKey = new Models\APIKey();
 
         /*
         * Ensure that our request can be validated by checking the request header
@@ -131,7 +129,8 @@ class CheckmatesAPI extends API
 
     protected function Checkin() {
         require "./app/core/http/endpoints/checkin.endpoint.php";
-
+        $checkinHandler = new Endpoints\Checkin($this);
+        return $checkinHandler->_handleRequest();
     }
 
 }

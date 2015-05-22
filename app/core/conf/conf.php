@@ -21,6 +21,12 @@ define(DB_USER, 'root');
 define(DB_PASS, '7O5VZJit9S');
 
 /*
+ * Server configuration constants
+ */
+
+define(SERVER_IP, '146.185.147.142/checkmates');
+
+/*
  * Notification server configuration
  */
 
