@@ -63,7 +63,7 @@ feature would then require the extra URI's to be implemented...
 
 ##### POST
 * Post a new comment on a checkin by specifying the `comment` filter in the URI: `/api/v2/Checkin/comment/{checkinId}`
-* Create a new checkin, send the checkin information in the body of the HTTP request: `/api/v2/Checkin`
+* Create a new checkin, send the checkin information in the body of the HTTP request: `/api/v2/Checkin` **NOTE** Images and form data must be sent as `multipart/form-data` for this request, failure to do so will result in a 400 being returned.
 
 ##### DELETE
 * Delete a checkin: `/api/v2/Checkin/{checkinId}`

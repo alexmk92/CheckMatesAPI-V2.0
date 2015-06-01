@@ -25,21 +25,6 @@ class User
 {
 
     /*
-    |--------------------------------------------------------------------------
-    | URI Templates
-    |--------------------------------------------------------------------------
-    |
-    | Define URI templates which will be matched when handling the request
-    |
-    */
-
-    private $allUsersTemplate;
-    private $userFriendsTemplate;
-    private $specificUserTemplate;
-    private $usersAtLocationTemplate;
-    private $userFavoritePlace;
-
-    /*
      * Property: Verb
      * The verb for the resource
      */

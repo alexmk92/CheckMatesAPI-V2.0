@@ -30,13 +30,13 @@ define(SERVER_IP, '146.185.147.142/checkmates');
  * Notification server configuration
  */
 
-define(ANDROID_CERT_PATH, './public/certificates/iOS.cert');
+define(ANDROID_CERT_PATH, './public/certificates/android.pem');
 define(ANDROID_API_KEY,   'AIzaSyBgqhtPTbtxjZ9mxAr7xThiCiR5qT4oRzg');
 define(ANDROID_PUSH_URL,  'http://android.googleapis.com/gcm/send');
 
-define(IOS_CERT_PATH,     './public/certificates/android.cert');
+define(IOS_CERT_PATH,     './public/certificates/Prod.pem');
 define(IOS_CERT_PASS,     'kinektmates15');
-define(IOS_CERT_SERVER,   'ssl://gateway.push.apple.com');
+define(IOS_CERT_SERVER,   'ssl://gateway.push.apple.com:2195');
 
 /*
 |--------------------------------------------------------------------------

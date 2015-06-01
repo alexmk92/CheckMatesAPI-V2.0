@@ -167,8 +167,6 @@ class ManageToken {
 
         $res = \Models\Database::getInstance()->fetchAll($query, $data);
 
-        var_dump($res);
-
         if ($res != 0) {
             return 1;
         } else {

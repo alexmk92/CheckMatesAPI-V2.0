@@ -58,11 +58,11 @@ class Session
         // Check if the user has a valid session token, if they don't recreate it.
         if($exists)
         {
-            $token->updateSessToken($entityId, $devId, $pushToken);
+            return $token->updateSessToken($entityId, $devId, $pushToken);
         }
         else
         {
-            $token->createSessToken($entityId, $devType, $devId, $pushToken);
+            return $token->createSessToken($entityId, $devType, $devId, $pushToken);
         }
     }
 
@@ -84,7 +84,7 @@ class Session
 
         // Build the query and to retrieve the session object
         $query = "SELECT us.oid, us.expiry_gmt, us.device, us.type, us.sid,
-                         ent.First_Name, ent.Fb_Id, ent.Profile_Pic_Url
+                         ent.First_Name, ent.Last_Name, ent.Fb_Id, ent.Profile_Pic_Url
                   FROM user_sessions us, entity ent
                   WHERE us.oid = ent.Entity_Id
                   AND us.token = :token
@@ -105,6 +105,7 @@ class Session
                                                 "deviceId"   => $res[0]["device"],
                                                 "deviceType" => $res[0]["type"],
                                                 "firstName"  => $res[0]["First_Name"],
+                                                "lastName"   => $res[0]["Last_Name"],
                                                 "fbId"       => $res[0]["Fb_Id"],
                                                 "profilePic" => $res[0]["Profile_Pic_Url"]
                                          )

@@ -143,19 +143,16 @@ class Checkin
         // Get the payload and decode it to a PHP array, set true to ensure assoc behaviour.
         $payload = json_decode(file_get_contents('php://input'), true);
 
-        // Check for an invalid payload
-        if (!in_array("image", $this->args) && empty($payload))
+        // Check for an invalid payload - we check FILES and POST arrays here for multipart data.
+        if (empty($payload) && (empty($_FILES) && empty($_POST)))
             return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid Checkin payload to the server.");
+        // Account for a payload that has been sent as a multipart form-data
+        if (empty($payload))
+            $payload = Array("image" => $_FILES, "args" => $_POST);
 
-        // /api/v2/Checkin/ Posts the new checkin that the user has sent in the Post body - this will only post checkin and not the image
+        // /api/v2/Checkin/ Posts the new checkin that the user has sent in the multipart body - this will only post checkin and not the image
         if(count($this->args) == 0 && $this->verb == "")
             return \Handlers\Checkin::checkin($payload);
-        // /api/v2/Checkin/{checkinID}/image uploads an image for the checkin, this will call an update resource once complete
-        if((count($this->args) == 2 || count($this->args) == 1) && in_array("image", $this->args))
-        {
-            $id = $this->args[0] == "image" ? $this->verb : $this->args[0];
-            return \Handlers\Checkin::setCheckinImage($id);
-        }
 
     }
 

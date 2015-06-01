@@ -17,7 +17,7 @@ use Models\Database;
     */
 
 // Include the session handler object
-require "./app/core/http/handlers/session.handler.php";
+require_once "./app/core/http/handlers/session.handler.php";
 
 class User
 {
@@ -69,22 +69,26 @@ class User
     |
     */
 
-    public static function getFriends($userId)
+    public static function getFriends($userId, $filter = NULL)
     {
         $data = Array(":entity_id" => $userId);
 
+        if(!empty($filter))
+            $data[":tagged"] = $filter["tagged"];
+
         // NOTE* I would like to tailor this to return the specific fields we need,
         // for now im not sure if this will suffice -  shout if more is needed
-        $query = "SELECT fb_id, first_name, last_name, profile_pic_url, last_checkin_place, category
+        $query = "SELECT entity_id, fb_id, first_name, last_name, profile_pic_url, last_checkin_place, category
                   FROM entity
                   JOIN friends
                   ON entity.entity_id = friends.entity_id2 OR entity.entity_id = friends.entity_id1
                   WHERE entity_id IN
                   (
-                    SELECT entity_id1 FROM friends WHERE entity_id2 = :entity_id
+                    SELECT entity_id1 FROM friends WHERE entity_id2 = :entity_id AND Category != 4
                     UNION ALL
-                    SELECT entity_id2 FROM friends WHERE entity_id1 = :entity_id
+                    SELECT entity_id2 FROM friends WHERE entity_id1 = :entity_id AND Category != 4
                   )
+                  AND entity_id NOT IN(".$filter["tagged"].")
                   ";
 
         // Check we recieved a valid object back to set the response.
@@ -142,12 +146,29 @@ class User
     |
     | @param $args - An array containing all information needed to make this
     |                request.
+    |                Params should include: [lat, long, entityId]
+    |
     |
     */
 
     public static function updateLocation($args)
     {
+        if(empty($args["ent_sess_token"]) || empty($args["ent_device_id"]))
+            return Array('error' => '401', 'message' => "Un-Authorised: The resource you're trying to update does not match your session token.");
 
+        $user = Session::validateSession($args["ent_sess_token"], $args["ent_device_id"]);
+
+        $query = "UPDATE entity SET last_checkin_lat = :lat, Last_CheckIn_Long = :lng WHERE entity_id = :entityId";
+        $data  = Array(
+            ":lat"      => $args["lat"],
+            ":lng"      => $args["long"],
+            ":entityId" => $user["entity_id"]
+        );
+
+        if(Database::getInstance()->update($query, $data) > 0)
+            return Array('error' => '203', 'message' => 'The resource was updated successfully, your new latitude is '.$args["lat"].' and your longitude is '.$args["long"]);
+
+        return Array("error" => "500", "message" => "An internal error occurred when processing your request. Please try again.");
     }
 
     /*
@@ -403,7 +424,7 @@ class User
         if($userExists != false)
         {
             // Ensure we have a valid session
-            Session::setSession($userExists->Entity_Id, $args);
+            $token = Session::setSession($userExists->Entity_Id, $args);
 
             // Update the users details, this includes updating the ABOUT info and profile pictures,
             // We do this here as profile info may have changed on Facebook since the last login.
@@ -419,7 +440,7 @@ class User
 
             // Override the payload as we are logging in, we don't want a list of all friends.
             $response["message"] = "You were logged in successfully, friends may have been updated: " . $response["message"];
-            $response["payload"] = Array("entity" => $userExists);
+            $response["payload"] = Array("entity" => $userExists, "session" => $token);
 
             return $response;
         }
@@ -481,7 +502,7 @@ class User
             return Array('error' => '400', 'message' => "Whoops, there is already an account registered with the Facebook ID: ". $args['ent_fbid']);
 
         // Everything went well, create a session for this user:
-        Session::setSession($id, $args);
+        $token = Session::setSession($id, $args);
 
         // Add all of the friends this user has.
         if($args["ent_friend"] != "")
@@ -494,8 +515,15 @@ class User
         $data  = Array(':entity_id' => $id);
         Database::getInstance()->insert($query, $data);
 
+        // Set default setting values for the user
+        $query = "INSERT INTO setting(Entity_Id, Pri_CheckIn, Pri_Visability, Notif_Tag, Notif_Msg, Notif_New_Friend, Notif_Friend_Request, Notif_CheckIn_Activity)
+                  VALUES (:entityId, :a, :b, :c, :d, :e, :f, :g)";
+
+        $data  = Array(":entityId" => $id, ":a" => 1, ":b" => 3, ":c" => 1, ":d" => 1, ":e" => 1, ":f" => 1, ":g" => 1);
+        Database::getInstance()->insert($query, $data);
+
         if($id > 0)
-            return Array('error' => '200', 'message' => 'The user was created successfully.', 'payload' => Array('entity_id' => $id, 'entity_data' => $args));
+            return Array('error' => '200', 'message' => 'The user was created successfully.', 'payload' => Array('entity_id' => $id, 'entity_data' => $args, "session" => $token));
         else
             return Array('error' => '500', 'message' => 'There was an internal error when creating the user listed in the payload.  Please try again.', 'payload' => Array('entity_id' => $id, 'entity_data' => $args));
     }
