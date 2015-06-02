@@ -23,10 +23,66 @@ require_once "./app/core/http/api.push.server.php";
 
 class Checkin
 {
+    /*
+    |--------------------------------------------------------------------------
+    | Get Checkin
+    |--------------------------------------------------------------------------
+    |
+    | Returns a list of all checkins dependent on the users preferences.
+    | This function
+    |
+    | @param $args - An array containing all
+    |
+    */
+
+    public function getCheckins($args)
+    {
+        // Check if a valid payload was sent
+        if(empty($args["curr_lat"]) || empty($args["curr_long"]))
+            return Array("error" => "400", "message" => "Bad request, no latitude or longitude was sent");
+
+        // Check login credentials were sent
+        if(empty($args["session_token"]) || empty($args["deviceId"]))
+            return Array("error" => "401", "message" => "Unauthorised: No session token was provided in the payload.");
+
+        // Validate the session and ensure that the session was set, if not return a 401
+        $user = Session::validateSession($args["session_token"], $args["deviceId"]);
+        if($user["error"] != 200)
+            return Array("error" => "401", "message" => "You are not authorised to access this resource, please re-login to generate a new session token.");
+
+        // Get the preferences for this user, this can then be used to select checkins which are only relevant to this user.
+        $query = "SELECT
+                          last_checkin_lat                AS last_lat,
+                          last_checkin_long               AS last_long,
+                          Last_Checkin_Country            AS last_country,
+                          TIMESTAMPDIFF(YEAR, DOB, NOW()) AS age,
+                          Pref_Chk_Exp                    AS expiry,
+                          Pri_Visability                  AS visability,
+                          Pref_Facebook                   AS facebook,
+                          Pref_Kinekt                     AS kinekt,
+                          Pref_Everyone                   AS everyone,
+                          Pref_Sex                        AS sex,
+                          Pref_Lower_age                  AS lowerAge,
+                          Pref_Upper_Age                  AS upperAge
+
+                  FROM entity
+                  JOIN preferences
+                    ON preferences.Entity_Id = entity.Entity_Id
+                  JOIN setting
+                    ON setting.Entity_Id = entity.Entity_Id
+                  WHERE entity.Entity_id = :entityId";
+
+        $data = Array(":entityId" => $args["entityId"]);
+
+        $userPreferences = Database::getInstance()->fetch($query, $data);
+
+
+    }
+
 
     /*
     |--------------------------------------------------------------------------
-    | Checkin
+    | Create Checkin
     |--------------------------------------------------------------------------
     |
     | Creates a new checkin for the logged in user.  This method is secured
@@ -42,7 +98,7 @@ class Checkin
     |
     */
 
-    public static function checkin($args)
+    public static function createCheckin($args)
     {
         // Extract the data from the payload
         $image = $args["image"]["image"];
@@ -306,8 +362,9 @@ class Checkin
         {
             if($res["error"] == 200 || $res["error"] == 400)
             {
+                $people = self::getPeopleAtLocation($args["place_name"], $args["place_lat"], $args["place_long"]);
                 $res["message"] = "The Checkin was created successfully.";
-                $res["payload"] = Array("details" => $placeData, "tagged_pushes" => $taggedPushes, "friend_pushes" => $friendPushes);
+                $res["payload"] = Array("details" => $placeData, "tagged_pushes" => $taggedPushes, "friend_pushes" => $friendPushes, "people" => $people);
                 return $res;
             }
             else
@@ -315,6 +372,114 @@ class Checkin
         }
         else
             return Array("error" => "500", "message" => "Internal server error whilst creating this checkin.");
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Get People At Location
+    |--------------------------------------------------------------------------
+    |
+    | Returns a list of people who also checked in to a specific location.
+    | This will retrieve every user at that specific lat/long and then wil l
+    | provide enough information to be filtered on the front end.
+    |
+    | @param $place    - The name of the place that is to be returned
+    | @param $lat      - The latitude of the place to be returned
+    | @param $long     - The longitude of the place to be returned.
+    | @param $entityId - The id of the user who just made a checkin
+    |
+    | @return $array   - Returns an array of users and their relation to the
+    |                    current user.
+    |
+    */
+
+    private function getPeopleAtLocation($place, $lat, $long, $entityId)
+    {
+        // Prepare for the LIKE clause
+        $place = "%" . $place . "%";
+
+        $query = "
+            SELECT
+                entity.entity_id,
+                entity.first_name,
+                entity.last_name,
+                entity.profile_pic_url,
+                TIMESTAMPDIFF(MINUTE, entity.last_checkin_dt, :now) AS ago,
+                friends.category
+            FROM entity
+            JOIN checkins
+              ON checkins.entity_id = entity.entity_id
+            JOIN friends
+              ON entity.entity_id = friends.entity_id2 OR entity.entity_id = friends.entity_id1
+            WHERE entity_id IN
+            (
+                SELECT entity_id1 FROM friends WHERE entity_id2 = :entId
+                UNION ALL
+                SELECT entity_id2 FROM friends WHERE entity_id1 = :entId
+            )
+            AND checkins.Place_Name LIKE :place
+            AND checkins.Place_Lat  =    :lat
+            AND checkins.Place_Long =    :long
+
+
+        ";
+
+        $data = Array(
+            ":place" => $place,
+            ":lat"   => $lat,
+            ":long"  => $long,
+            ":entId" => $entityId
+        );
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delete Checkin
+    |--------------------------------------------------------------------------
+    |
+    | Deletes a Checkin from the database
+    |
+    | @param $args   - Array to specify which resource to delete
+    |
+    | @return $array - Returns the response object, detailing if the resource
+    |                  was deleted successfully or if anything went wrong.
+    |
+    */
+
+    public static function deleteCheckin($args)
+    {
+        if(empty($args["checkinId"]) || empty($args["session_token"]) || empty($args["deviceId"]))
+            return Array("error" => "401", "message" => "Bad request, you are not authorised to delete this resource.");
+
+        $user = Session::validateSession($args["session_token"], $args["deviceId"]);
+
+        // Check if the session was validated
+        if($user["error"] != 200)
+            return Array("error" => "401", "message" => "Bad request, you are not authorised to delete this resource.");
+        else
+        {
+            // Perform the DELETE on the session
+            $query = "DELETE FROM Checkins WHERE Chk_Id = :checkinId AND Entity_Id = :entityId";
+            $data  = Array();
+
+            $res   = Database::getInstance()->delete($query, $data);
+            if($res > 0)
+            {
+                // Delete from the tags table
+                $query = "DELETE FROM tags WHERE checkin_id = :checkinId";
+                $data  = Array();
+
+                $res = Database::getInstance()->delete($query, $data);
+                if($res > 0)
+                {
+                    return Array("error" => "203", "message" => "The checkin and its associated tagged users were deleted successfully.");
+                }
+            }
+            return Array("error" => "203", "message" => "The checkin was deleted successfully.");
+        }
+
+        return Array("error" => "500", "message" => "There was an error when deleting the resouce. Please ensure the object sent to the server is valid.");
     }
 
     /*

@@ -152,7 +152,7 @@ class Checkin
 
         // /api/v2/Checkin/ Posts the new checkin that the user has sent in the multipart body - this will only post checkin and not the image
         if(count($this->args) == 0 && $this->verb == "")
-            return \Handlers\Checkin::checkin($payload);
+            return \Handlers\Checkin::createCheckin($payload);
 
     }
 
