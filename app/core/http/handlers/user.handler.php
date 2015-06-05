@@ -132,7 +132,7 @@ class User
 
     public static function respondToFriendRequest($args)
     {
-        if($args["ent_sender_id"] == '' || $args["ent_response"] == '')
+        if($args["sender_id"] == '' || $args["response"] == '')
             return Array('error' => '400', 'message' => "Bad request, no credentials were sent in the request body.");
 
     }
@@ -153,10 +153,10 @@ class User
 
     public static function updateLocation($args)
     {
-        if(empty($args["ent_sess_token"]) || empty($args["ent_device_id"]))
+        if(empty($args["sess_token"]) || empty($args["device_id"]))
             return Array('error' => '401', 'message' => "Un-Authorised: The resource you're trying to update does not match your session token.");
 
-        $user = Session::validateSession($args["ent_sess_token"], $args["ent_device_id"]);
+        $user = Session::validateSession($args["sess_token"], $args["device_id"]);
 
         $query = "UPDATE entity SET last_checkin_lat = :lat, Last_CheckIn_Long = :lng WHERE entity_id = :entityId";
         $data  = Array(
@@ -266,8 +266,6 @@ class User
 
         $requests = $DB->fetchAll($query, $data);
         return $requests;
-
-        $query = "SELECT * FROM ";
     }
 
     /*
@@ -362,7 +360,7 @@ class User
     public static function updateProfile($userId, $data)
     {
         // Check for users under 18
-        if (time() - strtotime($data['ent_dob']) <= 18 * 31536000 || $data['ent_dob'] == null)
+        if (time() - strtotime($data['dob']) <= 18 * 31536000 || $data['dob'] == null)
             return Array('error' => '400', 'message' => 'Bad request, you must be 18 years or older.');
 
         // We know the user is valid, therefore update it with the new
@@ -377,14 +375,14 @@ class User
                          profile_pic_url = :profilePic
                   WHERE  entity_id       = :entId";
 
-        $data  = Array(":firstName"  => $data['ent_first_name'],
-                       ":lastName"   => $data['ent_last_name'],
-                       ":email"      => $data['ent_email'],
-                       ":sex"        => $data['ent_sex'],
-                       ":dob"        => $data['ent_dob'],
-                       ":images"     => $data['ent_images'],
+        $data  = Array(":firstName"  => $data['first_name'],
+                       ":lastName"   => $data['last_name'],
+                       ":email"      => $data['email'],
+                       ":sex"        => $data['sex'],
+                       ":dob"        => $data['dob'],
+                       ":images"     => $data['images'],
                        ":entId"      => $userId,
-                       ":profilePic" => $data['ent_pic_url']);
+                       ":profilePic" => $data['pic_url']);
 
         // Perform the update on the database
         $res = Database::getInstance()->update($query, $data);
@@ -399,7 +397,7 @@ class User
 
     private static function updateScore($entityId, $amount, $operator)
     {
-
+        $query = "UPDATE entity SET score = :"
     }
 
     /*
@@ -416,11 +414,11 @@ class User
     {
         // Ensure we have a valid object, if any of the major determinate factors are null then
         // echo a 400 back to the user
-        if($args == null || !isset($args['ent_fbid']) || $args['ent_fbid'] == '' || !isset($args['ent_dev_id']) || !isset($args['ent_push_token']))
+        if($args == null || !isset($args['fbid']) || $args['fbid'] == '' || !isset($args['dev_id']) || !isset($args['push_token']))
             return Array('error' => '400', 'message' => "Sorry, no data was passed to the server.  Please ensure the user object is sent via JSON in the HTTP body");
 
         // Check if the user already exists in the system, if they don't then sign them up to the system
-        $userExists = self::get($args['ent_fbid']);
+        $userExists = self::get($args['fbid']);
         if($userExists != false)
         {
             // Ensure we have a valid session
@@ -435,8 +433,8 @@ class User
 
             // Check if there are any mutual friends to add - we do that here instead of on sign up as every time
             // we log in to the app more of our friends may have signed up to the app through FB
-            if($args["ent_friend"] != "")
-                $response = self::addFriends($args['ent_friend'], '1', $userExists->Entity_Id);
+            if($args["friends"] != "")
+                $response = self::addFriends($args['friend'], '1', $userExists->Entity_Id);
 
             // Override the payload as we are logging in, we don't want a list of all friends.
             $response["message"] = "You were logged in successfully, friends may have been updated: " . $response["message"];
@@ -468,29 +466,29 @@ class User
     public static function signup($args)
     {
         // Check for users under 18
-        if (time() - strtotime($args['ent_dob']) <= 18 * 31536000 || $args['ent_dob'] == null)
+        if (time() - strtotime($args['dob']) <= 18 * 31536000 || $args['dob'] == null)
             return Array('error' => '400', 'message' => 'Bad request, you must be 18 years or older.');
 
         // Check if the user already exists
         $query = "SELECT fb_id FROM entity WHERE fb_id = :fbId";
-        $data  = Array(":fbId" => $args['ent_fbid']);
+        $data  = Array(":fbId" => $args['fbid']);
 
         // We know our user is old enough, insert the new user.
         $query = "INSERT IGNORE INTO entity(fb_id, first_name, last_name, email, profile_pic_url, sex, dob, about, create_dt, last_checkin_dt, image_urls, score)
                   VALUES(:fbId, :firstName, :lastName, :email, :profilePic, :sex, :dob, :about, :createdAt, :lastCheckin, :images, :score)";
 
         $data  = Array(
-            ':fbId'        => $args['ent_fbid'],
-            ':firstName'   => $args['ent_first_name'],
-            ':lastName'    => $args['ent_last_name'],
-            ':email'       => $args['ent_email'],
-            ':profilePic'  => $args['ent_pic_url'],
-            ':sex'         => $args['ent_sex'],
-            ':dob'         => $args['ent_dob'],
-            ':about'       => $args['ent_about'],
+            ':fbId'        => $args['fbid'],
+            ':firstName'   => $args['first_name'],
+            ':lastName'    => $args['last_name'],
+            ':email'       => $args['email'],
+            ':profilePic'  => $args['pic_url'],
+            ':sex'         => $args['sex'],
+            ':dob'         => $args['dob'],
+            ':about'       => $args['about'],
             ':createdAt'   => date('Y-m-d H:i:s'),
             ':lastCheckin' => date('Y-m-d H:i:s'),
-            ':images'      => $args['ent_images'],
+            ':images'      => $args['images'],
             ':score'       => 0
         );
 
@@ -499,14 +497,14 @@ class User
 
         // If the user exists, throw an exception.
         if($id == 0)
-            return Array('error' => '400', 'message' => "Whoops, there is already an account registered with the Facebook ID: ". $args['ent_fbid']);
+            return Array('error' => '400', 'message' => "Whoops, there is already an account registered with the Facebook ID: ". $args['fbid']);
 
         // Everything went well, create a session for this user:
         $token = Session::setSession($id, $args);
 
         // Add all of the friends this user has.
-        if($args["ent_friend"] != "")
-            self::addFriends($args["ent_friend"], 1, $id);
+        if($args["friends"] != "")
+            self::addFriends($args["friends"], 1, $id);
 
         // Insert the user into the preferences table
         $query = "INSERT INTO preferences(entity_id)
