@@ -42,9 +42,9 @@ class Session
         // Create a new session token object to handle our session
         $token     = new \ManageToken();
 
-        $pushToken = $args["ent_push_token"];
-        $devId     = $args["ent_dev_id"];
-        $devType   = $args["ent_device_type"];   // 1 = APPLE, 0 = ANDROID
+        $pushToken = $args["push_token"];
+        $devId     = $args["dev_id"];
+        $devType   = $args["device_type"];   // 1 = APPLE, 0 = ANDROID
 
         // Check if the user already has a session
         $query = "SELECT sid, token, expiry_gmt

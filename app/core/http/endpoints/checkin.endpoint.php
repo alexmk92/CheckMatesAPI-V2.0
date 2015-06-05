@@ -121,6 +121,22 @@ class Checkin
         {
             return \Handlers\Checkin::getUsersAtCheckin($this->args[0]);
         }
+
+        //*************************************************************************************//
+        //                        TODO: SECTION FOR UNIMPLEMENTED
+        //*************************************************************************************//
+
+        // /api/v2/Checkin/user-maps/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(GETUSERMAPS)
+        else if(count($this->args) == 1 && $this->verb == 'users-maps')
+        {
+            return \Handlers\Checkin::getUserMaps($this->args[0]);
+        }
+        // /api/v2/Checkin/profile-maps/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(GETPROFILEMAPS)
+        else if(count($this->args) == 1 && $this->verb == 'profile-maps')
+        {
+            return \Handlers\Checkin::getProfileMaps($this->args[0]);
+        }
+
         // throw an exception if no handler found
         else
         {

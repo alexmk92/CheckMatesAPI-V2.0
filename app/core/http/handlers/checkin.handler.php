@@ -362,7 +362,7 @@ class Checkin
         {
             if($res["error"] == 200 || $res["error"] == 400)
             {
-                $people = self::getPeopleAtLocation($args["place_name"], $args["place_lat"], $args["place_long"]);
+                $people = self::getPeopleAtLocation($args["place_name"], $args["place_lat"], $args["place_long"], $args["entity_id"]);
                 $res["message"] = "The Checkin was created successfully.";
                 $res["payload"] = Array("details" => $placeData, "tagged_pushes" => $taggedPushes, "friend_pushes" => $friendPushes, "people" => $people);
                 return $res;
@@ -525,5 +525,34 @@ class Checkin
         // Final return type, should be 204, if 0 or array then the upload failed and we return an error back to the client.
         return Array("error" => $flag, "imageUrl" => $imageURL);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | GET USER MAPS
+    |--------------------------------------------------------------------------
+    |
+    | TODO: ADD DESCRIPTION
+    |
+    */
+
+    public static function getUserMaps($args)
+    {
+        return Array("error" => "501", "message" => "Not currently implemented.");
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | GET PROFILE MAPS
+    |--------------------------------------------------------------------------
+    |
+    | TODO: ADD DESCRIPTION
+    |
+    */
+
+    public static function getProfileMaps($args)
+    {
+        return Array("error" => "501", "message" => "Not currently implemented.");
+    }
+
 
 }

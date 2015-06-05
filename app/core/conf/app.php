@@ -29,6 +29,7 @@ return
     'handlers' => [
         'User'     => 'user.handler.php',
         'Key'      => 'key.endpoint.php',
+        'Friend'   => 'friend.handler.php',
         'Message'  => 'message.endpoint.php',
         'Checkin'  => 'checkin.endpoint.php'
     ],

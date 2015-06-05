@@ -115,7 +115,23 @@ class CheckmatesAPI extends API
 
     protected function Message() {
         require "./app/core/http/endpoints/message.endpoint.php";
+        $messageHandler = new Endpoints\Message();
+        return $messageHandler->_handleRequest();
+    }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Endpoint: Friend
+    |--------------------------------------------------------------------------
+    |
+    | Handle the request in a new Friend endpoint.
+    |
+    */
+
+    protected function Friend() {
+        require "./app/core/http/endpoints/friend.endpoint.php";
+        $friendsHandler = new Endpoints\Friend($this);
+        return $friendsHandler->_handleRequest();
     }
 
     /*

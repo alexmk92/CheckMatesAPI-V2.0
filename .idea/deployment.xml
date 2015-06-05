@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="kinektaws.server">
+  <component name="PublishConfigData" autoUpload="Always" serverName="AlexSims.me">
     <serverData>
-      <paths name="alexsims.me">
+      <paths name="AlexSims.me">
         <serverdata>
           <mappings>
             <mapping deploy="/" local="$PROJECT_DIR$" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="kinektaws.server">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/v2.0" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
@@ -20,4 +13,3 @@
     <option name="myAutoUpload" value="ALWAYS" />
   </component>
 </project>
-
