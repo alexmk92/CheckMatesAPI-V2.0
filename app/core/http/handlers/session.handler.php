@@ -43,7 +43,7 @@ class Session
         $token     = new \ManageToken();
 
         $pushToken = $args["push_token"];
-        $devId     = $args["dev_id"];
+        $devId     = $args["device_id"];
         $devType   = $args["device_type"];   // 1 = APPLE, 0 = ANDROID
 
         // Check if the user already has a session
@@ -88,9 +88,9 @@ class Session
                   FROM user_sessions us, entity ent
                   WHERE us.oid = ent.Entity_Id
                   AND us.token = :token
-                  AND us.device = :deviceId";
+                  AND us.device = :device_id";
 
-        $data  = Array(":token" => $token, ":deviceId" => $deviceId);
+        $data  = Array(":token" => $token, ":device_id" => $deviceId);
 
         // Check that we receive session object, otherwise this request is unauthorised
         $res = Database::getInstance()->fetchAll($query, $data);

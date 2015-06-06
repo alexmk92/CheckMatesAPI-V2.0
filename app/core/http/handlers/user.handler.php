@@ -89,10 +89,10 @@ class User
 
     public static function updateLocation($args)
     {
-        if(empty($args["sess_token"]) || empty($args["device_id"]))
+        if(empty($args["session_token"]) || empty($args["device_id"]))
             return Array('error' => '401', 'message' => "Un-Authorised: The resource you're trying to update does not match your session token.");
 
-        $user = Session::validateSession($args["sess_token"], $args["device_id"]);
+        $user = Session::validateSession($args["session_token"], $args["device_id"]);
 
         $query = "UPDATE entity SET last_checkin_lat = :lat, Last_CheckIn_Long = :lng WHERE entity_id = :entityId";
         $data  = Array(
@@ -324,7 +324,7 @@ class User
     {
         // Ensure we have a valid object, if any of the major determinate factors are null then
         // echo a 400 back to the user
-        if($args == null || !isset($args['fbid']) || $args['fbid'] == '' || !isset($args['dev_id']) || !isset($args['push_token']))
+        if($args == null || !isset($args['fbid']) || $args['fbid'] == '' || !isset($args['device_id']) || !isset($args['push_token']))
             return Array('error' => '400', 'message' => "Sorry, no data was passed to the server.  Please ensure the user object is sent via JSON in the HTTP body");
 
         // Check if the user already exists in the system, if they don't then sign them up to the system

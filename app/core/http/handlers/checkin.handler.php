@@ -42,11 +42,11 @@ class Checkin
             return Array("error" => "400", "message" => "Bad request, no latitude or longitude was sent");
 
         // Check login credentials were sent
-        if(empty($args["session_token"]) || empty($args["deviceId"]))
+        if(empty($args["session_token"]) || empty($args["device_id"]))
             return Array("error" => "401", "message" => "Unauthorised: No session token was provided in the payload.");
 
         // Validate the session and ensure that the session was set, if not return a 401
-        $user = Session::validateSession($args["session_token"], $args["deviceId"]);
+        $user = Session::validateSession($args["session_token"], $args["device_id"]);
         if($user["error"] != 200)
             return Array("error" => "401", "message" => "You are not authorised to access this resource, please re-login to generate a new session token.");
 
@@ -119,7 +119,7 @@ class Checkin
         $checkinImageURL = "";
 
         // Ensure a valid session token has been provided
-        $token = Session::validateSession($args["sess_token"], $args["dev_id"]);
+        $token = Session::validateSession($args["session_token"], $args["device_id"]);
 
         // If there was an error, then return the bad response object
         if(array_key_exists("error", $token))
@@ -449,10 +449,10 @@ class Checkin
 
     public static function deleteCheckin($args)
     {
-        if(empty($args["checkinId"]) || empty($args["session_token"]) || empty($args["deviceId"]))
+        if(empty($args["checkinId"]) || empty($args["session_token"]) || empty($args["device_id"]))
             return Array("error" => "401", "message" => "Bad request, you are not authorised to delete this resource.");
 
-        $user = Session::validateSession($args["session_token"], $args["deviceId"]);
+        $user = Session::validateSession($args["session_token"], $args["device_id"]);
 
         // Check if the session was validated
         if($user["error"] != 200)

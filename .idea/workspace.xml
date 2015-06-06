@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="a98be491-8ca3-4559-8d21-4a3b571dd347" name="Default" comment="" />
+    <list default="true" id="a98be491-8ca3-4559-8d21-4a3b571dd347" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/deployment.xml" afterPath="$PROJECT_DIR$/.idea/deployment.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+    </list>
     <ignored path="Checkmates V2 API.iws" />
     <ignored path=".idea/workspace.xml" />
     <ignored path=".idea/dataSources.local.xml" />
@@ -102,7 +105,7 @@
       <file leaf-file-name="friend.endpoint.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/core/http/endpoints/friend.endpoint.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-9.666667" vertical-offset="2440" max-vertical-offset="3549">
+            <state vertical-scroll-proportion="0.0" vertical-offset="2600" max-vertical-offset="3380">
               <caret line="130" column="5" selection-start-line="130" selection-start-column="5" selection-end-line="130" selection-end-column="5" />
               <folding />
             </state>
@@ -112,14 +115,9 @@
       <file leaf-file-name="friend.handler.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/core/http/handlers/friend.handler.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-14.833333" vertical-offset="2348" max-vertical-offset="3087">
+            <state vertical-scroll-proportion="0.0" vertical-offset="2660" max-vertical-offset="2940">
               <caret line="133" column="6" selection-start-line="133" selection-start-column="6" selection-end-line="133" selection-end-column="6" />
-              <folding>
-                <marker date="1433542072696" expanded="true" signature="1740:2361" placeholder="SELECT entit..entity..." />
-                <marker date="1433542072696" expanded="true" signature="2072:2150" placeholder="SELECT entit..friends..." />
-                <marker date="1433542072696" expanded="true" signature="2201:2279" placeholder="SELECT entit..friends..." />
-                <marker date="1433542072696" expanded="true" signature="3837:3898" placeholder="SELECT * FRO..friend_requests..." />
-              </folding>
+              <folding />
             </state>
           </provider>
         </entry>
@@ -127,8 +125,8 @@
       <file leaf-file-name="user.endpoint.php" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/core/http/endpoints/user.endpoint.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.5737483" vertical-offset="2411" max-vertical-offset="6426">
-              <caret line="135" column="9" selection-start-line="135" selection-start-column="9" selection-end-line="135" selection-end-column="9" />
+            <state vertical-scroll-proportion="2.1029413" vertical-offset="1101" max-vertical-offset="6120">
+              <caret line="148" column="9" selection-start-line="148" selection-start-column="9" selection-end-line="148" selection-end-column="9" />
               <folding />
             </state>
           </provider>
@@ -137,22 +135,9 @@
       <file leaf-file-name="checkin.handler.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/core/http/handlers/checkin.handler.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-359.23334" vertical-offset="374" max-vertical-offset="11823">
+            <state vertical-scroll-proportion="0.0" vertical-offset="10620" max-vertical-offset="11260">
               <caret line="531" column="38" selection-start-line="531" selection-start-column="38" selection-end-line="531" selection-end-column="38" />
-              <folding>
-                <marker date="1433537127989" expanded="true" signature="2101:3225" placeholder="SELECT last_..entity..." />
-                <marker date="1433537127989" expanded="true" signature="6817:6881" placeholder="UPDATE entit..." />
-                <marker date="1433537127989" expanded="true" signature="7086:8085" placeholder="INSERT INTO ..." />
-                <marker date="1433537127989" expanded="true" signature="8975:9458" placeholder="INSERT INTO ..." />
-                <marker date="1433537127989" expanded="true" signature="10659:10728" placeholder="INSERT INTO ..." />
-                <marker date="1433537127989" expanded="true" signature="11050:11123" placeholder="SELECT entit..setting..." />
-                <marker date="1433537127989" expanded="true" signature="13148:13221" placeholder="SELECT entit..setting..." />
-                <marker date="1433537127989" expanded="true" signature="16535:17391" placeholder="SELECT entit..entity..." />
-                <marker date="1433537127989" expanded="true" signature="17081:17137" placeholder="SELECT entit..friends..." />
-                <marker date="1433537127989" expanded="true" signature="17180:17236" placeholder="SELECT entit..friends..." />
-                <marker date="1433537127989" expanded="true" signature="18711:18783" placeholder="DELETE FROM ..." />
-                <marker date="1433537127989" expanded="true" signature="18997:19043" placeholder="DELETE FROM ..." />
-              </folding>
+              <folding />
             </state>
           </provider>
         </entry>
@@ -160,24 +145,9 @@
       <file leaf-file-name="user.handler.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/core/http/handlers/user.handler.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-35.833332" vertical-offset="8207" max-vertical-offset="14049">
+            <state vertical-scroll-proportion="0.0" vertical-offset="8840" max-vertical-offset="13380">
               <caret line="442" column="6" selection-start-line="442" selection-start-column="6" selection-end-line="442" selection-end-column="6" />
-              <folding>
-                <marker date="1433540888514" expanded="true" signature="1601:1650" placeholder="SELECT * FRO..entity..." />
-                <marker date="1433540888514" expanded="true" signature="3248:3343" placeholder="UPDATE entit..." />
-                <marker date="1433540888514" expanded="true" signature="5266:5315" placeholder="SELECT entit..entity..." />
-                <marker date="1433540888514" expanded="true" signature="5792:6303" placeholder="INSERT INTO ..." />
-                <marker date="1433540888514" expanded="true" signature="5872:6303" placeholder="SELECT :enti..DUAL..." />
-                <marker date="1433540888514" expanded="true" signature="6046:6241" placeholder="SELECT fid F..friends..." />
-                <marker date="1433540888514" expanded="true" signature="7823:7897" placeholder="SELECT * FRO..favorites..." />
-                <marker date="1433540888514" expanded="true" signature="8366:8386" placeholder="SELECT * FRO..entity..." />
-                <marker date="1433540888514" expanded="true" signature="9346:9417" placeholder="SELECT * FRO..entity..." />
-                <marker date="1433540888514" expanded="true" signature="10696:11124" placeholder="UPDATE entit..." />
-                <marker date="1433540888514" expanded="true" signature="15429:15473" placeholder="SELECT fb_id..entity..." />
-                <marker date="1433540888514" expanded="true" signature="15609:15891" placeholder="INSERT IGNOR..." />
-                <marker date="1433540888514" expanded="true" signature="17184:17255" placeholder="INSERT INTO ..." />
-                <marker date="1433540888514" expanded="true" signature="17430:17640" placeholder="INSERT INTO ..." />
-              </folding>
+              <folding />
             </state>
           </provider>
         </entry>
@@ -185,7 +155,7 @@
       <file leaf-file-name="message.handler.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/core/http/handlers/message.handler.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-9.666667" vertical-offset="1390" max-vertical-offset="2667">
+            <state vertical-scroll-proportion="0.0" vertical-offset="1600" max-vertical-offset="2540">
               <caret line="80" column="0" selection-start-line="80" selection-start-column="0" selection-end-line="92" selection-end-column="5" />
               <folding />
             </state>
@@ -195,7 +165,7 @@
       <file leaf-file-name="conf.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/core/conf/conf.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="14.233334" vertical-offset="427" max-vertical-offset="1176">
+            <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1120">
               <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
               <folding />
             </state>
@@ -205,7 +175,7 @@
       <file leaf-file-name="app.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/core/conf/app.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-13.3" vertical-offset="252" max-vertical-offset="1323">
+            <state vertical-scroll-proportion="0.0" vertical-offset="620" max-vertical-offset="1260">
               <caret line="31" column="37" selection-start-line="31" selection-start-column="37" selection-end-line="31" selection-end-column="37" />
               <folding />
             </state>
@@ -215,7 +185,7 @@
       <file leaf-file-name="message.endpoint.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/core/http/endpoints/message.endpoint.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-5.4666667" vertical-offset="1726" max-vertical-offset="3612">
+            <state vertical-scroll-proportion="0.0" vertical-offset="1800" max-vertical-offset="3440">
               <caret line="90" column="0" selection-start-line="90" selection-start-column="0" selection-end-line="98" selection-end-column="9" />
               <folding>
                 <element signature="e#6#88#0#PHP" expanded="true" />
@@ -227,7 +197,7 @@
       <file leaf-file-name="checkin.endpoint.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/core/http/endpoints/checkin.endpoint.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-46.333332" vertical-offset="752" max-vertical-offset="4074">
+            <state vertical-scroll-proportion="0.0" vertical-offset="2040" max-vertical-offset="3880">
               <caret line="102" column="5" selection-start-line="102" selection-start-column="5" selection-end-line="102" selection-end-column="5" />
               <folding />
             </state>
@@ -244,36 +214,12 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="IdeDocumentHistory">
-    <option name="CHANGED_PATHS">
-      <list>
-        <option value="$PROJECT_DIR$/.htaccess" />
-        <option value="$PROJECT_DIR$/app/core/http/endpoints/friends.endpoint.php" />
-        <option value="$PROJECT_DIR$/app/core/http/api.abstract.php" />
-        <option value="$PROJECT_DIR$/index.php" />
-        <option value="$PROJECT_DIR$/app/core/http/handlers/session.handler.php" />
-        <option value="$PROJECT_DIR$/app/core/http/api.implementation.php" />
-        <option value="$PROJECT_DIR$/app/core/conf/app.php" />
-        <option value="$PROJECT_DIR$/app/core/http/handlers/checkin.handler.php" />
-        <option value="$PROJECT_DIR$/app/core/http/endpoints/checkin.endpoint.php" />
-        <option value="$PROJECT_DIR$/app/core/http/handlers/user.handler.php" />
-        <option value="$PROJECT_DIR$/app/core/http/handlers/message.handler.php" />
-        <option value="$PROJECT_DIR$/app/core/http/endpoints/message.endpoint.php" />
-        <option value="$PROJECT_DIR$/app/core/http/handlers/friend.handler.php" />
-        <option value="$PROJECT_DIR$/app/core/http/endpoints/friend.endpoint.php" />
-        <option value="$PROJECT_DIR$/app/core/http/endpoints/user.endpoint.php" />
-      </list>
-    </option>
-  </component>
-  <component name="JsGulpfileManager">
-    <detection-done>true</detection-done>
-  </component>
   <component name="PhpWorkspaceProjectConfiguration" backward_compatibility_performed="true" />
   <component name="ProjectFrameBounds">
-    <option name="x" value="-8" />
-    <option name="y" value="-8" />
-    <option name="width" value="1840" />
-    <option name="height" value="1002" />
+    <option name="x" value="112" />
+    <option name="y" value="120" />
+    <option name="width" value="1947" />
+    <option name="height" value="1174" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
     <OptionsSetting value="true" id="Add" />
@@ -315,7 +261,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="CheckMatesAPI-V2.0" />
+              <option name="myItemId" value="Checkmates V2 API" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -325,7 +271,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="CheckMatesAPI-V2.0" />
+              <option name="myItemId" value="Checkmates V2 API" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
@@ -339,29 +285,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="CheckMatesAPI-V2.0" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="app" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="core" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="models" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
               <option name="myItemId" value="Checkmates V2 API" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="CheckMatesAPI-V2.0" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
@@ -370,84 +294,6 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="core" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="http" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Checkmates V2 API" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="CheckMatesAPI-V2.0" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="app" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="core" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="http" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="handlers" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Checkmates V2 API" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="CheckMatesAPI-V2.0" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="app" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="core" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="http" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="endpoints" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Checkmates V2 API" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="CheckMatesAPI-V2.0" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="app" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="core" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="conf" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -505,29 +351,28 @@
     <configuration default="true" type="PhpLocalRunConfigurationType" factoryName="PHP Console">
       <method />
     </configuration>
+    <configuration default="true" type="JavascriptDebugType" factoryName="JavaScript Debug">
+      <method />
+    </configuration>
     <configuration default="true" type="com.intellij.database.run.ConsoleRunConfigurationType" factoryName="Query Language Console">
       <option name="VM_PARAMETERS" value="" />
       <option name="USER_CFG_CLASS" />
       <option name="CONTEXT_PROVIDER" />
       <method />
     </configuration>
-    <configuration default="true" type="JavascriptDebugType" factoryName="JavaScript Debug">
-      <method />
-    </configuration>
     <configuration default="true" type="PhpBehatConfigurationType" factoryName="Behat">
       <BehatRunner />
-      <method />
-    </configuration>
-    <configuration default="true" type="PhpUnitRemoteRunConfigurationType" factoryName="PHPUnit on Server" server_id="cf1ad12d-7dc7-42d2-9b73-055f7938acc4" server_name="alexsims.me">
       <method />
     </configuration>
     <configuration default="true" type="js.build_tools.gulp" factoryName="Gulp.js">
       <node-options />
       <gulpfile />
       <tasks />
-      <arguments />
-      <pass-parent-envs>true</pass-parent-envs>
+      <pass-parent-env-vars>false</pass-parent-env-vars>
       <envs />
+      <method />
+    </configuration>
+    <configuration default="true" type="PhpUnitRemoteRunConfigurationType" factoryName="PHPUnit on Server" server_id="cf1ad12d-7dc7-42d2-9b73-055f7938acc4" server_name="alexsims.me">
       <method />
     </configuration>
     <list size="0" />
@@ -567,30 +412,30 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="1840" height="1002" extended-state="6" />
-    <editor active="true" />
+    <frame x="112" y="120" width="1947" height="1174" extended-state="0" />
+    <editor active="false" />
     <layout>
-      <window_info id="File Transfer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.093959734" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32885906" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.117694154" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.18969299" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.18366228" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.09731544" sideWeight="0.5" order="9" side_tool="true" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3298639" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.09870849" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.13450761" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.18969299" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.15734649" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.17322835" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.15013124" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.09731544" sideWeight="0.5" order="9" side_tool="true" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3298639" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="File Transfer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.093959734" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3298639" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3298639" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
   <component name="Vcs.Log.UiProperties">
@@ -616,11 +461,18 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/app/core/http/endpoints/checkin.endpoint.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="2040" max-vertical-offset="3880">
+          <caret line="102" column="5" selection-start-line="102" selection-start-column="5" selection-end-line="102" selection-end-column="5" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/app/core/conf/database.php">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1428">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -628,20 +480,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="7245" max-vertical-offset="11214">
           <caret line="54" column="12" selection-start-line="54" selection-start-column="12" selection-end-line="54" selection-end-column="12" />
-          <folding>
-            <marker date="1433537127989" expanded="true" signature="2101:3225" placeholder="SELECT last_..entity..." />
-            <marker date="1433537127989" expanded="true" signature="6817:6881" placeholder="UPDATE entit..." />
-            <marker date="1433537127989" expanded="true" signature="7086:8085" placeholder="INSERT INTO ..." />
-            <marker date="1433537127989" expanded="true" signature="8975:9458" placeholder="INSERT INTO ..." />
-            <marker date="1433537127989" expanded="true" signature="10659:10728" placeholder="INSERT INTO ..." />
-            <marker date="1433537127989" expanded="true" signature="11050:11123" placeholder="SELECT entit..setting..." />
-            <marker date="1433537127989" expanded="true" signature="13148:13221" placeholder="SELECT entit..setting..." />
-            <marker date="1433537127989" expanded="true" signature="16535:17391" placeholder="SELECT entit..entity..." />
-            <marker date="1433537127989" expanded="true" signature="17081:17137" placeholder="SELECT entit..friends..." />
-            <marker date="1433537127989" expanded="true" signature="17180:17236" placeholder="SELECT entit..friends..." />
-            <marker date="1433537127989" expanded="true" signature="18711:18783" placeholder="DELETE FROM ..." />
-            <marker date="1433537127989" expanded="true" signature="18997:19043" placeholder="DELETE FROM ..." />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -665,7 +504,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1008">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -673,10 +511,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="567" max-vertical-offset="3906">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <marker date="1433529064811" expanded="true" signature="-1:-1" placeholder="SELECT sid, ..user_sessions..." />
-            <marker date="1433529064811" expanded="true" signature="-1:-1" placeholder="SELECT us.oi..user_sessions..." />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -692,7 +526,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="3524" max-vertical-offset="4410">
           <caret line="173" column="0" selection-start-line="173" selection-start-column="0" selection-end-line="173" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -708,22 +541,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="5166" max-vertical-offset="11172">
           <caret line="259" column="43" selection-start-line="259" selection-start-column="43" selection-end-line="259" selection-end-column="43" />
-          <folding>
-            <marker date="1433540888514" expanded="true" signature="1601:1650" placeholder="SELECT * FRO..entity..." />
-            <marker date="1433540888514" expanded="true" signature="3248:3343" placeholder="UPDATE entit..." />
-            <marker date="1433540888514" expanded="true" signature="5266:5315" placeholder="SELECT entit..entity..." />
-            <marker date="1433540888514" expanded="true" signature="5792:6303" placeholder="INSERT INTO ..." />
-            <marker date="1433540888514" expanded="true" signature="5872:6303" placeholder="SELECT :enti..DUAL..." />
-            <marker date="1433540888514" expanded="true" signature="6046:6241" placeholder="SELECT fid F..friends..." />
-            <marker date="1433540888514" expanded="true" signature="7823:7897" placeholder="SELECT * FRO..favorites..." />
-            <marker date="1433540888514" expanded="true" signature="8366:8386" placeholder="SELECT * FRO..entity..." />
-            <marker date="1433540888514" expanded="true" signature="9346:9417" placeholder="SELECT * FRO..entity..." />
-            <marker date="1433540888514" expanded="true" signature="10696:11124" placeholder="UPDATE entit..." />
-            <marker date="1433540888514" expanded="true" signature="15429:15473" placeholder="SELECT fb_id..entity..." />
-            <marker date="1433540888514" expanded="true" signature="15609:15891" placeholder="INSERT IGNOR..." />
-            <marker date="1433540888514" expanded="true" signature="17184:17255" placeholder="INSERT INTO ..." />
-            <marker date="1433540888514" expanded="true" signature="17430:17640" placeholder="INSERT INTO ..." />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -731,7 +549,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1428">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -755,7 +572,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1008">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -771,10 +587,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="567" max-vertical-offset="3906">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <marker date="1433529064811" expanded="true" signature="-1:-1" placeholder="SELECT sid, ..user_sessions..." />
-            <marker date="1433529064811" expanded="true" signature="-1:-1" placeholder="SELECT us.oi..user_sessions..." />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -790,7 +602,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="3234" max-vertical-offset="4410">
           <caret line="154" column="5" selection-start-line="154" selection-start-column="5" selection-end-line="154" selection-end-column="5" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -798,12 +609,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="8631">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <marker date="1433505442956" expanded="true" signature="-1:-1" placeholder="SELECT sid F..user_sessions..." />
-            <marker date="1433505442956" expanded="true" signature="-1:-1" placeholder="DELETE FROM ..." />
-            <marker date="1433505442956" expanded="true" signature="-1:-1" placeholder="UPDATE user_..." />
-            <marker date="1433505442956" expanded="true" signature="-1:-1" placeholder="INSERT INTO ..." />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -811,7 +617,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="168" max-vertical-offset="294">
           <caret line="8" column="1" selection-start-line="8" selection-start-column="1" selection-end-line="8" selection-end-column="1" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -819,9 +624,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="546">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <marker date="1433443216942" expanded="true" signature="-1:-1" placeholder="SELECT name ..dev_type..." />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -829,20 +632,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="1134" max-vertical-offset="11214">
           <caret line="54" column="12" selection-start-line="54" selection-start-column="12" selection-end-line="54" selection-end-column="12" />
-          <folding>
-            <marker date="1433537127989" expanded="true" signature="2101:3225" placeholder="SELECT last_..entity..." />
-            <marker date="1433537127989" expanded="true" signature="6817:6881" placeholder="UPDATE entit..." />
-            <marker date="1433537127989" expanded="true" signature="7086:8085" placeholder="INSERT INTO ..." />
-            <marker date="1433537127989" expanded="true" signature="8975:9458" placeholder="INSERT INTO ..." />
-            <marker date="1433537127989" expanded="true" signature="10659:10728" placeholder="INSERT INTO ..." />
-            <marker date="1433537127989" expanded="true" signature="11050:11123" placeholder="SELECT entit..setting..." />
-            <marker date="1433537127989" expanded="true" signature="13148:13221" placeholder="SELECT entit..setting..." />
-            <marker date="1433537127989" expanded="true" signature="16535:17391" placeholder="SELECT entit..entity..." />
-            <marker date="1433537127989" expanded="true" signature="17081:17137" placeholder="SELECT entit..friends..." />
-            <marker date="1433537127989" expanded="true" signature="17180:17236" placeholder="SELECT entit..friends..." />
-            <marker date="1433537127989" expanded="true" signature="18711:18783" placeholder="DELETE FROM ..." />
-            <marker date="1433537127989" expanded="true" signature="18997:19043" placeholder="DELETE FROM ..." />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -858,22 +648,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="11235">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <marker date="1433540888514" expanded="true" signature="1601:1650" placeholder="SELECT * FRO..entity..." />
-            <marker date="1433540888514" expanded="true" signature="3248:3343" placeholder="UPDATE entit..." />
-            <marker date="1433540888514" expanded="true" signature="5266:5315" placeholder="SELECT entit..entity..." />
-            <marker date="1433540888514" expanded="true" signature="5792:6303" placeholder="INSERT INTO ..." />
-            <marker date="1433540888514" expanded="true" signature="5872:6303" placeholder="SELECT :enti..DUAL..." />
-            <marker date="1433540888514" expanded="true" signature="6046:6241" placeholder="SELECT fid F..friends..." />
-            <marker date="1433540888514" expanded="true" signature="7823:7897" placeholder="SELECT * FRO..favorites..." />
-            <marker date="1433540888514" expanded="true" signature="8366:8386" placeholder="SELECT * FRO..entity..." />
-            <marker date="1433540888514" expanded="true" signature="9346:9417" placeholder="SELECT * FRO..entity..." />
-            <marker date="1433540888514" expanded="true" signature="10696:11124" placeholder="UPDATE entit..." />
-            <marker date="1433540888514" expanded="true" signature="15429:15473" placeholder="SELECT fb_id..entity..." />
-            <marker date="1433540888514" expanded="true" signature="15609:15891" placeholder="INSERT IGNOR..." />
-            <marker date="1433540888514" expanded="true" signature="17184:17255" placeholder="INSERT INTO ..." />
-            <marker date="1433540888514" expanded="true" signature="17430:17640" placeholder="INSERT INTO ..." />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -917,7 +692,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1428">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -925,7 +699,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1008">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -933,7 +706,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="3524" max-vertical-offset="4410">
           <caret line="183" column="66" selection-start-line="183" selection-start-column="66" selection-end-line="183" selection-end-column="66" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -941,9 +713,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1221">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <marker date="1433443216942" expanded="true" signature="-1:-1" placeholder="SELECT name ..dev_type..." />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -967,7 +737,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1680">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
       <provider editor-type-id="com.intellij.database.editor.CsvTableFileEditorProvider">
@@ -978,7 +747,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-3.5" vertical-offset="0" max-vertical-offset="294">
           <caret line="5" column="1" selection-start-line="5" selection-start-column="1" selection-end-line="5" selection-end-column="1" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -986,12 +754,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-121.1" vertical-offset="0" max-vertical-offset="8631">
           <caret line="176" column="6" selection-start-line="176" selection-start-column="6" selection-end-line="176" selection-end-column="6" />
-          <folding>
-            <marker date="1433505442956" expanded="true" signature="-1:-1" placeholder="SELECT sid F..user_sessions..." />
-            <marker date="1433505442956" expanded="true" signature="-1:-1" placeholder="DELETE FROM ..." />
-            <marker date="1433505442956" expanded="true" signature="-1:-1" placeholder="UPDATE user_..." />
-            <marker date="1433505442956" expanded="true" signature="-1:-1" placeholder="INSERT INTO ..." />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -999,11 +762,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-77.7" vertical-offset="63" max-vertical-offset="4221">
           <caret line="114" column="41" selection-start-line="114" selection-start-column="41" selection-end-line="114" selection-end-column="41" />
-          <folding>
-            <marker date="1433443216940" expanded="true" signature="-1:-1" placeholder="DELETE FROM ..." />
-            <marker date="1433443216940" expanded="true" signature="-1:-1" placeholder="INSERT INTO ..." />
-            <marker date="1433443216940" expanded="true" signature="-1:-1" placeholder="SELECT DISTI..user_sessions..." />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -1019,10 +778,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-14.0" vertical-offset="0" max-vertical-offset="3906">
           <caret line="20" column="0" selection-start-line="20" selection-start-column="0" selection-end-line="20" selection-end-column="0" />
-          <folding>
-            <marker date="1433529064811" expanded="true" signature="-1:-1" placeholder="SELECT sid, ..user_sessions..." />
-            <marker date="1433529064811" expanded="true" signature="-1:-1" placeholder="SELECT us.oi..user_sessions..." />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1036,7 +791,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/core/conf/conf.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="14.233334" vertical-offset="427" max-vertical-offset="1176">
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1120">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
         </state>
@@ -1044,7 +799,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/core/conf/app.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-13.3" vertical-offset="252" max-vertical-offset="1323">
+        <state vertical-scroll-proportion="0.0" vertical-offset="620" max-vertical-offset="1260">
           <caret line="31" column="37" selection-start-line="31" selection-start-column="37" selection-end-line="31" selection-end-column="37" />
           <folding />
         </state>
@@ -1052,28 +807,15 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/core/http/handlers/checkin.handler.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-359.23334" vertical-offset="374" max-vertical-offset="11823">
+        <state vertical-scroll-proportion="0.0" vertical-offset="10620" max-vertical-offset="11260">
           <caret line="531" column="38" selection-start-line="531" selection-start-column="38" selection-end-line="531" selection-end-column="38" />
-          <folding>
-            <marker date="1433537127989" expanded="true" signature="2101:3225" placeholder="SELECT last_..entity..." />
-            <marker date="1433537127989" expanded="true" signature="6817:6881" placeholder="UPDATE entit..." />
-            <marker date="1433537127989" expanded="true" signature="7086:8085" placeholder="INSERT INTO ..." />
-            <marker date="1433537127989" expanded="true" signature="8975:9458" placeholder="INSERT INTO ..." />
-            <marker date="1433537127989" expanded="true" signature="10659:10728" placeholder="INSERT INTO ..." />
-            <marker date="1433537127989" expanded="true" signature="11050:11123" placeholder="SELECT entit..setting..." />
-            <marker date="1433537127989" expanded="true" signature="13148:13221" placeholder="SELECT entit..setting..." />
-            <marker date="1433537127989" expanded="true" signature="16535:17391" placeholder="SELECT entit..entity..." />
-            <marker date="1433537127989" expanded="true" signature="17081:17137" placeholder="SELECT entit..friends..." />
-            <marker date="1433537127989" expanded="true" signature="17180:17236" placeholder="SELECT entit..friends..." />
-            <marker date="1433537127989" expanded="true" signature="18711:18783" placeholder="DELETE FROM ..." />
-            <marker date="1433537127989" expanded="true" signature="18997:19043" placeholder="DELETE FROM ..." />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/core/http/endpoints/checkin.endpoint.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-46.333332" vertical-offset="752" max-vertical-offset="4074">
+        <state vertical-scroll-proportion="0.0" vertical-offset="2040" max-vertical-offset="3880">
           <caret line="102" column="5" selection-start-line="102" selection-start-column="5" selection-end-line="102" selection-end-column="5" />
           <folding />
         </state>
@@ -1081,7 +823,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/core/http/endpoints/message.endpoint.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-5.4666667" vertical-offset="1726" max-vertical-offset="3612">
+        <state vertical-scroll-proportion="0.0" vertical-offset="1800" max-vertical-offset="3440">
           <caret line="90" column="0" selection-start-line="90" selection-start-column="0" selection-end-line="98" selection-end-column="9" />
           <folding>
             <element signature="e#6#88#0#PHP" expanded="true" />
@@ -1091,7 +833,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/core/http/handlers/message.handler.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-9.666667" vertical-offset="1390" max-vertical-offset="2667">
+        <state vertical-scroll-proportion="0.0" vertical-offset="1600" max-vertical-offset="2540">
           <caret line="80" column="0" selection-start-line="80" selection-start-column="0" selection-end-line="92" selection-end-column="5" />
           <folding />
         </state>
@@ -1099,20 +841,15 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/core/http/handlers/friend.handler.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-14.833333" vertical-offset="2348" max-vertical-offset="3087">
+        <state vertical-scroll-proportion="0.0" vertical-offset="2660" max-vertical-offset="2940">
           <caret line="133" column="6" selection-start-line="133" selection-start-column="6" selection-end-line="133" selection-end-column="6" />
-          <folding>
-            <marker date="1433542072696" expanded="true" signature="1740:2361" placeholder="SELECT entit..entity..." />
-            <marker date="1433542072696" expanded="true" signature="2072:2150" placeholder="SELECT entit..friends..." />
-            <marker date="1433542072696" expanded="true" signature="2201:2279" placeholder="SELECT entit..friends..." />
-            <marker date="1433542072696" expanded="true" signature="3837:3898" placeholder="SELECT * FRO..friend_requests..." />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/core/http/endpoints/friend.endpoint.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-9.666667" vertical-offset="2440" max-vertical-offset="3549">
+        <state vertical-scroll-proportion="0.0" vertical-offset="2600" max-vertical-offset="3380">
           <caret line="130" column="5" selection-start-line="130" selection-start-column="5" selection-end-line="130" selection-end-column="5" />
           <folding />
         </state>
@@ -1120,34 +857,20 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/core/http/handlers/user.handler.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-35.833332" vertical-offset="8207" max-vertical-offset="14049">
+        <state vertical-scroll-proportion="0.0" vertical-offset="8840" max-vertical-offset="13380">
           <caret line="442" column="6" selection-start-line="442" selection-start-column="6" selection-end-line="442" selection-end-column="6" />
-          <folding>
-            <marker date="1433540888514" expanded="true" signature="1601:1650" placeholder="SELECT * FRO..entity..." />
-            <marker date="1433540888514" expanded="true" signature="3248:3343" placeholder="UPDATE entit..." />
-            <marker date="1433540888514" expanded="true" signature="5266:5315" placeholder="SELECT entit..entity..." />
-            <marker date="1433540888514" expanded="true" signature="5792:6303" placeholder="INSERT INTO ..." />
-            <marker date="1433540888514" expanded="true" signature="5872:6303" placeholder="SELECT :enti..DUAL..." />
-            <marker date="1433540888514" expanded="true" signature="6046:6241" placeholder="SELECT fid F..friends..." />
-            <marker date="1433540888514" expanded="true" signature="7823:7897" placeholder="SELECT * FRO..favorites..." />
-            <marker date="1433540888514" expanded="true" signature="8366:8386" placeholder="SELECT * FRO..entity..." />
-            <marker date="1433540888514" expanded="true" signature="9346:9417" placeholder="SELECT * FRO..entity..." />
-            <marker date="1433540888514" expanded="true" signature="10696:11124" placeholder="UPDATE entit..." />
-            <marker date="1433540888514" expanded="true" signature="15429:15473" placeholder="SELECT fb_id..entity..." />
-            <marker date="1433540888514" expanded="true" signature="15609:15891" placeholder="INSERT IGNOR..." />
-            <marker date="1433540888514" expanded="true" signature="17184:17255" placeholder="INSERT INTO ..." />
-            <marker date="1433540888514" expanded="true" signature="17430:17640" placeholder="INSERT INTO ..." />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/core/http/endpoints/user.endpoint.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.5737483" vertical-offset="2411" max-vertical-offset="6426">
-          <caret line="135" column="9" selection-start-line="135" selection-start-column="9" selection-end-line="135" selection-end-column="9" />
+        <state vertical-scroll-proportion="2.1029413" vertical-offset="1101" max-vertical-offset="6120">
+          <caret line="148" column="9" selection-start-line="148" selection-start-column="9" selection-end-line="148" selection-end-column="9" />
           <folding />
         </state>
       </provider>
     </entry>
   </component>
 </project>
+
