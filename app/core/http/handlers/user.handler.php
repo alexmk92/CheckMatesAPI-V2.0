@@ -3,21 +3,22 @@
 namespace Handlers;
 use Models\Database;
 
-    /*
-    |--------------------------------------------------------------------------
-    | User Handler
-    |--------------------------------------------------------------------------
-    |
-    | Defines the implementation of a User handler, this is a simple interface
-    | to converse with the Database.  It has been abstracted from the endpoint
-    | implementation as there may be a large number of queries within the file.
-    |
-    | @author - Alex Sims (Checkmates CTO)
-    |
-    */
+/*
+|--------------------------------------------------------------------------
+| User Handler
+|--------------------------------------------------------------------------
+|
+| Defines the implementation of a User handler, this is a simple interface
+| to converse with the Database.  It has been abstracted from the endpoint
+| implementation as there may be a large number of queries within the file.
+|
+| @author - Alex Sims (Checkmates CTO)
+|
+*/
 
-// Include the session handler object
+// Include the session handler object and any other handler bridges
 require_once "./app/core/http/handlers/session.handler.php";
+require_once "friend.handler.php";
 
 class User
 {
@@ -105,78 +106,6 @@ class User
             return Array('error' => '203', 'message' => 'The resource was updated successfully, your new latitude is '.$args["lat"].' and your longitude is '.$args["long"]);
 
         return Array("error" => "500", "message" => "An internal error occurred when processing your request. Please try again.");
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Add Friends
-    |--------------------------------------------------------------------------
-    |
-    | Adds the friends in the given array to the database for this user, the
-    | id passed to this method will be the facebook id of the list of users
-    | as well as the fbID of the current user.
-    |
-    | @param $friends  - An array of Facebook users
-    | @param $category - The category for this relation - 1 = FB, 2 = Kinekt 3 = ALL 4 = Blocked
-    | @param $userId   - The ID for this user (must be facebook ID)
-    |
-    */
-
-    public static function addFriends($friends, $category, $userId)
-    {
-        // Create an array of unique friends
-        $friends = array_filter(array_unique(explode(",", $friends)));
-
-        // Set variables for response - iCount = insertCount, aCount = noAccountCount and fCount = friendsCount
-        $iCount = 0;
-        $aCount = 0;
-        $fCount = sizeof($friends);
-
-        // Ensure that we have sent some users to add, if not then return an error 400
-        if($iCount == $fCount)
-            return Array('error' => '400', 'message' => 'Bad request, no users were sent in the POST body.');
-
-        // Loop through the friends array and insert each unique user
-        foreach ($friends as $friend)
-        {
-            $query = "SELECT entity_id FROM entity WHERE fb_id = :fb_id";
-            $data  = Array(":fb_id" => $friend);
-
-            $entId = json_decode(json_encode(Database::getInstance()->fetch($query, $data)), true);
-            if($entId["entity_id"] != 0) {
-                $friend = $entId["entity_id"];
-
-                // Checks to see whether the user combination already exists in the database, uses
-                // DUAL for the initial select to ensure we fetch from cache if the friends table is empty.
-                $query = "INSERT INTO friends(entity_id1, entity_id2, category)
-                          SELECT :entityA, :entityB, :category
-                          FROM DUAL
-                          WHERE NOT EXISTS
-                          (
-                              SELECT fid FROM friends
-                              WHERE (entity_id1 = :entityA AND entity_id2 = :entityB)
-                              OR    (entity_id1 = :entityB AND entity_id2 = :entityA)
-                          )
-                          LIMIT 1
-                          ";
-
-                // Bind the parameters to the query
-                $data = Array(":entityA" => $userId, ":entityB" => $friend, ":category" => $category);
-
-                // Perform the insert, then increment count if this wasn't a duplicate record
-                if (Database::getInstance()->insert($query, $data) != 0)
-                    $iCount++;
-            }
-            else
-            {
-                $aCount++;
-            }
-        }
-
-        // Everything was successful, print out the response
-        $diff = ($fCount - $iCount) - $aCount;
-        $msg  = ($iCount == 0) ? "Oops, no users were added:" : "Success, the users were added:";
-        return Array('error' => '200', 'message' => "{$msg} out of {$fCount} friends, {$iCount} were inserted, {$diff} were duplicates and {$aCount} of your friends does not have a Kinekt account.");
     }
 
     /*
@@ -305,11 +234,6 @@ class User
             return Array('error' => '200', 'message' => 'The user with ID: '.$userId.' is already up to date and does not need modifying.');
     }
 
-    private static function updateScore($entityId, $amount, $operator)
-    {
-
-    }
-
     /*
     |--------------------------------------------------------------------------
     | Login
@@ -324,11 +248,11 @@ class User
     {
         // Ensure we have a valid object, if any of the major determinate factors are null then
         // echo a 400 back to the user
-        if($args == null || !isset($args['fbid']) || $args['fbid'] == '' || !isset($args['device_id']) || !isset($args['push_token']))
+        if($args == null || !isset($args['facebook_id']) || $args['facebook_id'] == '' || !isset($args['device_id']) || !isset($args['push_token']))
             return Array('error' => '400', 'message' => "Sorry, no data was passed to the server.  Please ensure the user object is sent via JSON in the HTTP body");
 
         // Check if the user already exists in the system, if they don't then sign them up to the system
-        $userExists = self::get($args['fbid']);
+        $userExists = self::get($args['facebook_id']);
         if($userExists != false)
         {
             // Ensure we have a valid session
@@ -344,7 +268,7 @@ class User
             // Check if there are any mutual friends to add - we do that here instead of on sign up as every time
             // we log in to the app more of our friends may have signed up to the app through FB
             if($args["friends"] != "")
-                $response = self::addFriends($args['friend'], '1', $userExists->Entity_Id);
+                $response = Friend::addFriends($args['friends'], '1', $userExists->Entity_Id);
 
             // Override the payload as we are logging in, we don't want a list of all friends.
             $response["message"] = "You were logged in successfully, friends may have been updated: " . $response["message"];
@@ -380,15 +304,15 @@ class User
             return Array('error' => '400', 'message' => 'Bad request, you must be 18 years or older.');
 
         // Check if the user already exists
-        $query = "SELECT fb_id FROM entity WHERE fb_id = :fbId";
-        $data  = Array(":fbId" => $args['fbid']);
+        $query = "SELECT fb_id FROM entity WHERE fb_id = :facebook_id";
+        $data  = Array(":facebook_id" => $args['facebook_id']);
 
         // We know our user is old enough, insert the new user.
         $query = "INSERT IGNORE INTO entity(fb_id, first_name, last_name, email, profile_pic_url, sex, dob, about, create_dt, last_checkin_dt, image_urls, score)
-                  VALUES(:fbId, :firstName, :lastName, :email, :profilePic, :sex, :dob, :about, :createdAt, :lastCheckin, :images, :score)";
+                  VALUES(:facebook_id, :firstName, :lastName, :email, :profilePic, :sex, :dob, :about, :createdAt, :lastCheckin, :images, :score)";
 
         $data  = Array(
-            ':fbId'        => $args['fbid'],
+            ':facebook_id' => $args['facebook_id'],
             ':firstName'   => $args['first_name'],
             ':lastName'    => $args['last_name'],
             ':email'       => $args['email'],
@@ -407,14 +331,14 @@ class User
 
         // If the user exists, throw an exception.
         if($id == 0)
-            return Array('error' => '400', 'message' => "Whoops, there is already an account registered with the Facebook ID: ". $args['fbid']);
+            return Array('error' => '400', 'message' => "Whoops, there is already an account registered with the Facebook ID: ". $args['facebook_id']);
 
         // Everything went well, create a session for this user:
         $token = Session::setSession($id, $args);
 
         // Add all of the friends this user has.
         if($args["friends"] != "")
-            self::addFriends($args["friends"], 1, $id);
+            Friend::addFriends($args["friends"], 1, $id);
 
         // Insert the user into the preferences table
         $query = "INSERT INTO preferences(entity_id)
@@ -578,6 +502,19 @@ class User
 
     /*
      |--------------------------------------------------------------------------
+     | (PUT) UPDATE SCORE
+     |--------------------------------------------------------------------------
+     |
+     | TODO: ADD DESCRIPTION
+     |
+     */
+    private static function updateScore($entityId, $amount, $operator)
+    {
+
+    }
+
+    /*
+     |--------------------------------------------------------------------------
      | (POST) ADD FAVOURITE
      |--------------------------------------------------------------------------
      |
@@ -592,48 +529,6 @@ class User
 
     /*
      |--------------------------------------------------------------------------
-     | (POST) BLOCK USER
-     |--------------------------------------------------------------------------
-     |
-     | TODO: ADD DESCRIPTION
-     |
-     */
-
-    public static function blockUser($args)
-    {
-        return Array("error" => "501", "message" => "Not currently implemented.");
-    }
-
-    /*
-     |--------------------------------------------------------------------------
-     | DELETE FRIEND
-     |--------------------------------------------------------------------------
-     |
-     | TODO: ADD DESCRIPTION
-     |
-     */
-
-    public static function removeFriend($args)
-    {
-        return Array("error" => "501", "message" => "Not currently implemented.");
-    }
-
-    /*
-     |--------------------------------------------------------------------------
-     | DELETE MOST RECENT USER
-     |--------------------------------------------------------------------------
-     |
-     | TODO: ADD DESCRIPTION
-     |
-     */
-
-    public static function removeMostRecent($args)
-    {
-        return Array("error" => "501", "message" => "Not currently implemented.");
-    }
-
-    /*
-     |--------------------------------------------------------------------------
      | DELETE ACCOUNT
      |--------------------------------------------------------------------------
      |
@@ -641,7 +536,7 @@ class User
      |
      */
 
-    public static function removeUser($args)
+    public static function deleteAccount($args)
     {
         return Array("error" => "501", "message" => "Not currently implemented.");
     }

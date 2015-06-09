@@ -139,4 +139,104 @@ class Friend
         return Array("error" => "501", "message" => "Not currently implemented.");
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | (POST) Add Friends
+    |--------------------------------------------------------------------------
+    |
+    | Adds the friends in the given array to the database for this user, the
+    | id passed to this method will be the facebook id of the list of users
+    | as well as the facebook_id of the current user.
+    |
+    | @param $friends  - An array of Facebook users
+    | @param $category - The category for this relation - 1 = FB, 2 = Kinekt 3 = ALL 4 = Blocked
+    | @param $userId   - The ID for this user (must be facebook ID)
+    |
+    */
+
+    public static function addFriends($friends, $category, $userId)
+    {
+        // Create an array of unique friends
+        $friends = array_filter(array_unique(explode(",", $friends)));
+
+        // Set variables for response - iCount = insertCount, aCount = noAccountCount and fCount = friendsCount
+        $iCount = 0;
+        $aCount = 0;
+        $fCount = sizeof($friends);
+
+        // Ensure that we have sent some users to add, if not then return an error 400
+        if($iCount == $fCount)
+            return Array('error' => '400', 'message' => 'Bad request, no users were sent in the POST body.');
+
+        // Loop through the friends array and insert each unique user
+        foreach ($friends as $friend)
+        {
+            $query = "SELECT entity_id FROM entity WHERE fb_id = :fb_id";
+            $data  = Array(":fb_id" => $friend);
+
+            $entId = json_decode(json_encode(Database::getInstance()->fetch($query, $data)), true);
+            if($entId["entity_id"] != 0) {
+                $friend = $entId["entity_id"];
+
+                // Checks to see whether the user combination already exists in the database, uses
+                // DUAL for the initial select to ensure we fetch from cache if the friends table is empty.
+                $query = "INSERT INTO friends(entity_id1, entity_id2, category)
+                          SELECT :entityA, :entityB, :category
+                          FROM DUAL
+                          WHERE NOT EXISTS
+                          (
+                              SELECT fid FROM friends
+                              WHERE (entity_id1 = :entityA AND entity_id2 = :entityB)
+                              OR    (entity_id1 = :entityB AND entity_id2 = :entityA)
+                          )
+                          LIMIT 1
+                          ";
+
+                // Bind the parameters to the query
+                $data = Array(":entityA" => $userId, ":entityB" => $friend, ":category" => $category);
+
+                // Perform the insert, then increment count if this wasn't a duplicate record
+                if (Database::getInstance()->insert($query, $data) != 0)
+                    $iCount++;
+            }
+            else
+            {
+                $aCount++;
+            }
+        }
+
+        // Everything was successful, print out the response
+        $diff = ($fCount - $iCount) - $aCount;
+        $msg  = ($iCount == 0) ? "Oops, no users were added:" : "Success, the users were added:";
+        return Array('error' => '200', 'message' => "{$msg} out of {$fCount} friends, {$iCount} were inserted, {$diff} were duplicates and {$aCount} of your friends does not have a Kinekt account.");
+    }
+
+     /*
+     |--------------------------------------------------------------------------
+     | DELETE FRIEND
+     |--------------------------------------------------------------------------
+     |
+     | TODO: ADD DESCRIPTION
+     |
+     */
+
+    public static function removeFriend($args)
+    {
+        return Array("error" => "501", "message" => "Not currently implemented.");
+    }
+
+    /*
+     |--------------------------------------------------------------------------
+     | (PUT) BLOCK USER
+     |--------------------------------------------------------------------------
+     |
+     | TODO: ADD DESCRIPTION
+     |
+     */
+
+    public static function blockUser($args)
+    {
+        return Array("error" => "501", "message" => "Not currently implemented.");
+    }
+
 }

@@ -80,6 +80,8 @@ class Checkin
         {
             case "GET"    : return $this->_GET();
                 break;
+            case "PUT"    : return $this->_PUT();
+                break;
             case "POST"   : return $this->_POST();
                 break;
             case "DELETE" : return $this->_DELETE();
@@ -142,6 +144,21 @@ class Checkin
         {
             throw new \Exception("No handler found for the GET resource of this URI, please check the documentation.");
         }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PUT
+    |--------------------------------------------------------------------------
+    |
+    | Calls the correct PUT method relative to the matching URI template.  The
+    | update transaction is then handled in the handler class.
+    |
+    */
+
+    private function _PUT()
+    {
+
     }
 
     /*

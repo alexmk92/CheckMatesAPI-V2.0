@@ -6,6 +6,7 @@ namespace Endpoints;
 * Ensure we include the reference to the handler for this object.
 */
 
+use Handlers;
 require "./app/core/http/handlers/friend.handler.php";
 
 /*
@@ -80,6 +81,8 @@ class Friend
         {
             case "GET"    : return $this->_GET();
                 break;
+            case "PUT"    : return $this->_PUT();
+                break;
             case "POST"   : return $this->_POST();
                 break;
             case "DELETE" : return $this->_DELETE();
@@ -104,12 +107,12 @@ class Friend
         // /api/v2/User/friends/{userId} - Returns the friends of the user
         if(count($this->args) == 1 && $this->verb == "friends")
         {
-            return \Handlers\Friend::getFriends($this->args[0]);
+            return Friend::getFriends($this->args[0]);
         }
         // /api/v2/Friend/friend-requests/{userId} - Returns the requests for the user
         else if(count($this->args) == 1 && $this->verb == "friend-requests")
         {
-            return \Handlers\Friend::getFriendRequests($this->args[0]);
+            return Friend::getFriendRequests($this->args[0]);
         }
         else
         {
@@ -136,12 +139,31 @@ class Friend
         // /api/v2/Friend/send-request/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(SENDFRIENDREQUEST)
         if(count($this->args) == 1 && $this->verb == 'send-request')
         {
-            return \Handlers\Friend::sendFriendRequest($this->args[0]);
+            return Friend::sendFriendRequest($this->args[0]);
         }
         // /api/v2/Friend/accept-request/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(ACCEPTFRIENDREQUEST)
         else if(count($this->args) == 1 && $this->verb == 'accept-request')
         {
-            return \Handlers\Friend::acceptFriendRequest($this->args[0]);
+            return Friend::acceptFriendRequest($this->args[0]);
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PUT
+    |--------------------------------------------------------------------------
+    |
+    | Calls the correct PUT method relative to the matching URI template. The
+    | transaction is handled in the handler class.
+    |
+    */
+
+    private function _PUT()
+    {
+        // /api/v2/Friend/block/{EntityId} - TODO: Write impelementation to block this user
+        if(count($this->args) == 1 && $this->verb == 'block')
+        {
+            return Friend::blockFriend();
         }
     }
 
