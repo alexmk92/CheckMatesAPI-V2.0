@@ -173,9 +173,9 @@ class User
     |
     */
 
-    public static function get($args)
+    public static function get($userId)
     {
-        $data = Array(":entity_id" => $args["user_id"]);
+        $data = Array(":entity_id" => $userId);
         $query = "SELECT * FROM entity WHERE entity_id = :entity_id OR fb_id = :entity_id";
 
         $res = Database::getInstance()->fetch($query, $data);
