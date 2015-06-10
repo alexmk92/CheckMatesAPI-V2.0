@@ -70,12 +70,100 @@ class Checkin
                     ON preferences.Entity_Id = entity.Entity_Id
                   JOIN setting
                     ON setting.Entity_Id = entity.Entity_Id
-                  WHERE entity.Entity_id = :entityId";
+                  WHERE entity.Entity_id = :entityId
+                    OR entity.Fb_Id = :entityId";
 
         $data = Array(":entityId" => $args["entityId"]);
-
         $userPreferences = Database::getInstance()->fetch($query, $data);
 
+        // Check for a bad response
+        if(empty($userPreferences))
+            return Array("error" => "404", "message" => "No preferences were found for this user so the operation could not complete, please ensure you sent a valid entity id");
+
+        // Determine the radius that the spatial query will be set too
+        $spatialFilter = "";
+        $userFilter    = "";
+        $data          = Array();
+
+        // Determine the radius to show
+        switch($userPreferences["visability"])
+        {
+            case 1:
+                $spatial = "(3958 * acos( cos( radians ( :currLat ) ) * cos ( radians( :last_lat ) ) * cos ( radians( :last_long ) - radians( :currLong ) + sin( radians( :currLat ) * sin ( radians( :last_lat ) ) ) < = 150";
+                $data    = Array(":currLat" => $args["current_lat"], ":currLong" => $args["current_long"], ":last_lat" => $userPreferences["last_lat"], ":last_long" => $userPreferences["last_long"]);
+                break;
+            case 2:
+                $spatial = "ent.Last_Checkin_Country = :lastCountry";
+                $data    = Array(":lastCountry" => $userPreferences["last_country"]);
+                break;
+            default:
+                break;
+        }
+
+        // Determine what age users to show - if we max on the app show oldest users
+        // max it to some erroneous value for people with ridiculous Facebook birthdays
+        if($userPreferences["upperAge"] == 50)
+            $userPreferences["upperAge"] = 150;
+
+        // Check if we need to get Facebook users, Kinekt users or both
+        if($userPreferences["facebook"] == 1)
+        {
+            $userFilter .= "OR (ent.Entity_Id IN (
+                                                      SELECT DISTINCT entity_id, fb_id, first_name, last_name, profile_pic_url, last_checkin_place, category
+                                                      FROM entity
+                                                      JOIN friends
+                                                      ON entity.entity_id = friends.entity_id2 OR entity.entity_id = friends.entity_id1
+                                                      WHERE entity_id IN
+                                                      (
+                                                        SELECT entity_id1 FROM friends WHERE entity_id2 = :entity_id AND Category = 1
+                                                        UNION ALL
+                                                        SELECT entity_id2 FROM friends WHERE entity_id1 = :entity_id AND Category == 1
+                                                      )
+                                                  )";
+        }
+        // Check if we need to get kinekt users
+        if($userPreferences["kinekt"] == 1)
+        {
+            $userFilter .= "OR (ent.Entity_Id IN (
+                                                      SELECT DISTINCT entity_id, fb_id, first_name, last_name, profile_pic_url, last_checkin_place, category
+                                                      FROM entity
+                                                      JOIN friends
+                                                      ON entity.entity_id = friends.entity_id2 OR entity.entity_id = friends.entity_id1
+                                                      WHERE entity_id IN
+                                                      (
+                                                        SELECT entity_id1 FROM friends WHERE entity_id2 = :entity_id AND Category = 2
+                                                        UNION ALL
+                                                        SELECT entity_id2 FROM friends WHERE entity_id1 = :entity_id AND Category = 2
+                                                      )
+                                                  )";
+        }
+        // Check if we need to get everyone
+        if($userPreferences["everyone"] == 1)
+        {
+            $userFilter .= "OR (ent.Entity_Id IN (
+                                                      SELECT DISTINCT entity_id, fb_id, first_name, last_name, profile_pic_url, last_checkin_place, category
+                                                      FROM entity
+                                                      JOIN friends
+                                                      ON entity.entity_id = friends.entity_id2 OR entity.entity_id = friends.entity_id1
+                                                      WHERE entity_id NOT IN
+                                                      (
+                                                        SELECT entity_id1 FROM friends WHERE entity_id2 = :entity_id
+                                                        UNION ALL
+                                                        SELECT entity_id2 FROM friends WHERE entity_id1 = :entity_id
+                                                      )
+                                                  )";
+        }
+        // Check what sexes we need to retrieve
+        switch($userPreferences[""])
+        {
+
+        }
+
+
+        // Get the users based on their preferences
+        $query = "SELECT
+
+                 ";
 
     }
 
