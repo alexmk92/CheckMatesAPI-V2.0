@@ -173,12 +173,16 @@ class User
     |
     */
 
-    public static function get($userId)
+    public static function get($args)
     {
-        $data = Array(":entity_id" => $userId);
+        $data = Array(":entity_id" => $args["user_id"]);
         $query = "SELECT * FROM entity WHERE entity_id = :entity_id OR fb_id = :entity_id";
 
-        return Database::getInstance()->fetch($query, $data);
+        $res = Database::getInstance()->fetch($query, $data);
+        if(empty($res))
+            return Array("error" => "404", "message" => "Sorry, the user with id: " . $userId . " does not exist on the server.");
+
+        return Array("error" => "200", "message" => "Successfully retrieved the user with id: " . $userId, "payload" => $res);
     }
 
    /*
@@ -383,7 +387,7 @@ class User
      |
      */
 
-    public static function getScores($args)
+    public static function getScore($args)
     {
         return Array("error" => "501", "message" => "Not currently implemented.");
     }

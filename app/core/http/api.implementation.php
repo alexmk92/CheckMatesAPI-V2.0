@@ -62,30 +62,19 @@ class CheckmatesAPI extends API
         parent::__construct($request);
 
         /*
-        * Define references to any models that are to be used by the API, by
-        * default here we need an API key and a User to authenticate
-        */
-
-        $User   = new Models\User();
+        * Authorise the session here, if the session isn't set then we can return
+         * an error 401 back to the client.
+         */
 
         /*
-        * Ensure that our request can be validated by checking the request header
-        * for a valid API key and session token
-        */
-        /*
-                if(!array_key_exists('apiKey', $request))
-                    throw new Exception('No API Key provided for this resource');
-                else if (!$APIKey->verifyKey($request['apiKey'], $origin))
-                    throw new Exception('This API Key is not valid');
-                else if (array_key_exists('token', $request) && !$User->get('token', $request['token']))
-                    throw new Exception('The token provided by the user was invalid');
-        */
-        /*
-        * Connect to the resource server using the credentials provided by the calling
-        * client. This client is valid after passing the checks above.
-        */
+        if(empty($args["session_token"]) || empty($args["device_id"]))
+            return Array("error" => "401", "message" => "Unauthorised: No session token was provided in the payload.");
 
-        $this->User = $User;
+        // Validate the session and ensure that the session was set, if not return a 401
+        $user = Session::validateSession($args["session_token"], $args["device_id"]);
+        if($user["error"] != 200)
+            return Array("error" => "401", "message" => "You are not authorised to access this resource, please re-login to generate a new session token.");
+        */
 
     }
 

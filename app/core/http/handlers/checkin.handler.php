@@ -435,6 +435,25 @@ class Checkin
 
     /*
     |--------------------------------------------------------------------------
+    | Get Latest Checkin
+    |--------------------------------------------------------------------------
+    |
+    | Returns the latest checkin for the specified user.
+    |
+    | @param $args   - Array to specify which resource to delete
+    |
+    | @return $array - Returns the response object, detailing if the resource
+    |                  was deleted successfully or if anything went wrong.
+    |
+    */
+
+    private function getLatestCheckin($userId)
+    {
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | Delete Checkin
     |--------------------------------------------------------------------------
     |
