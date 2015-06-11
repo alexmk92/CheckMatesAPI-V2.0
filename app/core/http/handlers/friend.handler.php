@@ -43,13 +43,14 @@ class Friend
     public static function getFriends($userId, $filter = NULL)
     {
         $data = Array(":entity_id" => $userId);
-
         if(!empty($filter))
             $data[":tagged"] = $filter["tagged"];
+        else
+            $data[":tagged"] = "";
 
         // NOTE* I would like to tailor this to return the specific fields we need,
         // for now im not sure if this will suffice -  shout if more is needed
-        $query = "SELECT entity_id, fb_id, first_name, last_name, profile_pic_url, last_checkin_place, category
+        $query = "SELECT DISTINCT entity_id, fb_id, first_name, last_name, profile_pic_url, last_checkin_place, category
                   FROM entity
                   JOIN friends
                   ON entity.entity_id = friends.entity_id2 OR entity.entity_id = friends.entity_id1
@@ -59,7 +60,7 @@ class Friend
                     UNION ALL
                     SELECT entity_id2 FROM friends WHERE entity_id1 = :entity_id AND Category != 4
                   )
-                  AND entity_id NOT IN(".$filter["tagged"].")
+                  AND entity_id NOT IN( :tagged )
                   ";
 
         // Check we recieved a valid object back to set the response.

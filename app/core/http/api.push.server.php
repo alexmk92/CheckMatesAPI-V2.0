@@ -31,6 +31,7 @@ class PushServer
 
     public static function sendNotification($payload)
     {
+
         // List of Android and iOS Devices for this user, push notifications will be sent to each
         // device that the user owns.
         $androidDevices = Array();
@@ -102,6 +103,7 @@ class PushServer
         {
             return Array("error" => "400", "message" => "Sorry, the push notification was not sent. This is caused by an invalid push token, or if the user is offline");
         }
+
     }
 
     /*
@@ -167,7 +169,6 @@ class PushServer
         else
         {
             // Dispose of any open sockets / resources
-
             fclose($apns_fp);
 
             return Array("error" => "417", "message" => "Sorry, we couldn't connect to Apple when sending the push...Check certificates.");

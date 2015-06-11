@@ -106,7 +106,18 @@ class Checkin
         // /api/v2/Checkin - Returns all Checkins in the system
         if(count($this->args) == 0 && $this->verb == "")
         {
-            return \Handlers\Checkin::getAll();
+            $args    = "";
+            $headers = apache_request_headers();
+            if(!empty($headers))
+            {
+                $args = Array(
+                    "curr_lat" => $headers["curr_lat"],
+                    "curr_long" => $headers["curr_long"],
+                    "session_token" => $headers["session_token"],
+                    "device_id" => $headers["device_id"]
+                );
+            }
+            return \Handlers\Checkin::getCheckins($args);
         }
         // /api/v2/Checkin/{CheckinId} - Returns the Checkin
         else if(count($this->args) == 1 && $this->verb == "")

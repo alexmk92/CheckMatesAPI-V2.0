@@ -104,20 +104,15 @@ class Friend
 
     private function _GET()
     {
-        // /api/v2/User/friends/{userId} - Returns the friends of the user
-        if(count($this->args) == 1 && $this->verb == "friends")
-        {
-            return Friend::getFriends($this->args[0]);
-        }
+        // /api/v2/Friend/{userId} - Returns the friends of the user
+        if(count($this->args) == 1)
+            return \Handlers\Friend::getFriends($this->args[0]);
         // /api/v2/Friend/friend-requests/{userId} - Returns the requests for the user
         else if(count($this->args) == 1 && $this->verb == "friend-requests")
-        {
-            return Friend::getFriendRequests($this->args[0]);
-        }
+            return \Handlers\Friend::getFriendRequests($this->args[0]);
+        // Unsupported handler
         else
-        {
             throw new \Exception("No handler found for the GET resource of this URI, please check the documentation.");
-        }
     }
 
     /*

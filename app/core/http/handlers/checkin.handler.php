@@ -35,7 +35,7 @@ class Checkin
     |
     */
 
-    public function getCheckins($args)
+    public static function getCheckins($args)
     {
         // Check if a valid payload was sent
         if(empty($args["curr_lat"]) || empty($args["curr_long"]))
@@ -47,7 +47,7 @@ class Checkin
 
         // Validate the session and ensure that the session was set, if not return a 401
         $user = Session::validateSession($args["session_token"], $args["device_id"]);
-        if($user["error"] != 200)
+        if(array_key_exists("error", $user))
             return Array("error" => "401", "message" => "You are not authorised to access this resource, please re-login to generate a new session token.");
 
         // Get the preferences for this user, this can then be used to select checkins which are only relevant to this user.
@@ -73,8 +73,8 @@ class Checkin
                   WHERE entity.Entity_id = :entityId
                     OR entity.Fb_Id = :entityId";
 
-        $data = Array(":entityId" => $args["entityId"]);
-        $userPreferences = Database::getInstance()->fetch($query, $data);
+        $data = Array(":entityId" => $user["entityId"]);
+        $userPreferences = json_decode(json_encode(Database::getInstance()->fetch($query, $data)), true);
 
         // Check for a bad response
         if(empty($userPreferences))
@@ -85,18 +85,19 @@ class Checkin
         $userFilter    = "";
         $data          = Array();
 
-        // Determine the radius to show
+        // Determine the radius to show - we reinitialise the data array here for the next query
         switch($userPreferences["visability"])
         {
             case 1:
-                $spatial = "(3958 * acos( cos( radians ( :currLat ) ) * cos ( radians( :last_lat ) ) * cos ( radians( :last_long ) - radians( :currLong ) + sin( radians( :currLat ) * sin ( radians( :last_lat ) ) ) < = 150";
-                $data    = Array(":currLat" => $args["current_lat"], ":currLong" => $args["current_long"], ":last_lat" => $userPreferences["last_lat"], ":last_long" => $userPreferences["last_long"]);
+                $spatial = "(3958 * acos( cos( radians ( :currLat ) ) * cos ( radians( ent.Last_Checkin_Lat ) ) * cos ( radians( ent.Last_Checkin_Long ) - radians( :currLong ) + sin( radians( :currLat ) * sin ( radians( ent.Last_Checkin_Lat ) ) ) < = 150";
+                $data    = Array(":currLat" => $args["curr_lat"], ":currLong" => $args["curr_long"]);
                 break;
             case 2:
                 $spatial = "ent.Last_Checkin_Country = :lastCountry";
                 $data    = Array(":lastCountry" => $userPreferences["last_country"]);
                 break;
             default:
+                $data    = Array();
                 break;
         }
 
@@ -108,7 +109,7 @@ class Checkin
         // Check if we need to get Facebook users, Kinekt users or both
         if($userPreferences["facebook"] == 1)
         {
-            $userFilter .= "OR (ent.Entity_Id IN (
+            $userFilter .= " OR (ent.Entity_Id IN (
                                                       SELECT DISTINCT entity_id, fb_id, first_name, last_name, profile_pic_url, last_checkin_place, category
                                                       FROM entity
                                                       JOIN friends
@@ -124,7 +125,7 @@ class Checkin
         // Check if we need to get kinekt users
         if($userPreferences["kinekt"] == 1)
         {
-            $userFilter .= "OR (ent.Entity_Id IN (
+            $userFilter .= " OR (ent.Entity_Id IN (
                                                       SELECT DISTINCT entity_id, fb_id, first_name, last_name, profile_pic_url, last_checkin_place, category
                                                       FROM entity
                                                       JOIN friends
@@ -140,7 +141,7 @@ class Checkin
         // Check if we need to get everyone
         if($userPreferences["everyone"] == 1)
         {
-            $userFilter .= "OR (ent.Entity_Id IN (
+            $userFilter .= " OR (ent.Entity_Id IN (
                                                       SELECT DISTINCT entity_id, fb_id, first_name, last_name, profile_pic_url, last_checkin_place, category
                                                       FROM entity
                                                       JOIN friends
@@ -152,18 +153,43 @@ class Checkin
                                                         SELECT entity_id2 FROM friends WHERE entity_id1 = :entity_id
                                                       )
                                                   )";
-        }
-        // Check what sexes we need to retrieve
-        switch($userPreferences[""])
-        {
 
+            $userFilter .= " AND TIMESTAMPDIFF(YEAR, ent.DOB, NOW()) BETWEEN :lowerAge AND :upperAge";
+
+            // Bind the new params to our data array
+            if(empty($data[":lowerAge"]))
+                $data[":lowerAge"] = $userPreferences["lowerAge"];
+            if(empty($data[":upperAge"]))
+                $data[":upperAge"] = $userPreferences["upperAge"];
+
+            // Check what sexes we need to retrieve
+            switch($userPreferences["sex"])
+            {
+                case 1:
+                    $userFilter .= " AND ent.Sex = 1";
+                    break;
+                case 2:
+                    $userFilter .= " AND ent.Sex = 2";
+                    break;
+            }
         }
 
+        // Perform the rest of the binding
+        if(empty($data[":entityId"]))
+            $data[":entityId"] = $user["entityId"];
+
+        // Build the final condition
+        if($spatialFilter = "")
+            $spatialFilter = "(" . $userFilter . ")";
+        else
+            $spatialFilter = $spatialFilter . " and(" . $userFilter . ")";
 
         // Get the users based on their preferences
         $query = "SELECT
 
                  ";
+
+        var_dump($data);
 
     }
 
@@ -189,8 +215,10 @@ class Checkin
     public static function createCheckin($args)
     {
         // Extract the data from the payload
-        $image = $args["image"]["image"];
         $args  = $args["args"];
+
+        if(!empty($args["image"]["image"]))
+            $image = $args["image"]["image"];
 
         // Reference a new push server
         $server = new \PushServer();
@@ -254,12 +282,6 @@ class Checkin
                 $checkinImageURL = $res["imageUrl"];
         }
 
-        // Everything has succeeded so far, proceed to do scoring here...
-        $query = "UPDATE entity SET score = Score + 10 WHERE entity_id = :entityId";
-        $data  = Array(":entityId" => $token["entityId"]);
-
-        Database::getInstance()->update($query, $data);
-
         // Perform the Checkin insert here...
         $query = "
                     INSERT INTO checkins
@@ -315,6 +337,27 @@ class Checkin
         $res = Database::getInstance()->insert($query, $placeData);
         if($res > 0)
         {
+            // Everything has succeeded so far, proceed to do scoring and update the user here...
+            $query = "UPDATE entity
+                      SET score = Score + 10,
+                          Last_CheckIn_Lat  = :lat,
+                          Last_CheckIn_Long = :lng,
+                          Last_CheckIn_Place = :place,
+                          Last_CheckIn_Dt = :now,
+                          Last_CheckIn_Country = :country
+                      WHERE entity_id = :entityId";
+
+            $data  = Array(
+                ":entityId" => $token["entityId"],
+                ":lat"      => $args["place_lat"],
+                ":lng"      => $args["place_long"],
+                ":place"    => $args["place_name"],
+                ":now"      => $now,
+                ":country"  => $args["place_country"]
+            );
+
+            Database::getInstance()->update($query, $data);
+
             $query = "
                     INSERT INTO checkinArchive
                     (
@@ -405,7 +448,7 @@ class Checkin
 
         // Set up friend push variables
         $filter      = Array("tagged" => $taggedUsers);
-        $friends     = User::getFriends($token["entityId"], $filter);
+        $friends     = Friend::getFriends($token["entityId"], $filter);
         $friendCount = count($friends);
         $success     = 0;
 
@@ -450,7 +493,7 @@ class Checkin
         {
             if($res["error"] == 200 || $res["error"] == 400)
             {
-                $people = self::getPeopleAtLocation($args["place_name"], $args["place_lat"], $args["place_long"], $args["entity_id"]);
+                $people = self::getPeopleAtLocation($args["place_name"], $args["place_lat"], $args["place_long"], $token["entityId"]);
                 $res["message"] = "The Checkin was created successfully.";
                 $res["payload"] = Array("details" => $placeData, "tagged_pushes" => $taggedPushes, "friend_pushes" => $friendPushes, "people" => $people);
                 return $res;
@@ -481,7 +524,7 @@ class Checkin
     |
     */
 
-    private function getPeopleAtLocation($place, $lat, $long, $entityId)
+    private static function getPeopleAtLocation($place, $lat, $long, $entityId)
     {
         // Prepare for the LIKE clause
         $place = "%" . $place . "%";
@@ -507,7 +550,7 @@ class Checkin
             )
             AND checkins.Place_Name LIKE :place
             AND checkins.Place_Lat  =    :lat
-            AND checkins.Place_Long =    :long
+            AND checkins.Place_Long =    :lng
 
 
         ";
@@ -515,7 +558,7 @@ class Checkin
         $data = Array(
             ":place" => $place,
             ":lat"   => $lat,
-            ":long"  => $long,
+            ":lng"   => $long,
             ":entId" => $entityId
         );
 
@@ -535,7 +578,7 @@ class Checkin
     |
     */
 
-    private function getLatestCheckin($userId)
+    private static function getLatestCheckin($userId)
     {
 
     }

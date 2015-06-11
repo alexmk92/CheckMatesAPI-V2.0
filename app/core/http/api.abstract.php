@@ -207,7 +207,7 @@ abstract class API
 
         // Set the response object
         $response = array(
-                            'error'   => $statusCode . " - " . $this->_getStatus($statusCode),
+                            'error'   => $statusCode,
                             'message' => json_decode($message),
                             'data'    => json_decode($payload)
                          );

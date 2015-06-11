@@ -179,6 +179,7 @@ class User
         $query = "SELECT * FROM entity WHERE entity_id = :entity_id OR fb_id = :entity_id";
 
         $res = Database::getInstance()->fetch($query, $data);
+
         if(empty($res))
             return Array("error" => "404", "message" => "Sorry, the user with id: " . $userId . " does not exist on the server.");
 
@@ -257,14 +258,16 @@ class User
 
         // Check if the user already exists in the system, if they don't then sign them up to the system
         $userExists = self::get($args['facebook_id']);
-        if($userExists != false)
+        if($userExists["error"] != 404)
         {
+            $userExists["payload"] = json_decode(json_encode($userExists["payload"]), true);
+
             // Ensure we have a valid session
-            $token = Session::setSession($userExists->Entity_Id, $args);
+            $token = Session::setSession($userExists["payload"]["Entity_Id"], $args);
 
             // Update the users details, this includes updating the ABOUT info and profile pictures,
             // We do this here as profile info may have changed on Facebook since the last login.
-            $response = self::updateProfile($userExists->Entity_Id, $args);
+            $response = self::updateProfile($userExists["payload"]["Entity_Id"], $args);
 
             if($response["error"] == "400")
                 return $response;
@@ -272,7 +275,7 @@ class User
             // Check if there are any mutual friends to add - we do that here instead of on sign up as every time
             // we log in to the app more of our friends may have signed up to the app through FB
             if($args["friends"] != "")
-                $response = Friend::addFriends($args['friends'], '1', $userExists->Entity_Id);
+                $response = Friend::addFriends($args['friends'], '1', $userExists["payload"]["Entity_Id"]);
 
             // Override the payload as we are logging in, we don't want a list of all friends.
             $response["message"] = "You were logged in successfully, friends may have been updated: " . $response["message"];
