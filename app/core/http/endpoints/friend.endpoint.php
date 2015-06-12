@@ -127,20 +127,31 @@ class Friend
 
     private function _POST()
     {
+        // Retrieve the payload and send with the friendId to the handler.
+        $payload = json_decode(file_get_contents('php://input'), true);
+
+        // Check for an invalid payload
+        if ($payload == null)
+            return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid User payload to the server.");
+
+        // /api/v2/Friend/send-request/{friendId} - Sends a friend request.
+        if(count($this->args) == 1 && $this->verb == 'send-request')
+        {
+            return \Handlers\Friend::sendFriendRequest($this->args[0], $payload);
+        }
+
         //*************************************************************************************//
         //                        TODO: SECTION FOR UNIMPLEMENTED
         //*************************************************************************************//
 
-        // /api/v2/Friend/send-request/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(SENDFRIENDREQUEST)
-        if(count($this->args) == 1 && $this->verb == 'send-request')
-        {
-            return Friend::sendFriendRequest($this->args[0]);
-        }
         // /api/v2/Friend/accept-request/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(ACCEPTFRIENDREQUEST)
         else if(count($this->args) == 1 && $this->verb == 'accept-request')
         {
-            return Friend::acceptFriendRequest($this->args[0]);
+            return \Handlers\Friend::acceptFriendRequest($this->args[0]);
         }
+        // Unsupported handler
+        else
+            throw new \Exception("No handler found for the GET resource of this URI, please check the documentation.");
     }
 
     /*
@@ -155,11 +166,29 @@ class Friend
 
     private function _PUT()
     {
-        // /api/v2/Friend/block/{EntityId} - TODO: Write impelementation to block this user
+        // /api/v2/Friend/block/{friendId} - Blocks communication between two users. Initiated by the entityId.
         if(count($this->args) == 1 && $this->verb == 'block')
         {
-            return Friend::blockFriend();
+            $userId = "";
+
+            // Retrieve the userId from the headers that have been sent as a part of the PUT HTTP Request.
+            foreach (getallheaders() as $header => $value) {
+
+                // If we find the entityId, collect it.
+                if(strtoupper($header) == "ENTITYID")
+                    $userId = $value;
+            }
+
+            if(empty($userId))
+                return array("error" => "422", "message" => "Unprocessable entity: The underpinning logic of the
+                            operation cannot be performed. Please make sure the required parameters are included in
+                            the headers for a PUT HTTP request. ", "payload" => "");
+
+            return \Handlers\Friend::blockUser($userId, $this->args[0]);
         }
+        // Unsupported handler
+        else
+            throw new \Exception("No handler found for the GET resource of this URI, please check the documentation.");
     }
 
     /*
@@ -174,7 +203,21 @@ class Friend
 
     private function _DELETE()
     {
+        // Retrieve the payload and send with the friendId to the handler.
+        $payload = json_decode(file_get_contents('php://input'), true);
 
+        // Check for an invalid payload
+        if ($payload == null)
+            return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid User payload to the server.");
+
+        // /api/v2/Friend/remove-friend/{friendId}/{category} - Deletes a friend taking into account different categories.
+        if(count($this->args) == 1 && $this->verb == 'remove-friend')
+        {
+            return \Handlers\Friend::removeFriend($this->args[0], $payload);
+        }
+        // Unsupported handler
+        else
+            throw new \Exception("No handler found for the GET resource of this URI, please check the documentation.");
     }
 
 }

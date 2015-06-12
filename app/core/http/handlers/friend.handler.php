@@ -117,13 +117,51 @@ class Friend
      | (POST) SEND FRIEND REQUEST
      |--------------------------------------------------------------------------
      |
-     | TODO: ADD DESCRIPTION
+     | Sends a new friend request to a user.
+     |
+     | @param $userId   - The ID for this user.
+     |
+     | @param $friendID - The ID of the users friend.
+     |
+     | @param $payload  - ALl of the Curl JSON information.
+     |
+     | @return a success or failure message based on the result of the query.
      |
      */
 
-    public static function sendFriendRequest($args)
+    public static function sendFriendRequest($friendId, $payload)
     {
-        return Array("error" => "501", "message" => "Not currently implemented.");
+        // Authenticate the token.
+        $user = session::validateSession($payload['session_token'],$payload['device_id']);
+
+        // Check to see if the user has been retrieved and the token successfully authenticated.
+        if(empty($user))
+            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
+
+        // Prepare a query that's purpose will be to insert a new friend request into the friend_requests table.
+        $query = "INSERT INTO friend_requests(Req_Sender, Req_Receiver)
+                          SELECT :sender, :receiver
+                          FROM DUAL
+                          WHERE NOT EXISTS
+                          (
+                              SELECT Req_Id FROM friend_requests
+                              WHERE (Req_Sender = :sender AND Req_Receiver = :receiver)
+                              OR    (Req_Receiver = :receiver AND Req_Sender = :sender)
+                          )
+                          LIMIT 1
+                          ";
+
+        // Bind the parameters to the query
+        $data = Array(":sender" => $user['entityId'], ":receiver" => $friendId);
+
+        // Perform the insert, then increment count if this wasn't a duplicate record
+        if (Database::getInstance()->insert($query, $data) != 0)
+            return Array("error" => "200", "message" => "Friend request has been sent successfully.", "params" => "");
+        else
+            return Array("error" => "409", "message" => "Conflict: A friend request has already been sent to this user."
+                , "params" => "");
+
+        // TODO: Send a push notification (change the above to reflect this change).
     }
 
     /*
@@ -217,13 +255,40 @@ class Friend
      | DELETE FRIEND
      |--------------------------------------------------------------------------
      |
-     | TODO: ADD DESCRIPTION
+     | Removes a friend. It is presumed that the friend will be deleted from all categories.
+     |
+     | @param $friendId - The identifer of the friend to remove.
+     |
+     | @param $payload  - ALl of the Curl JSON information.
+     |
+     | @return          A success or failure return array depending on the outcome.
      |
      */
 
-    public static function removeFriend($args)
+    public static function removeFriend($friendId, $payload)
     {
-        return Array("error" => "501", "message" => "Not currently implemented.");
+        // Authenticate the token.
+        $user = session::validateSession($payload['session_token'],$payload['device_id']);
+
+        // Check to see if the user has been retrieved and the token successfully authenticated.
+        if(empty($user))
+            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
+
+        // Prepare a query that's purpose will be to delete all records between a user and a current friend.
+        $query = "DELETE FROM friends WHERE Entity_Id1 = :userId AND Entity_Id2 = :friendId ";
+
+        // Bind the parameters to the query
+        $data = Array(":userId" => $user['entityId'], ":friendId" => $friendId);
+
+        // Delete all records of friendship between the two users.
+        // If the query runs successfully, return a success 200 message.
+        if (Database::getInstance()->delete($query, $data))
+            return Array("error" => "200", "message" => "Friend has been removed successfully from all categories.", "params" => "");
+        else
+            return Array("error" => "409", "message" => "Conflict: The user and friend id specified have no relationship with "
+                            ."one another."
+            , "params" => "");
+
     }
 
     /*
@@ -231,13 +296,39 @@ class Friend
      | (PUT) BLOCK USER
      |--------------------------------------------------------------------------
      |
-     | TODO: ADD DESCRIPTION
+     | Change the category of a friendship between two people in order to block
+     | the lines of communication. Simply updates all rows that pertain to the two
+     | user identifiers.
+     |
+     | @param userId   - The entityId. Sent as a header instead of as a part of a payload
+     |                   that is authenticated because the PUT verb was used.
+     |
+     | @param friendId - The identifier of the 'friend'.
+     |
      |
      */
 
-    public static function blockUser($args)
+    public static function blockUser($userId, $friendId)
     {
-        return Array("error" => "501", "message" => "Not currently implemented.");
+        // Prepare a query that's purpose will be to update the friends table to change the
+        // category of a relationship between two users to 4.
+        // However, this should only be done in one direction rather than two.
+        // For example: user blocks friend, but the query must not do it the other way around too.
+        // So...more basic queries for that.
+        $query = "UPDATE friends
+                  SET Category = 4
+                  WHERE Entity_Id1 = :userId AND Entity_Id2 = :friendId ";
+
+        // Bind the parameters to the query
+        $data = Array(":userId" => $userId, ":friendId" => $friendId);
+
+        // Delete all records of friendship between the two users.
+        // If the query runs successfully, return a success 200 message.
+        if (Database::getInstance()->delete($query, $data))
+            return Array("error" => "200", "message" => "This user has been blocked successfully.", "params" => "");
+        else
+            return Array("error" => "409", "message" => "Conflict: The relationship between the two users does not exist."
+            , "params" => "");
     }
 
 }

@@ -237,6 +237,8 @@ class User
         // Get the payload and decode it to a PHP array, set true to ensure assoc behaviour.
         $payload = json_decode(file_get_contents('php://input'), true);
 
+        var_dump($payload);
+
         // Check for an invalid payload
         if ($payload == null)
             return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid User payload to the server.");
