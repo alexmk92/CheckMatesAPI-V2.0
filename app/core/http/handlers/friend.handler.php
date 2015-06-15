@@ -18,6 +18,7 @@ use Models\Database;
 
 // Include the session handler object
 require_once "./app/core/http/handlers/session.handler.php";
+require_once "./app/core/http/api.push.server.php";
 
 class Friend
 {
@@ -147,6 +148,10 @@ class Friend
                               SELECT Req_Id FROM friend_requests
                               WHERE (Req_Sender = :sender AND Req_Receiver = :receiver)
                               OR    (Req_Receiver = :receiver AND Req_Sender = :sender)
+                              UNION
+                              SELECT fid FROM friends
+                              WHERE (Entity_Id1 = :sender AND Entity_Id2 = :receiver)
+                              OR    (Entity_Id2 = :sender AND Entity_Id1 = :receiver)
                           )
                           LIMIT 1
                           ";
@@ -155,13 +160,59 @@ class Friend
         $data = Array(":sender" => $user['entityId'], ":receiver" => $friendId);
 
         // Perform the insert, then increment count if this wasn't a duplicate record
-        if (Database::getInstance()->insert($query, $data) != 0)
-            return Array("error" => "200", "message" => "Friend request has been sent successfully.", "params" => "");
-        else
-            return Array("error" => "409", "message" => "Conflict: A friend request has already been sent to this user."
-                , "params" => "");
+        if (Database::getInstance()->insert($query, $data) != 0) {
 
-        // TODO: Send a push notification (change the above to reflect this change).
+            $query = "SELECT Entity_Id, First_Name, Last_Name
+                      FROM entity
+                      WHERE Entity_Id = :friendId ";
+
+            $data = Array("friendId" => $friendId);
+
+            // This expression will result to std::object or false - this is why we perform a boolean check
+            $friend = Database::getInstance()->fetch($query, $data);
+            if ($friend) {
+
+                // Today's date and time.
+                $now = gmdate('Y-m-d H:i:s', time());
+
+                // Configure the push payload, we trim the name so that if it was Alexander John, it becomes Alexander.
+                $pushPayload = Array(
+                    "senderId" => $user['entityId'],
+                    "senderName" => $user['firstName'] . " " . $user['lastName'],
+                    "receiver" => $friendId,
+                    "message" => $user['firstName']. " " . $user['lastName'] . " wants to add you as a friend.",
+                    "type" => 3,
+                    "date" => $now,
+                    "messageId" => NULL,
+                    "messageType" => NULL
+                );
+
+                // Reference a new push server and send the notification.
+                $server = new \PushServer();
+
+                $res = $server->sendNotification($pushPayload);
+
+                if(!empty($res))
+                    // Request and notification (push) sent.
+                    return Array("error" => "200", "message" => "The friend request to ".$friend->First_Name." ".$friend->Last_Name. " ".
+                        "has been sent successfully.", "params" => "");
+
+                else
+                    // Only request sent.
+                    return Array("error" => "207", "message" => "Partial success: A friend request has been sent, but without a notification",
+                                 "payload" => "");
+            }
+            else
+                // Friend cannot be found.
+                return Array("error" => "400", "message" => "The identifier for the friend cannot be found. Please send".
+                             "a request to a established user. ", "payload" => "");
+
+        }
+        else
+            // Conflict with either friends or friend_requests table.
+            return Array("error" => "409", "message" => "You are either already friends with this user, or a friend request has already"
+                                                       ." been sent." , "params" => "");
+
     }
 
     /*
@@ -173,9 +224,62 @@ class Friend
      |
      */
 
-    public static function acceptFriendRequest($args)
+    public static function acceptFriendRequest($friendId, $payload)
     {
-        return Array("error" => "501", "message" => "Not currently implemented.");
+        // Authenticate the token.
+        $user = session::validateSession($payload['session_token'],$payload['device_id']);
+
+        // Check to see if the user has been retrieved and the token successfully authenticated.
+        if(empty($user))
+            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
+
+        // First we need to delete the friend request. If this check fails, then we know that the friend request does
+        // not exist in the table. This is better than doing a select and a delete query.
+        // The identifier of the 'friend' in this case, will be the sender, as they were the one who sent the request
+        // in the first place.
+        $query = "DELETE FROM friend_requests
+                  WHERE Req_Sender = :friendId
+                  AND Req_Receiver = :userId ";
+
+        // Bind the parameters to the query
+        $data = Array(":userId" => $user['entityId'], ":friendId" => $friendId);
+
+        if(Database::getInstance()->delete($query, $data)) {
+
+            // Prepare the query for adding a row into the friends table.
+            $query = "INSERT INTO friends(Entity_Id1, Entity_Id2, Category)
+                      VALUES              (:userId, :friendId, 2) ";
+
+            // Bind the parameters to the query
+            $data = Array(":userId" => $user['entityId'], ":friendId" => $friendId);
+
+            // Perform the insert, then increment count if this wasn't a duplicate record
+            if (Database::getInstance()->insert($query, $data)) {
+
+                $query = "SELECT Entity_Id, First_Name, Last_Name
+                          FROM entity
+                          WHERE Entity_Id = :friendId ";
+
+                $data = Array("friendId" => $friendId);
+
+                // This expression will result to std::object or false - this is why we perform a boolean check
+                $friend = Database::getInstance()->fetch($query, $data);
+
+                // Retrieve the friends name to make the return message more useful.
+                if ($friend) {
+
+                    return Array("error" => "200", "message" => "" . $friend->First_Name . " " . $friend->Last_Name . " has been added to your " .
+                        "friends list.", "payload" => "");
+                } else
+                    // Retrieving friends first/last name has failed.
+                    return Array("error" => "400", "message" => "Error retrieving friend from the database.", "payload" => "");
+            } else
+                // Inserting a new row into the friends table has failed.
+                return Array("error" => "400", "message" => "Error adding friend. The query has failed.", "payload" => "");
+        }
+        else
+            // Deleting the friend-request has failed.
+            return Array("error" => "400", "message" => "The friend request does not exist.", "payload" => "");
     }
 
     /*
@@ -256,6 +360,8 @@ class Friend
      |--------------------------------------------------------------------------
      |
      | Removes a friend. It is presumed that the friend will be deleted from all categories.
+     | Note: when testing, if you send a friend request then delete, it will not be removed because it
+     | will be in the friend-requests table.
      |
      | @param $friendId - The identifer of the friend to remove.
      |
@@ -292,6 +398,48 @@ class Friend
     }
 
     /*
+    |--------------------------------------------------------------------------
+    | (DELETE) REJECT FRIEND REQUEST
+    |--------------------------------------------------------------------------
+    |
+    | Rejects a friend request.
+    | The userId will be the reciever for the request, and the friendId will be the
+    | sender. This effectively removes the request row from the table.
+    |
+    | @param $friendId - The identifer of the user to reject.
+    |
+    | @param $payload  - ALl of the Curl JSON information.
+    |
+    | @return          A success or failure return array depending on the outcome.
+    |
+    */
+    public static function rejectFriendRequest($friendId, $payload)
+    {
+        // Authenticate the token.
+        $user = session::validateSession($payload['session_token'],$payload['device_id']);
+
+        // Check to see if the user has been retrieved and the token successfully authenticated.
+        if(empty($user))
+            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
+
+
+        // Prepare a query that's purpose will be to delete all records between a user and a current friend.
+        $query = "DELETE FROM friend_requests WHERE Req_Sender = :friendId AND Req_Receiver = :userId ";
+
+        // Bind the parameters to the query
+        $data = Array(":userId" => $user['entityId'], ":friendId" => $friendId);
+
+        // Delete all records of friendship between the two users.
+        // If the query runs successfully, return a success 200 message.
+        if (Database::getInstance()->delete($query, $data))
+            return Array("error" => "200", "message" => "Friend request has been removed.", "params" => "");
+        else
+            return Array("error" => "400", "message" => "Friend request does not exist, so it cannot be removed."
+            , "params" => "");
+    }
+
+
+    /*
      |--------------------------------------------------------------------------
      | (PUT) BLOCK USER
      |--------------------------------------------------------------------------
@@ -322,8 +470,6 @@ class Friend
         // Bind the parameters to the query
         $data = Array(":userId" => $userId, ":friendId" => $friendId);
 
-        // Delete all records of friendship between the two users.
-        // If the query runs successfully, return a success 200 message.
         if (Database::getInstance()->delete($query, $data))
             return Array("error" => "200", "message" => "This user has been blocked successfully.", "params" => "");
         else

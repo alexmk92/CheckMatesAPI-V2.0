@@ -107,9 +107,11 @@ class Friend
         // /api/v2/Friend/{userId} - Returns the friends of the user
         if(count($this->args) == 1)
             return \Handlers\Friend::getFriends($this->args[0]);
+
         // /api/v2/Friend/friend-requests/{userId} - Returns the requests for the user
         else if(count($this->args) == 1 && $this->verb == "friend-requests")
             return \Handlers\Friend::getFriendRequests($this->args[0]);
+
         // Unsupported handler
         else
             throw new \Exception("No handler found for the GET resource of this URI, please check the documentation.");
@@ -140,14 +142,10 @@ class Friend
             return \Handlers\Friend::sendFriendRequest($this->args[0], $payload);
         }
 
-        //*************************************************************************************//
-        //                        TODO: SECTION FOR UNIMPLEMENTED
-        //*************************************************************************************//
-
-        // /api/v2/Friend/accept-request/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(ACCEPTFRIENDREQUEST)
+        // /api/v2/Friend/accept-request/{friendId} - Accepts a friend request.
         else if(count($this->args) == 1 && $this->verb == 'accept-request')
         {
-            return \Handlers\Friend::acceptFriendRequest($this->args[0]);
+            return \Handlers\Friend::acceptFriendRequest($this->args[0], $payload);
         }
         // Unsupported handler
         else
@@ -210,10 +208,14 @@ class Friend
         if ($payload == null)
             return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid User payload to the server.");
 
-        // /api/v2/Friend/remove-friend/{friendId}/{category} - Deletes a friend taking into account different categories.
+        // /api/v2/Friend/remove-friend/{friendId} - Deletes a friend taking into account different categories.
         if(count($this->args) == 1 && $this->verb == 'remove-friend')
         {
             return \Handlers\Friend::removeFriend($this->args[0], $payload);
+        }
+        else if(count($this->args) == 1 && $this->verb == 'reject-request')
+        {
+            return \Handlers\Friend::rejectFriendRequest($this->args[0], $payload);
         }
         // Unsupported handler
         else

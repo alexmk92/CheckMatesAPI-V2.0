@@ -104,7 +104,7 @@ class CheckmatesAPI extends API
 
     protected function Message() {
         require "./app/core/http/endpoints/message.endpoint.php";
-        $messageHandler = new Endpoints\Message();
+        $messageHandler = new Endpoints\Message($this);
         return $messageHandler->_handleRequest();
     }
 

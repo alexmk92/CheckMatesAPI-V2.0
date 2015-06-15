@@ -52,6 +52,25 @@ class Message
     private $method;
 
     /*
+     |--------------------------------------------------------------------------
+     | Constructor
+     |--------------------------------------------------------------------------
+     |
+     | Constructs a new Checkin handler object, from here we can get the method,
+     | verb, arguments and other URI information to perform the request with.
+     |
+     */
+
+    function __construct(\API $sender)
+    {
+        // Extract info from payload into the encapsulated variables.
+        $info = $sender->_getInfo();
+        $this->verb   = $info['verb'];
+        $this->args   = $info['args'];
+        $this->method = $info['method'];
+    }
+
+    /*
     |--------------------------------------------------------------------------
     | Handle Request
     |--------------------------------------------------------------------------
@@ -71,7 +90,7 @@ class Message
                 break;
             case "DELETE" : return $this->_DELETE();
                 break;
-            default       : throw new \Exception("Unsupported header type for resource: Checkin");
+            default       : throw new \Exception("Unsupported header type for resource: Message");
                 break;
         }
     }
@@ -88,14 +107,24 @@ class Message
 
     private function _GET()
     {
+        $userId = "";
+
+        // Retrieve the userId from the headers that have been sent as a part of the GET HTTP Request.
+        foreach (getallheaders() as $header => $value) {
+
+            // Retrieve the identifier of the user that made the request.
+            if(strtoupper($header) == "ENTITYID")
+                $userId = $value;
+        }
+
         //*************************************************************************************//
         //                        TODO: SECTION FOR UNIMPLEMENTED
         //*************************************************************************************//
 
-        // /api/v2/Message/comments/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(GETCOMMENTS)
+        // /api/v2/Message/comments/{CheckinId} - Get all the comments for a checkIn.
         if(count($this->args) == 1 && $this->verb == 'comments')
         {
-            return \Handlers\Message::getComments($this->args[0]);
+            return \Handlers\Message::getComments($this->args[0], $userId);
         }
         // /api/v2/Message/history/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(GETCHATHISTORY)
         if(count($this->args) == 1 && $this->verb == 'history')
@@ -107,7 +136,9 @@ class Message
         {
             return \Handlers\Message::getChatMessages($this->args[0]);
         }
-
+        // Unsupported handler
+        else
+            throw new \Exception("No handler found for the GET resource of this URI, please check the documentation.");
 
     }
 
