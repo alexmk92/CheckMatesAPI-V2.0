@@ -26,9 +26,28 @@ the JSON object sent must contain all information on the given user.
 * A users position can be updated by specifying the new long/lat in the URI via: `/api/v2/User/{userId}/{long}/{lat}`.
 
 ##### POST
-* A new user can be inserted by sending a JSON object in the body of the HTTP request to `/api/v2/User`
-* A new friend can be added by sending a userId in the body of the HTTP reques to `/api/v2/User/friends/{userId}`, this will 
-send a new friend request to the specified user.
+* A new user can be inserted by sending a JSON object in the body of the HTTP request to `/api/v2/User`, conversely signing in is handled at the same endpoint by sending the same JSON object most of the information for this object should be derived from the Facebook graph API:
+
+    {
+        "device_id" : "some_id",
+        "device_type" : 1, // 1 for Apple, 2 for Android
+        "push_token" : "some_token",
+        "facebook_id" : "xyz",
+        "first_name" : "John",
+        "last_name" : "Doe",
+        "dob" : "Y-m-d",
+        "about" : "some details", 
+        "email" : "john.doe@gmail.com",
+        "friends" : "facebookID1, facebookID2, facebookID3",
+        "images" : "http://server.com/image1.png, http://server.com/image2.png",
+        "pic_url" : "http://server.com/profilePic.png",
+        "sex" : 1, // 1 for male, 2 for female
+        "
+    }
+    
+The server will process this object and determine whether or not the user should be registered or logged in.  If they are logged in then a new session is created and these details are returned in the response payload.  It should be noted that the `session_token` that is returned must be used to validate future sessions. Failure to provide this will cause the users session to be terminated.
+
+It should also be noted that this resource will add Facebook friends each time the app is opened (synchronises with the FB server), duplicate friends will not be added, any other changes such as profile picture changes will be committed here too.
 
 ##### DELETE
 * A user can be deleted by sending a single or multiple userId's to the URI: `/api/v2/User/{userId}` - deleting a user through
