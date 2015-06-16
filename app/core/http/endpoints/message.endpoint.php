@@ -116,26 +116,21 @@ class Message
             if(strtoupper($header) == "ENTITYID")
                 $userId = $value;
         }
-
-        //*************************************************************************************//
-        //                        TODO: SECTION FOR UNIMPLEMENTED
-        //*************************************************************************************//
-
         // /api/v2/Message/comments/{CheckinId} - Get all the comments for a checkIn.
         if(count($this->args) == 1 && $this->verb == 'comments')
         {
             return \Handlers\Message::getComments($this->args[0], $userId);
         }
-        // /api/v2/Message/history/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(GETCHATHISTORY)
-        if(count($this->args) == 1 && $this->verb == 'history')
-        {
-            return \Handlers\Message::getChatHistory($this->args[0]);
-        }
-        // /api/v2/Message/messages/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(GETCHATMESSAGES)
+        // /api/v2/Message/messages/{friendId} - Get all of the messages between a friend and the user that made the request.
         if(count($this->args) == 1 && $this->verb == 'messages')
         {
-            return \Handlers\Message::getChatMessages($this->args[0]);
+            return \Handlers\Message::getChatMessages($this->args[0], $userId);
         }
+
+        //*************************************************************************************//
+        //                        TODO: SECTION FOR UNIMPLEMENTED
+        //*************************************************************************************//
+
         // Unsupported handler
         else
             throw new \Exception("No handler found for the GET resource of this URI, please check the documentation.");
@@ -154,29 +149,27 @@ class Message
 
     private function _POST()
     {
-        //*************************************************************************************//
-        //                        TODO: SECTION FOR UNIMPLEMENTED
-        //*************************************************************************************//
+        // Retrieve the payload and send with the friendId to the handler.
+        $payload = json_decode(file_get_contents('php://input'), true);
 
-        // /api/v2/Message/like/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(LIKECOMMENT)
-        if(count($this->args) == 1 && $this->verb == 'like')
-        {
-            return \Handlers\Message::likeMessage($this->args[0]);
-        }
-        // /api/v2/Message/add-comment/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(ADDCOMMENT)
+        // Check for an invalid payload
+        if ($payload == null)
+            return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid User payload to the server.");
+
+        // /api/v2/Message/add-comment/{CheckinId} - Add new comment to a checkin
         if(count($this->args) == 1 && $this->verb == 'add-comment')
         {
-            return \Handlers\Message::addComment($this->args[0]);
+            return \Handlers\Message::addComment($this->args[0], $payload);
         }
-        // /api/v2/Message/send-message/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(SENDMESSAGE)
+        // /api/v2/Message/send-message/{friendId} - Send a message to a friend.
         if(count($this->args) == 1 && $this->verb == 'send-message')
         {
-            return \Handlers\Message::sendMessage($this->args[0]);
+            return \Handlers\Message::sendMessage($this->args[0], $payload);
         }
-        // /api/v2/Message/report-email/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(REPORTEMAIL)
+        // /api/v2/Message/report-email/{$reportId} - Report a message, along with the user information of the person who sent it.
         if(count($this->args) == 1 && $this->verb == 'report-email')
         {
-            return \Handlers\Message::reportEmail($this->args[0]);
+            return \Handlers\Message::reportEmail($payload, $this->args[0]);
         }
     }
 

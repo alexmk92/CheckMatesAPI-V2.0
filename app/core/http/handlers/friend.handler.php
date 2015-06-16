@@ -51,20 +51,20 @@ class Friend
 
         // NOTE* I would like to tailor this to return the specific fields we need,
         // for now im not sure if this will suffice -  shout if more is needed
-        $query = "SELECT DISTINCT entity_id, fb_id, first_name, last_name, profile_pic_url, last_checkin_place, category
+        $query = "SELECT DISTINCT Entity_Id, Fb_Id, First_Name, Last_Name, Profile_Pic_Url, Last_CheckIn_Place, Category
                   FROM entity
                   JOIN friends
-                  ON entity.entity_id = friends.entity_id2 OR entity.entity_id = friends.entity_id1
-                  WHERE entity_id IN
+                  ON entity.Entity_Id = friends.Entity_Id2 OR entity.Entity_Id = friends.Entity_Id1
+                  WHERE Entity_Id IN
                   (
-                    SELECT entity_id1 FROM friends WHERE entity_id2 = :entity_id AND Category != 4
+                    SELECT Entity_Id1 FROM friends WHERE Entity_Id2 = :entity_id AND Category != 4
                     UNION ALL
-                    SELECT entity_id2 FROM friends WHERE entity_id1 = :entity_id AND Category != 4
+                    SELECT Entity_Id2 FROM friends WHERE Entity_Id1 = :entity_id AND Category != 4
                   )
-                  AND entity_id NOT IN( :tagged )
+                  AND Entity_Id NOT IN( :tagged )
                   ";
 
-        // Check we recieved a valid object back to set the response.
+        // Check we received a valid object back to set the response.
         $res = Database::getInstance()->fetchAll($query, $data);
         $count = sizeof($res);
 
@@ -323,14 +323,14 @@ class Friend
 
                 // Checks to see whether the user combination already exists in the database, uses
                 // DUAL for the initial select to ensure we fetch from cache if the friends table is empty.
-                $query = "INSERT INTO friends(entity_id1, entity_id2, category)
+                $query = "INSERT INTO friends(Entity_Id1, Entity_Id2, Category)
                           SELECT :entityA, :entityB, :category
                           FROM DUAL
                           WHERE NOT EXISTS
                           (
                               SELECT fid FROM friends
-                              WHERE (entity_id1 = :entityA AND entity_id2 = :entityB)
-                              OR    (entity_id1 = :entityB AND entity_id2 = :entityA)
+                              WHERE (Entity_Id1 = :entityA AND Entity_Id2 = :entityB)
+                              OR    (Entity_Id1 = :entityB AND Entity_Id2 = :entityA)
                           )
                           LIMIT 1
                           ";
