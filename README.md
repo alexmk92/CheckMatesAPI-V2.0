@@ -28,7 +28,7 @@ the JSON object sent must contain all information on the given user.
 ##### POST
 * A new user can be inserted by sending a JSON object in the body of the HTTP request to `/api/v2/User`, conversely signing in is handled at the same endpoint by sending the same JSON object most of the information for this object should be derived from the Facebook graph API:
 
-    {
+`    {
         "device_id" : "some_id",
         "device_type" : 1, // 1 for Apple, 2 for Android
         "push_token" : "some_token",
@@ -44,6 +44,7 @@ the JSON object sent must contain all information on the given user.
         "sex" : 1, // 1 for male, 2 for female
         "
     }
+`
     
 The server will process this object and determine whether or not the user should be registered or logged in.  If they are logged in then a new session is created and these details are returned in the response payload.  It should be noted that the `session_token` that is returned must be used to validate future sessions. Failure to provide this will cause the users session to be terminated.
 
