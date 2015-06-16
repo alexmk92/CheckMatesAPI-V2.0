@@ -54,28 +54,6 @@ class User
 
     /*
     |--------------------------------------------------------------------------
-    | Respond to Friend Request
-    |--------------------------------------------------------------------------
-    |
-    | Either accepts or declines the friend request and then informs the
-    | interested party.
-    |
-    | @param $args - An array containing all information needed to make this
-    |                request.
-    |
-    |
-    |
-    */
-
-    public static function respondToFriendRequest($args)
-    {
-        if($args["sender_id"] == '' || $args["response"] == '')
-            return Array('error' => '400', 'message' => "Bad request, no credentials were sent in the request body.");
-
-    }
-
-    /*
-    |--------------------------------------------------------------------------
     | Update Location
     |--------------------------------------------------------------------------
     |

@@ -46,6 +46,13 @@ class User
     private $method;
 
     /*
+     * Property: File
+     * The PUT info
+     */
+
+    private $file;
+
+    /*
     |--------------------------------------------------------------------------
     | Constructor
     |--------------------------------------------------------------------------
@@ -62,6 +69,7 @@ class User
         $this->verb   = $info['verb'];
         $this->args   = $info['args'];
         $this->method = $info['method'];
+        $this->file   = $info['file'];
     }
 
     /*
@@ -186,15 +194,21 @@ class User
     private function _PUT()
     {
         // Get the payload and decode it to a PHP array, set true to ensure assoc behaviour.
-        $payload = json_decode(file_get_contents('php://input'), true);
+        $payload = json_decode($this->file, true);
 
         // Check for an invalid payload
         if ($payload == null)
             return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid User payload to the server.");
 
         // /api/v2/User/location/lat/long
-        if(count($this->args) == 2 && $this->verb == "location")
+        if(count($this->args) == 2 && $this->verb == "update-location")
+        {
+            if(empty($payload["lat"]))
+                $payload["lat"] = $this->args[0];
+            if(empty($payload["long"]))
+                $payload["long"] = $this->args[1];
             return \Handlers\User::updateLocation($payload);
+        }
         // /api/v2/User/friends/requests/respond
         if(count($this->args) == 2 && $this->verb == "friends")
             return \Handlers\User::respondToFriendRequest($payload);

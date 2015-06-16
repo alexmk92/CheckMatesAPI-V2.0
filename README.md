@@ -13,38 +13,65 @@ wider support, but it is not a huge priority.
 All user requests are documented here:
 
 ##### GET
-* All users can be retrieved via`/api/v2/User`
-* A specific user can be retrieved via `/api/v2/User/{userId}`, in extension to this, a list of user Id's can
-be sent to retrieve multiple users.
-* Users can be retrieved within a radius around a location by using GET via `/api/v2/User/at-location/{long}/{lat}/{radius}/{limit}`, it should
-be noted that `{limit}` is an optional parameter, if this is not specified a default of 50 users will be returned.
+* All users can be retrieved via`/api/v2/User`.  
+
+* A specific user can be retrieved via `/api/v2/User/{userId}`.
+
 * All friends of a specific user can be retrieved by: `/api/v2/User/friends/{userId}`
 
 ##### PUT
-* A single user can be updated by sending a new JSON object with the new information to `/api/v2/User/{userId}`. Please note that
-the JSON object sent must contain all information on the given user.
-* A users position can be updated by specifying the new long/lat in the URI via: `/api/v2/User/{userId}/{long}/{lat}`.
+* A user can be updated by sending a new JSON object with the new information to `/api/v2/User/{userId}`. Please note that the JSON object sent must contain all information on the given user.  This resource does not need to be called directly as changes set here are automatically performed when the user signs up or logs in, however in the event that a user updates there `about` information, this resource must have the following fields passed in a PUT method:
+
+```json    
+{
+    "device_id" : "some_id",
+    "device_type" : "1 for Apple, 2 for Android, specify an int here",
+    "push_token" : "some_token",
+    "facebook_id" : "xyz",
+    "first_name" : "John",
+    "last_name" : "Doe",
+    "dob" : "Y-m-d",
+    "about" : "some details", 
+    "email" : "john.doe@gmail.com",
+    "friends" : "facebookID1, facebookID2, facebookID3",
+    "images" : "http://server.com/image1.png, http://server.com/image2.png",
+    "pic_url" : "http://server.com/profilePic.png",
+    "sex" : "1 for male, 2 for female.  Specify an int here", 
+    "
+}
+```
+
+* A users position can be updated by specifying the new long/lat in the URI via: `/api/v2/User/update-location/{lat}/{long}` in addition to the longitude and latitude sent in the URL, a JSON object containing session information must be provided.
+
+```json
+{
+    "device_id" : "some_id",
+    "session_token" : "some_token"
+}
+```
+
+If this information is not correct then a 401 will be returned. An error 500 may also be returned if the resource does not update, this normally means that the Database could not be reached.
 
 ##### POST
 * A new user can be inserted by sending a JSON object in the body of the HTTP request to `/api/v2/User`, conversely signing in is handled at the same endpoint by sending the same JSON object most of the information for this object should be derived from the Facebook graph API:
 
 ```json    
-    {
-        "device_id" : "some_id",
-        "device_type" : 1, // 1 for Apple, 2 for Android
-        "push_token" : "some_token",
-        "facebook_id" : "xyz",
-        "first_name" : "John",
-        "last_name" : "Doe",
-        "dob" : "Y-m-d",
-        "about" : "some details", 
-        "email" : "john.doe@gmail.com",
-        "friends" : "facebookID1, facebookID2, facebookID3",
-        "images" : "http://server.com/image1.png, http://server.com/image2.png",
-        "pic_url" : "http://server.com/profilePic.png",
-        "sex" : 1, // 1 for male, 2 for female
-        "
-    }
+{
+    "device_id" : "some_id",
+    "device_type" : "1 for Apple, 2 for Android, specify an int here",
+    "push_token" : "some_token",
+    "facebook_id" : "xyz",
+    "first_name" : "John",
+    "last_name" : "Doe",
+    "dob" : "Y-m-d",
+    "about" : "some details", 
+    "email" : "john.doe@gmail.com",
+    "friends" : "facebookID1, facebookID2, facebookID3",
+    "images" : "http://server.com/image1.png, http://server.com/image2.png",
+    "pic_url" : "http://server.com/profilePic.png",
+    "sex" : "1 for male, 2 for female.  Specify an int here", 
+    "
+}
 ```
     
 The server will process this object and determine whether or not the user should be registered or logged in.  If they are logged in then a new session is created and these details are returned in the response payload.  It should be noted that the `session_token` that is returned must be used to validate future sessions. Failure to provide this will cause the users session to be terminated.
@@ -52,18 +79,21 @@ The server will process this object and determine whether or not the user should
 It should also be noted that this resource will add Facebook friends each time the app is opened (synchronises with the FB server), duplicate friends will not be added, any other changes such as profile picture changes will be committed here too.
 
 ##### DELETE
-* A user can be deleted by sending a single or multiple userId's to the URI: `/api/v2/User/{userId}` - deleting a user through
-this interface will delete all of their posts, messages, checkins and all other information.
-* Friends can be deleted by sending the friend ID to: `/api/v2/User/friends/{userId}`
+* A user can be deleted by sending a single userId to the URI: `/api/v2/User/{userId}` - deleting a user through this interface will delete all of their posts, messages, checkins and all other information, this request must be authenticated by sending a `session_token` and `device_id` to the API. If the senderID does not match userID then the request will fail by returning a `401` code.
+
+```json
+{
+    "device_id" : "some_id",
+    "session_token" : "some_token"
+}
+```
 
 ## Message Endpoint
 All message requests are documented here, as the application grows it would be great to implement group chat - this 
 feature would then require the extra URI's to be implemented...
 
 ##### GET
-* Messages sent by a user: `/api/v2/Message/sent-by/{userId}`
-* Messages sent to a user: `/api/v2/Message/sent-to/{userId}`
-* Threads a user belongs to: `/api/v2/Message/thread/{userId}`
+* 
 
 ##### POST
 * Send a new message to a specific message thread.  The message is sent in the body of the HTTP request: `/api/v2/Message/thread/{threadId}`
