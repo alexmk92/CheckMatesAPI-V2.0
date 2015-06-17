@@ -82,79 +82,64 @@ class Checkin
 
         // Determine the radius that the spatial query will be set too
         $spatialFilter = "";
-        $userFilter    = "";
+        $userFilter    = "0";
         $data          = Array();
 
         // Determine the radius to show - we reinitialise the data array here for the next query
         switch($userPreferences["visability"])
         {
             case 1:
-                $spatial = "(3958 * acos( cos( radians ( :currLat ) ) * cos ( radians( ent.Last_Checkin_Lat ) ) * cos ( radians( ent.Last_Checkin_Long ) - radians( :currLong ) + sin( radians( :currLat ) * sin ( radians( ent.Last_Checkin_Lat ) ) ) < = 150";
-                $data    = Array(":currLat" => $args["curr_lat"], ":currLong" => $args["curr_long"]);
+                $spatialFilter = "(3958 * acos( cos( radians ( :currLat ) ) * cos ( radians( ent.Last_Checkin_Lat ) ) * cos ( radians( ent.Last_Checkin_Long ) - radians( :currLong ) + sin( radians( :currLat ) * sin ( radians( ent.Last_Checkin_Lat ) ) ) < = 150";
+                $data          = Array(":currLat" => $args["curr_lat"], ":currLong" => $args["curr_long"]);
                 break;
             case 2:
-                $spatial = "ent.Last_Checkin_Country = :lastCountry";
-                $data    = Array(":lastCountry" => $userPreferences["last_country"]);
+                $spatialFilter = "ent.Last_Checkin_Country = :lastCountry";
+                $data          = Array(":lastCountry" => $userPreferences["last_country"]);
                 break;
             default:
-                $data    = Array();
+                $data          = Array();
                 break;
         }
 
         // Determine what age users to show - if we max on the app show oldest users
         // max it to some erroneous value for people with ridiculous Facebook birthdays
         if($userPreferences["upperAge"] == 50)
-            $userPreferences["upperAge"] = 150;
+            $userPreferences["upperAge"] = 130;
 
         // Check if we need to get Facebook users, Kinekt users or both
-        if($userPreferences["facebook"] == 1)
+        if(($userPreferences["facebook"] == 1 || $userPreferences["kinekt"] == 1) && $userPreferences["everyone"] != 1)
         {
-            $userFilter .= " OR (ent.Entity_Id IN (
-                                                      SELECT DISTINCT entity_id, fb_id, first_name, last_name, profile_pic_url, last_checkin_place, category
+            if(empty($data[":category"]))
+            {
+                if($userPreferences["facebook"] == 1 && $userPreferences["kinekt"] == 1)
+                    $data[":category"] = "1 OR Category = 2";
+                else
+                {
+                    if($userPreferences["facebook"] == 1)
+                        $data[":category"] = "1";
+                    if($userPreferences["kinekt"] == 1)
+                        $data[":category"] = "2";
+                }
+            }
+
+            $userFilter .= " OR ent.Entity_Id IN (
+                                                      SELECT DISTINCT entity_id
                                                       FROM entity
                                                       JOIN friends
                                                       ON entity.entity_id = friends.entity_id2 OR entity.entity_id = friends.entity_id1
                                                       WHERE entity_id IN
                                                       (
-                                                        SELECT entity_id1 FROM friends WHERE entity_id2 = :entity_id AND Category = 1
-                                                        UNION ALL
-                                                        SELECT entity_id2 FROM friends WHERE entity_id1 = :entity_id AND Category == 1
-                                                      )
-                                                  )";
-        }
-        // Check if we need to get kinekt users
-        if($userPreferences["kinekt"] == 1)
-        {
-            $userFilter .= " OR (ent.Entity_Id IN (
-                                                      SELECT DISTINCT entity_id, fb_id, first_name, last_name, profile_pic_url, last_checkin_place, category
-                                                      FROM entity
-                                                      JOIN friends
-                                                      ON entity.entity_id = friends.entity_id2 OR entity.entity_id = friends.entity_id1
-                                                      WHERE entity_id IN
-                                                      (
-                                                        SELECT entity_id1 FROM friends WHERE entity_id2 = :entity_id AND Category = 2
-                                                        UNION ALL
-                                                        SELECT entity_id2 FROM friends WHERE entity_id1 = :entity_id AND Category = 2
+                                                            SELECT entity_id1 FROM friends WHERE entity_id2 = :entityId AND Category :category
+                                                            UNION ALL
+                                                            SELECT entity_id2 FROM friends WHERE entity_id1 = :entityId AND Category :category
                                                       )
                                                   )";
         }
         // Check if we need to get everyone
         if($userPreferences["everyone"] == 1)
         {
-            $userFilter .= " OR (ent.Entity_Id IN (
-                                                      SELECT DISTINCT entity_id, fb_id, first_name, last_name, profile_pic_url, last_checkin_place, category
-                                                      FROM entity
-                                                      JOIN friends
-                                                      ON entity.entity_id = friends.entity_id2 OR entity.entity_id = friends.entity_id1
-                                                      WHERE entity_id NOT IN
-                                                      (
-                                                        SELECT entity_id1 FROM friends WHERE entity_id2 = :entity_id
-                                                        UNION ALL
-                                                        SELECT entity_id2 FROM friends WHERE entity_id1 = :entity_id
-                                                      )
-                                                  )";
-
-            $userFilter .= " AND TIMESTAMPDIFF(YEAR, ent.DOB, NOW()) BETWEEN :lowerAge AND :upperAge";
+            $userFilter = "0 OR setting.Pri_CheckIn = 2
+                            AND TIMESTAMPDIFF(YEAR, ent.DOB, NOW()) BETWEEN :lowerAge AND :upperAge";
 
             // Bind the new params to our data array
             if(empty($data[":lowerAge"]))
@@ -177,20 +162,81 @@ class Checkin
         // Perform the rest of the binding
         if(empty($data[":entityId"]))
             $data[":entityId"] = $user["entityId"];
+        if(empty($data[":currLat"]))
+            $data[":currLat"] = $args["curr_lat"];
+        if(empty($data[":currLong"]))
+            $data[":currLong"] = $args["curr_long"];
+        if(empty($data[":expiry"]))
+            $data[":expiry"] = $userPreferences["expiry"] * 60;
 
         // Build the final condition
-        if($spatialFilter = "")
+        if(empty($spatialFilter))
             $spatialFilter = "(" . $userFilter . ")";
         else
-            $spatialFilter = $spatialFilter . " and(" . $userFilter . ")";
+            $spatialFilter .= " AND (" . $userFilter . ")";
 
         // Get the users based on their preferences
-        $query = "SELECT
+        $query = "SELECT DISTINCT
+                        ent.Entity_Id,
+                        ent.Profile_Pic_Url,
+                        ent.Last_CheckIn_Lat,
+                        ent.Last_CheckIn_Long,
+                        ent.First_Name AS first_name,
+                        ent.Last_Name AS last_name,
+                        checkins.place_name,
+                        checkins.place_lat,
+                        checkins.place_long,
+                        checkins.place_people,
+                        checkins.img_url AS checkin_photo,
+                        COUNT(checkin_comments.Chk_Id) AS checkin_comments,
+                        COUNT(checkin_likes.Chk_Id) AS checkin_likes,
+                        (6371 * acos( cos( radians(:currLat) ) * cos( radians(ent.Last_CheckIn_Lat) ) * cos( radians(ent.Last_CheckIn_Long) - radians(:currLong) ) + sin( radians(:currLat) ) * sin( radians(ent.Last_CheckIn_Lat) ) ) ) as distance,
+                        (
+                            SELECT Category
+                            FROM   friends
+                            WHERE  (Entity_Id1 = ent.Entity_Id AND Entity_Id2 = :entityId)  OR
+                                   (Entity_Id2 = ent.Entity_Id AND Entity_Id1 = :entityId)
+                        ) AS FC,
+                        ent.Last_Checkin_Dt AS date
+                  FROM  entity ent
+                  JOIN  checkins
+                  ON    ent.Entity_Id = checkins.Entity_Id
+                  JOIN  setting
+                  ON    setting.Entity_Id = ent.Entity_Id
+             LEFT JOIN  checkin_comments
+                  ON    checkins.chk_id = checkin_comments.chk_id
+             LEFT JOIN  checkin_likes
+                  ON    checkins.chk_id = checkin_likes.chk_id
+                  WHERE ent.Entity_Id = setting.Entity_Id
+                  AND   ent.Create_Dt != ent.Last_CheckIn_Dt
+                  AND   ent.Last_CheckIn_Place IS NOT NULL
+                  AND   TIMESTAMPDIFF(MINUTE, ent.Last_CheckIn_Dt, NOW()) < :expiry
+                  AND   ".$spatialFilter."
+                  GROUP BY ent.Entity_Id
+                  ORDER BY distance ASC
+                  ";
 
-                 ";
+        // Get the results and build the response payload
+        $res = Database::getInstance()->fetchAll($query, $data);
+        if(empty($res))
+            return Array("error" => "404", "message" => "Sorry, it doesn't look like there have been any checkins recently.  Update your privacy settings to see more users!");
+        // Ensure all privacy is taken care of here...i.e. no facebook friends must be returned with no last name
+        else
+        {
+            $users = Array();
 
-        var_dump($data);
+            foreach($res as $user)
+            {
+                if(empty($user["FC"]))
+                    $user["FC"] = "3";
+                if($user["FC"] != 2)
+                    $user["last_name"] = "";
 
+                array_push($users, $user);
+            }
+
+            return Array("error" => "200", "message" => "Successfully retrieved " . count($res) . " users around your location!", "payload" => Array("users" => $users));
+        }
     }
 
 
@@ -455,9 +501,10 @@ class Checkin
         // Send a push notification to each of these friends
         if($friendCount > 0) {
             foreach ($friends["payload"] as $friend) {
+
                 // Notify the user, only if they prompted to recieve notifications
                 $query = "SELECT entity_id FROM setting WHERE entity_id = :userId AND notif_tag = 1";
-                $data = Array("userId" => $friend["entity_id"]);
+                $data = Array("userId" => $friend["Entity_Id"]);
 
                 // This expression will result to std::object or false - this is why we perform a boolean check
                 $recipient = Database::getInstance()->fetch($query, $data);

@@ -103,16 +103,15 @@ class Checkin
 
     private function _GET()
     {
-        // /api/v2/Checkin - Returns all Checkins in the system
-        if(count($this->args) == 0 && $this->verb == "")
+        // /api/v2/Checkin/around-location/long/lat
+        if(count($this->args) == 2 && $this->verb == "around-location")
         {
-            $args    = "";
             $headers = apache_request_headers();
             if(!empty($headers))
             {
                 $args = Array(
-                    "curr_lat" => $headers["curr_lat"],
-                    "curr_long" => $headers["curr_long"],
+                    "curr_long" => $this->args[0],
+                    "curr_lat" => $this->args[1],
                     "session_token" => $headers["session_token"],
                     "device_id" => $headers["device_id"]
                 );
