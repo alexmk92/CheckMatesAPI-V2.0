@@ -72,9 +72,10 @@ class Friend
         $payload = Array();
         foreach ($res as $user)
         {
+
             $user["uri_info"] = Array(
-                "user" => "/User/{$user["fb_id"]}",
-                "messages" => "/Messages/{$user["fb_id"]}"
+                "user" => "/User/{$user["Fb_Id"]}",
+                "messages" => "/Messages/{$user["Fb_Id"]}"
             );
             array_push($payload, $user);
         }
@@ -421,7 +422,6 @@ class Friend
         // Check to see if the user has been retrieved and the token successfully authenticated.
         if(empty($user))
             return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
-
 
         // Prepare a query that's purpose will be to delete all records between a user and a current friend.
         $query = "DELETE FROM friend_requests WHERE Req_Sender = :friendId AND Req_Receiver = :userId ";

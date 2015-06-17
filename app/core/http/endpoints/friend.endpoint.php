@@ -141,7 +141,6 @@ class Friend
         {
             return \Handlers\Friend::sendFriendRequest($this->args[0], $payload);
         }
-
         // /api/v2/Friend/accept-request/{friendId} - Accepts a friend request.
         else if(count($this->args) == 1 && $this->verb == 'accept-request')
         {

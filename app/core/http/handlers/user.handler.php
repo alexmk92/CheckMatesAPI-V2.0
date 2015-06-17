@@ -154,12 +154,31 @@ class User
     public static function get($userId)
     {
         $data = Array(":entity_id" => $userId);
-        $query = "SELECT * FROM entity WHERE entity_id = :entity_id OR fb_id = :entity_id";
+        $query = "SELECT DISTINCT entity.*, friends.Category
+                  FROM entity
+                  JOIN friends
+                  ON entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2
+                  WHERE entity_id = :entity_id
+                  OR fb_id = :entity_id
+                  AND friends.Category != 4";
 
         $res = Database::getInstance()->fetch($query, $data);
 
+        // Attempt to get a user without a friend connection
+        if(empty($res))
+        {
+            $query = "SELECT DISTINCT entity.*
+                      FROM entity
+                      WHERE entity_id = :entity_id
+                      OR fb_id = :entity_id";
+
+            $res = Database::getInstance()->fetch($query, $data);
+        }
         if(empty($res))
             return Array("error" => "404", "message" => "Sorry, the user with id: " . $userId . " does not exist on the server.");
+
+        if(empty($res->Category))
+            $res->Category = 3;
 
         return Array("error" => "200", "message" => "Successfully retrieved the user with id: " . $userId, "payload" => $res);
     }
