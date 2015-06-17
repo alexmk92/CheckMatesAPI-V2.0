@@ -495,13 +495,93 @@ class User
      | (PUT) UPDATE SETTINGS
      |--------------------------------------------------------------------------
      |
-     | TODO: ADD DESCRIPTION
+     | Update the settings for the user. Requires at least one of the values of the
+     | settings table to be sent in the JSON body, else an error is returned.
+     |
+     | @param $payload - The JSON encoded body for the PUT HTTP request.
+     |                   Requires at least one of the following values to be specified:
+     |                   1) privacyCheckin
+     |                   2) privacyVisibility
+     |                   3) notifTag
+     |                   4) notifMessages
+     |                   5) notifNewFriends
+     |                   6) notifFriendRequests
+     |                   7) notifCheckinActivity
+     |
+     | @param $userId  - The identifer of the user.
+     |
      |
      */
 
-    public static function updateSettings($args)
+    public static function updateSettings($payload, $userId)
     {
-        return Array("error" => "501", "message" => "Not currently implemented.");
+        // Authenticate the token.
+        $user = session::validateSession($payload['session_token'],$payload['device_id']);
+
+        // Check to see if the user has been retrieved and the token successfully authenticated.
+        if(empty($user))
+            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
+
+        if($userId != $user['entityId'])
+            return Array("error" => "400", "message" => "Bad request. Somehow the entity_id of the validated session does not match the identifier".
+                " of the sent user provided by the parameter.", "payload" => "");
+
+        // Check to see what JSON body values we have.
+        $foundSettings = Array();
+
+        // Check if values exist, and if so add to an array of values using the names of the columns from the database.
+        if(isset($payload['privacyCheckin']))       $foundSettings['Pri_CheckIn']            = $payload['privacyCheckin'];
+        if(isset($payload['privacyVisibility']))    $foundSettings['Pri_Visability']         = $payload['privacyVisibility'];
+        if(isset($payload['notifTag']))             $foundSettings['Notif_Tag']              = $payload['notifTag'];
+        if(isset($payload['notifMessages']))        $foundSettings['Notif_Msg']              = $payload['notifMessages'];
+        if(isset($payload['notifNewFriends']))      $foundSettings['Notif_New_Friend']       = $payload['notifNewFriends'];
+        if(isset($payload['notifFriendRequests']))  $foundSettings['Notif_Friend_Request']   = $payload['notifFriendRequests'];
+        if(isset($payload['notifCheckinActivity'])) $foundSettings['Notif_CheckIn_Activity'] = $payload['notifCheckinActivity'];
+
+        // If we have found no matching values, then return an error.
+        if(count($foundSettings) == 0)
+            return Array("error" => "400", "message" => "Updating has failed because at least one settings tag needs to be provided.");
+
+        // Create the variable that will form the query for the SQL update operation.
+        // Note: it is meant to be 'update settings set ', so ignore red error warning.
+        $query = 'UPDATE setting
+                  SET';
+
+        // For each tag we have, add column name and value.
+        // Count keeps track of the index of the foreach. When the index is equal to the size
+        // of the array of values, we don't include a comma and then move on to the WHERE clause
+        // of the query.
+        $count = 0;
+        foreach($foundSettings as $setting)
+        {
+            // Find tag name and get value from array. Concatenate both together.
+            $tagName = array_search($setting, $foundSettings);
+            $query .= ' ' . $tagName . ' = ' . $foundSettings[$tagName];
+
+            // If we exhaust all values, don't include a comma at the end of the query.
+            if($count == count($foundSettings) -1){} // Don't include.
+            else
+                $query .= ', ';                      // Include.
+
+            $count++;
+        }
+
+        // Finally add the WHERE clause and do the normal stuff of appending the userId.
+        // Example output: UPDATE setting
+        //                 SET Pri_Visability = 2, Notif_New_Friend = 1, Notif_CheckIn_Activity = 0
+        //                 WHERE Entity_Id = :userId
+        $query .= ' WHERE Entity_Id = :userId';
+
+        // Bind the parameter to the query
+        $data = Array(":userId" => $user['entityId']);
+
+        // Perform the update
+        if (Database::getInstance()->update($query, $data))
+            return Array("error" => "200", "message" => "The settings have been changed successfully.");
+        else
+            // If the values of the settings are the same as before the query was performed.
+            // Let me know if you want this check done above - Adam.
+            return Array("error" => "409", "message" => "Please select new values for the chosen settings.");
     }
 
     /*
@@ -509,11 +589,39 @@ class User
      | (PUT) UPDATE SCORE
      |--------------------------------------------------------------------------
      |
-     | TODO: ADD DESCRIPTION
+     | Update a users score to reflect the changes they have made whilst using one or more of the apps.
+     | The score needs to be updated on the apps end. I suggest using the scoreValue returned and performing
+     | validation based on the HTTP response; update UI with returned value.
+     |
+     | @param $payload    - The Json encoded information for the HTTP PUT request.
+     |
+     | @param $scoreValue - The value to add to the score value in the database.
+     |
+     | @return            - The new value of the score with a success message, else a failure message.
      |
      */
-    private static function updateScore($entityId, $amount, $operator)
+    public static function updateScore($payload, $scoreValue)
     {
+        // Authenticate the token.
+        $user = session::validateSession($payload['session_token'],$payload['device_id']);
+
+        // Check to see if the user has been retrieved and the token successfully authenticated.
+        if(empty($user))
+            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
+
+        $query = "UPDATE entity
+                  SET    Score = Score + :scoreValue
+                  WHERE  Entity_Id = :userId
+                 ";
+
+        // Bind the parameters to the query
+        $data = Array(":userId" => $user['entityId'], ":scoreValue" => $scoreValue);
+
+        // Perform the update
+        if (Database::getInstance()->update($query, $data))
+            return Array("error" => "200", "message" => "The score has been successfully updated.", "payload" => Array("scoreValue" => $scoreValue));
+        else
+            return Array("error" => "400", "message" => "There has been an error updating the score for this user. ");
 
     }
 
@@ -522,13 +630,54 @@ class User
      | (POST) ADD FAVOURITE
      |--------------------------------------------------------------------------
      |
-     | TODO: ADD DESCRIPTION
+     | Add a new favourite place. The placeName and imageUrl need to be sent
+     | in the body of the HTTP POST request.
+     |
+     | @param $userId   - The identifier of the user that is adding the new place.
+     |
+     | @param $payload  - The JSON encoded body for the HTTP POST request.
+     |
+     | @body $placeName - The name of the place.
+     |
+     | @body $picUrl    - The url link for the place.
+     |
+     | @return          - A success or failure message dependent on the outcome.
      |
      */
 
-    public static function addFavourite($args)
+    public static function addFavourite($payload, $userId)
     {
-        return Array("error" => "501", "message" => "Not currently implemented.");
+        // Authenticate the token.
+        $user = session::validateSession($payload['session_token'],$payload['device_id']);
+
+        // Check to see if the user has been retrieved and the token successfully authenticated.
+        if(empty($user))
+            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
+
+        if($userId != $user['entityId'])
+            return Array("error" => "400", "message" => "Bad request. Somehow the entity_id of the validated session does not match the identifier".
+                " of the sent user provided by the parameter.", "payload" => "");
+
+        // Checks to see whether the user combination already exists in the database.
+        $query = "INSERT INTO favorites(Entity_Id, Place_Name, Place_Pic_Url)
+                          SELECT :userId, :placeName, :picUrl
+                          FROM DUAL
+                          WHERE NOT EXISTS
+                          (
+                              SELECT favorites.Like_Id FROM favorites
+                              WHERE (Entity_Id = :userId AND Place_Name = :placeName AND Place_Pic_Url = :picUrl)
+                          )
+                          LIMIT 1
+                          ";
+
+        // Bind the parameters to the query
+        $data = Array(":userId" => $userId, ":placeName" => $payload['placeName'], ":picUrl" => $payload['picUrl']);
+
+        // Perform the insert, then increment count if this wasn't a duplicate record
+        if (Database::getInstance()->insert($query, $data))
+            return Array("error" => "200", "message" => "" . $payload['placeName'] . " has been added to your favourites.");
+        else
+            return Array("error" => "409", "message" => "This place is already in your favourites list.");
     }
 
     /*
@@ -536,13 +685,138 @@ class User
      | DELETE ACCOUNT
      |--------------------------------------------------------------------------
      |
-     | TODO: ADD DESCRIPTION
+     | Delete all information within the database relating to a user.
+     |
+     | @param $userId - The identifier of the user.
+     |
+     | @return        - A failure or success message depending on whether or not more than one
+     |                  row from a table relating to a user was deleted.
      |
      */
 
-    public static function deleteAccount($args)
+    public static function deleteAccount($payload, $userId)
     {
-        return Array("error" => "501", "message" => "Not currently implemented.");
+        // Authenticate the token.
+        $user = session::validateSession($payload['session_token'],$payload['device_id']);
+
+        // Check to see if the user has been retrieved and the token successfully authenticated.
+        if(empty($user))
+            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
+
+        if($userId != $user['entityId'])
+            return Array("error" => "400", "message" => "Bad request. Somehow the entity_id of the validated session does not match the identifier".
+                                                    " of the sent user provided by the parameter.", "payload" => "");
+
+        // Bind the parameters to the query - do this at the top level because it will be used a lot below.
+        $data = Array(":userId" => $user['entityId']);
+
+        // How many rows have been affected.
+        $deletedCount = 0;
+
+        // User sessions
+        $query = "DELETE FROM user_sessions
+                  WHERE oid = :userId
+                  ";
+
+        if (Database::getInstance()->delete($query, $data))
+            $deletedCount++;
+
+        // Favourites
+        $query = "DELETE FROM favorites
+                  WHERE Entity_Id = :userId
+                  ";
+
+        if (Database::getInstance()->delete($query, $data))
+            $deletedCount++;
+
+        // Friends
+        $query = "DELETE FROM friends
+                  WHERE Entity_Id1 = :userId
+                  OR    Entity_Id2 = :userId
+                  ";
+
+        if (Database::getInstance()->delete($query, $data))
+            $deletedCount++;
+
+        // Chat messages
+        $query = "DELETE FROM chatmessages
+                  WHERE sender   = :userId
+                  OR    receiver = :userId
+                  ";
+
+        if (Database::getInstance()->delete($query, $data))
+            $deletedCount++;
+
+        // Checkins
+        $query = "DELETE FROM checkins
+                  WHERE Entity_Id = :userId
+                  ";
+
+        if (Database::getInstance()->delete($query, $data))
+            $deletedCount++;
+
+        // Checkin comments
+        $query = "DELETE FROM checkin_comments
+                  WHERE Entity_Id = :userId
+                  ";
+
+        if (Database::getInstance()->delete($query, $data))
+            $deletedCount++;
+
+        // Checkin likes
+        $query = "DELETE FROM checkin_likes
+                  WHERE Entity_Id = :userId
+                  ";
+
+        if (Database::getInstance()->delete($query, $data))
+            $deletedCount++;
+
+        // Friend requests
+        $query = "DELETE FROM friend_requests
+                  WHERE Req_Receiver = :userId
+                  OR    Req_Sender   = :userId
+                  ";
+
+        if (Database::getInstance()->delete($query, $data))
+            $deletedCount++;
+
+        // Entity - the user
+        $query = "DELETE FROM entity
+                  WHERE Entity_Id = :userId
+                  ";
+
+        if (Database::getInstance()->delete($query, $data))
+            $deletedCount++;
+
+        // Notifications
+        $query = "DELETE FROM notifications
+                  WHERE sender   = :userId
+                  OR    receiver = :userId
+                  ";
+
+        if (Database::getInstance()->delete($query, $data))
+            $deletedCount++;
+
+        // Preferences
+        $query = "DELETE FROM preferences
+                  WHERE Entity_Id = :userId
+                  ";
+
+        if (Database::getInstance()->delete($query, $data))
+            $deletedCount++;
+
+        // Settings
+        $query = "DELETE FROM setting
+                  WHERE Entity_Id = :userId
+                 ";
+
+        if (Database::getInstance()->delete($query, $data))
+            $deletedCount++;
+
+        if($deletedCount > 0)
+            return Array("error" => "200", "message" => "The user account has been deleted. ". $deletedCount .": rows were affected.");
+        else
+            return Array("error" => "200", "message" => "The operation was successful, but no rows were affected.");
     }
 
     /*
@@ -550,13 +824,43 @@ class User
      | DELETE FAVOURITE PLACE
      |--------------------------------------------------------------------------
      |
-     | TODO: ADD DESCRIPTION
+     | Remove a favourite place of a user.
+     |
+     | @param $likeId - the identifier of the favourite place.
+     |
+     | @return        - A success or failure message dependent on whether the place was
+     |                  deleted or not.
      |
      */
 
-    public static function removeFavourite($args)
+    public static function removeFavourite($likeId, $payload)
     {
-        return Array("error" => "501", "message" => "Not currently implemented.");
+        // Authenticate the token.
+        $user = session::validateSession($payload['session_token'],$payload['device_id']);
+
+        // Check to see if the user has been retrieved and the token successfully authenticated.
+        if(empty($user))
+            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
+
+        // User sessions
+        $query = "DELETE FROM favorites
+                  WHERE Entity_Id = :userId
+                  AND   Like_Id   = :likeId
+                  ";
+
+        // Bind the parameters to the query - do this at the top level because it will be used a lot below.
+        $data = Array(":userId" => $user['entityId'], ":likeId" => $likeId);
+
+        // Remove from favourites.
+        if (Database::getInstance()->delete($query, $data))
+
+            // Favourite place has been removed.
+            return Array("error" => "200", "message" => "This place has been successfully removed from your favourites.");
+        else
+
+            // Conflict in terms of the primary key for the favourites table.
+            return Array("error" => "409", "message" => "Conflict: The specified identifer for the favourite place has not matched"
+                                                       ." a record in the database.");
     }
 
 

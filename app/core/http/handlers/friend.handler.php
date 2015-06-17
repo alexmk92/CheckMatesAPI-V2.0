@@ -470,7 +470,7 @@ class Friend
         // Bind the parameters to the query
         $data = Array(":userId" => $userId, ":friendId" => $friendId);
 
-        if (Database::getInstance()->delete($query, $data))
+        if (Database::getInstance()->update($query, $data))
             return Array("error" => "200", "message" => "This user has been blocked successfully.", "params" => "");
         else
             return Array("error" => "409", "message" => "Conflict: The relationship between the two users does not exist."

@@ -159,22 +159,4 @@ class Session
         }
     }
 
-    /*
-     * MAY ADD THIS IN FUTURE, REDUNDANT FOR NOW...
-     *
-    private static function updateActiveTime($entityId)
-    {
-        $currTime = gmdate("Y-m-d H:i:s", time());
-
-        $query = "UPDATE entity SET last_active_dt_time = :dateTime WHERE entity_id = :entityId";
-        $data  = Array(":dateTime" => $currTime, ":entityId" => $entityId);
-
-        $res   = Database::getInstance()->update($query, $data);
-
-        if($res > 0)
-            return true;
-
-        return false;
-    }
-    */
 }

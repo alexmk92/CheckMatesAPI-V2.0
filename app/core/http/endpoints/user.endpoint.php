@@ -229,10 +229,20 @@ class User
         {
             return \Handlers\User::updatePreferences($this->args[0]);
         }
-        // /api/v2/User/update-settings/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(UPDATESETTINGS)
+        // /api/v2/User/update-settings/{userId} - Update the settings for the user with one or more values provided.
         if(count($this->args) == 1 && $this->verb == 'update-settings')
         {
-            return \Handlers\User::updateSettings($this->args[0]);
+            return \Handlers\User::updateSettings($payload, $this->args[0]);
+        }
+        // /api/v2/User/update-score/{scoreValue} - Update a users score - add to it.
+        if(count($this->args) == 1 && $this->verb == 'update-score')
+        {
+            return \Handlers\User::updateScore($payload, $this->args[0]);
+        }
+        // throw an exception if no handler found
+        else
+        {
+            throw new \Exception("No handler found for the PUT resource of this URI, please check the documentation.");
         }
     }
 
@@ -268,10 +278,15 @@ class User
         {
             return \Handlers\User::blockUser($this->args[0]);
         }
-        // /api/v2/User/add-favourite/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(ADDFAVOURITE)
+        // /api/v2/User/add-favourite/{userId} - Add a new favourite place.
         if(count($this->args) == 1 && $this->verb == 'add-favourite')
         {
-            return \Handlers\User::addFavourite($this->args[0]);
+            return \Handlers\User::addFavourite($payload, $this->args[0]);
+        }
+        // throw an exception if no handler found
+        else
+        {
+            throw new \Exception("No handler found for the POST resource of this URI, please check the documentation.");
         }
     }
 
@@ -287,29 +302,27 @@ class User
 
     private function _DELETE()
     {
-        //*************************************************************************************//
-        //                        TODO: SECTION FOR UNIMPLEMENTED
-        //*************************************************************************************//
+        // Get the payload and decode it to a PHP array, set true to ensure assoc behaviour.
+        $payload = json_decode(file_get_contents('php://input'), true);
 
-        // /api/v2/User/unfriend/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(REMOVEFRIEND)
-        if(count($this->args) == 1 && $this->verb == 'unfriend')
-        {
-            return \Handlers\User::removeFriend($this->args[0]);
-        }
-        // /api/v2/User/remove-most-recent/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(DELETEMOSTRECENT)
-        if(count($this->args) == 1 && $this->verb == 'remove-most-recent')
-        {
-            return \Handlers\User::removeMostRecent($this->args[0]);
-        }
-        // /api/v2/User/remove-user/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(REMOVEUSER)
+        // Check for an invalid payload
+        if ($payload == null)
+            return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid User payload to the server.");
+
+        // /api/v2/User/remove-user/{userId} - Delete the users account.
         if(count($this->args) == 1 && $this->verb == 'remove-user')
         {
-            return \Handlers\User::removeUser($this->args[0]);
+            return \Handlers\User::deleteAccount($payload, $this->args[0]);
         }
-        // /api/v2/User/remove-favourite-place/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(REMOVEFAVOURITEPLACE)
-        if(count($this->args) == 1 && $this->verb == 'remove-favourite-place')
+        // /api/v2/User/remove-favourite-place/{likeId} - Remove a favourite place.
+        if(count($this->args) == 1 && $this->verb == 'remove-favourite')
         {
-            return \Handlers\User::removeFavourite($this->args[0]);
+            return \Handlers\User::removeFavourite($this->args[0], $payload);
+        }
+        // throw an exception if no handler found
+        else
+        {
+            throw new \Exception("No handler found for the DELETE resource of this URI, please check the documentation.");
         }
     }
 }
