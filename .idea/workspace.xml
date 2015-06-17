@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
+<<<<<<< HEAD
     <list default="true" id="a98be491-8ca3-4559-8d21-4a3b571dd347" name="Default" comment="" />
+=======
+    <list default="true" id="a98be491-8ca3-4559-8d21-4a3b571dd347" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+    </list>
+>>>>>>> ec46994c74c067d4cbb8f1f2bbe6350ed679554a
     <ignored path="Checkmates V2 API.iws" />
     <ignored path=".idea/workspace.xml" />
     <ignored path=".idea/dataSources.local.xml" />
@@ -93,6 +100,32 @@
       </PATH_ELEMENT>
     </PATH>
   </component>
+<<<<<<< HEAD
+=======
+  <component name="DockManager">
+    <window id="1">
+      <content type="file-editors">
+        <state>
+          <leaf>
+            <file leaf-file-name="README.md" pinned="false" current-in-tab="true">
+              <entry file="file://$PROJECT_DIR$/README.md">
+                <provider editor-type-id="MarkdownPreviewEditor">
+                  <state />
+                </provider>
+                <provider selected="true" editor-type-id="text-editor">
+                  <state vertical-scroll-proportion="3.5748792" vertical-offset="0" max-vertical-offset="3940">
+                    <caret line="185" column="0" selection-start-line="185" selection-start-column="0" selection-end-line="185" selection-end-column="0" />
+                    <folding />
+                  </state>
+                </provider>
+              </entry>
+            </file>
+          </leaf>
+        </state>
+      </content>
+    </window>
+  </component>
+>>>>>>> ec46994c74c067d4cbb8f1f2bbe6350ed679554a
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FavoritesManager">
     <favorites_list name="Checkmates V2 API" />
@@ -296,8 +329,13 @@
       <file leaf-file-name="checkin.endpoint.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/core/http/endpoints/checkin.endpoint.php">
           <provider selected="true" editor-type-id="text-editor">
+<<<<<<< HEAD
             <state vertical-scroll-proportion="-6.3" vertical-offset="2226" max-vertical-offset="4641">
               <caret line="115" column="31" selection-start-line="115" selection-start-column="31" selection-end-line="115" selection-end-column="31" />
+=======
+            <state vertical-scroll-proportion="0.85863876" vertical-offset="1700" max-vertical-offset="4420">
+              <caret line="126" column="3" selection-start-line="126" selection-start-column="3" selection-end-line="126" selection-end-column="4" />
+>>>>>>> ec46994c74c067d4cbb8f1f2bbe6350ed679554a
               <folding />
             </state>
           </provider>
@@ -316,11 +354,22 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
+<<<<<<< HEAD
         <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/app/core/http/handlers/session.handler.php" />
+=======
+        <option value="$PROJECT_DIR$/app/core/http/api.abstract.php" />
+        <option value="$PROJECT_DIR$/app/core/http/endpoints/user.endpoint.php" />
+>>>>>>> ec46994c74c067d4cbb8f1f2bbe6350ed679554a
         <option value="$PROJECT_DIR$/app/core/http/handlers/friend.handler.php" />
         <option value="$PROJECT_DIR$/app/core/http/endpoints/user.endpoint.php" />
         <option value="$PROJECT_DIR$/app/core/http/handlers/user.handler.php" />
+<<<<<<< HEAD
+=======
+        <option value="$PROJECT_DIR$/app/core/http/handlers/checkin.handler.php" />
+        <option value="$PROJECT_DIR$/app/core/http/endpoints/checkin.endpoint.php" />
+        <option value="$PROJECT_DIR$/README.md" />
+>>>>>>> ec46994c74c067d4cbb8f1f2bbe6350ed679554a
       </list>
     </option>
   </component>
@@ -632,7 +681,11 @@
     <layout>
       <window_info id="File Transfer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.12863535" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32809612" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
+<<<<<<< HEAD
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.18903804" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
+=======
+      <window_info id="Terminal" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.096551724" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
+>>>>>>> ec46994c74c067d4cbb8f1f2bbe6350ed679554a
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.13450761" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.18969299" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -1085,6 +1138,7 @@
         </state>
       </provider>
     </entry>
+<<<<<<< HEAD
     <entry file="file://$PROJECT_DIR$/README.md">
       <provider editor-type-id="com.intellij.database.editor.CsvTableFileEditorProvider">
         <state />
@@ -1097,6 +1151,50 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/core/http/endpoints/checkin.endpoint.php">
+=======
+    <entry file="file://$PROJECT_DIR$/app/core/http/handlers/message.handler.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-14.75862" vertical-offset="5972" max-vertical-offset="6860">
+          <caret line="320" column="0" selection-start-line="320" selection-start-column="0" selection-end-line="320" selection-end-column="0" />
+          <folding>
+            <marker date="1434486611000" expanded="true" signature="1255:1570" placeholder="SELECT ent.E..checkin_comments..." />
+            <marker date="1434486611000" expanded="true" signature="2027:2160" placeholder="SELECT Entit..friends..." />
+            <marker date="1434486611000" expanded="true" signature="4691:4995" placeholder="SELECT sende..entity..." />
+            <marker date="1434486611000" expanded="true" signature="4691:5388" placeholder="SELECT sende..." />
+            <marker date="1434486611000" expanded="true" signature="5045:5349" placeholder="SELECT sende..entity..." />
+            <marker date="1434486611000" expanded="true" signature="7016:7129" placeholder="INSERT INTO ..." />
+            <marker date="1434486611000" expanded="true" signature="8866:8994" placeholder="INSERT INTO ..." />
+            <marker date="1434486611000" expanded="true" signature="10824:10945" placeholder="SELECT Entit..entity..." />
+            <marker date="1434486611000" expanded="true" signature="10824:11117" placeholder="SELECT Entit..." />
+            <marker date="1434486611000" expanded="true" signature="10994:11117" placeholder="SELECT Entit..entity..." />
+            <marker date="1434486611000" expanded="true" signature="11547:13865" placeholder="..." />
+            <marker date="1434486611000" expanded="true" signature="11590:13829" placeholder="..." />
+            <marker date="1434486611000" expanded="false" signature="11656:11672" placeholder="..." />
+            <marker date="1434486611000" expanded="false" signature="11765:11781" placeholder="..." />
+            <marker date="1434486611000" expanded="false" signature="11876:11932" placeholder="..." />
+            <marker date="1434486611000" expanded="true" signature="11949:12622" placeholder="..." />
+            <marker date="1434486611000" expanded="true" signature="12001:12573" placeholder="..." />
+            <marker date="1434486611000" expanded="false" signature="12062:12080" placeholder="..." />
+            <marker date="1434486611000" expanded="false" signature="12093:12105" placeholder="..." />
+            <marker date="1434486611000" expanded="false" signature="12132:12144" placeholder="..." />
+            <marker date="1434486611000" expanded="false" signature="12251:12269" placeholder="..." />
+            <marker date="1434486611000" expanded="false" signature="12435:12453" placeholder="..." />
+            <marker date="1434486611000" expanded="false" signature="12742:12758" placeholder="..." />
+            <marker date="1434486611000" expanded="false" signature="12853:12909" placeholder="..." />
+            <marker date="1434486611000" expanded="true" signature="12926:13607" placeholder="..." />
+            <marker date="1434486611000" expanded="true" signature="12978:13558" placeholder="..." />
+            <marker date="1434486611000" expanded="false" signature="13039:13057" placeholder="..." />
+            <marker date="1434486611000" expanded="false" signature="13070:13082" placeholder="..." />
+            <marker date="1434486611000" expanded="false" signature="13109:13121" placeholder="..." />
+            <marker date="1434486611000" expanded="false" signature="13230:13248" placeholder="..." />
+            <marker date="1434486611000" expanded="false" signature="13418:13436" placeholder="..." />
+            <marker date="1434486611000" expanded="false" signature="13727:13743" placeholder="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/core/http/handlers/app.handler.php">
+>>>>>>> ec46994c74c067d4cbb8f1f2bbe6350ed679554a
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-6.3" vertical-offset="2226" max-vertical-offset="4641">
           <caret line="115" column="31" selection-start-line="115" selection-start-column="31" selection-end-line="115" selection-end-column="31" />
@@ -1233,8 +1331,27 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/core/conf/database.php">
       <provider selected="true" editor-type-id="text-editor">
+<<<<<<< HEAD
         <state vertical-scroll-proportion="2.1" vertical-offset="63" max-vertical-offset="1428">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+=======
+        <state vertical-scroll-proportion="0.85863876" vertical-offset="1700" max-vertical-offset="4420">
+          <caret line="126" column="3" selection-start-line="126" selection-start-column="3" selection-end-line="126" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider editor-type-id="MarkdownPreviewEditor">
+        <state />
+      </provider>
+      <provider editor-type-id="com.intellij.database.editor.CsvTableFileEditorProvider">
+        <state />
+      </provider>
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="3.5748792" vertical-offset="0" max-vertical-offset="3940">
+          <caret line="185" column="0" selection-start-line="185" selection-start-column="0" selection-end-line="185" selection-end-column="0" />
+>>>>>>> ec46994c74c067d4cbb8f1f2bbe6350ed679554a
           <folding />
         </state>
       </provider>
