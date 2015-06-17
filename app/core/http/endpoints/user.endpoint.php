@@ -213,7 +213,16 @@ class User
         if(count($this->args) == 2 && $this->verb == "friends")
             return \Handlers\User::respondToFriendRequest($payload);
 
-
+        // /api/v2/User/update-settings/{userId} - Update the settings for the user with one or more values provided.
+        if(count($this->args) == 1 && $this->verb == 'update-settings')
+        {
+            return \Handlers\User::updateSettings($payload, $this->args[0]);
+        }
+        // /api/v2/User/update-score/{scoreValue} - Update a users score - add to it.
+        if(count($this->args) == 1 && $this->verb == 'update-score')
+        {
+            return \Handlers\User::updateScore($payload, $this->args[0]);
+        }
 
         //*************************************************************************************//
         //                        TODO: SECTION FOR UNIMPLEMENTED
@@ -228,16 +237,6 @@ class User
         if(count($this->args) == 1 && $this->verb == 'update-preference')
         {
             return \Handlers\User::updatePreferences($this->args[0]);
-        }
-        // /api/v2/User/update-settings/{userId} - Update the settings for the user with one or more values provided.
-        if(count($this->args) == 1 && $this->verb == 'update-settings')
-        {
-            return \Handlers\User::updateSettings($payload, $this->args[0]);
-        }
-        // /api/v2/User/update-score/{scoreValue} - Update a users score - add to it.
-        if(count($this->args) == 1 && $this->verb == 'update-score')
-        {
-            return \Handlers\User::updateScore($payload, $this->args[0]);
         }
         // throw an exception if no handler found
         else
@@ -269,15 +268,6 @@ class User
         if(count($this->args) == 0 && $this->verb == "")
             return \Handlers\User::login($payload);
 
-        //*************************************************************************************//
-        //                        TODO: SECTION FOR UNIMPLEMENTED
-        //*************************************************************************************//
-
-        // /api/v2/User/block/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(BLOCKUSER)
-        if(count($this->args) == 1 && $this->verb == 'block')
-        {
-            return \Handlers\User::blockUser($this->args[0]);
-        }
         // /api/v2/User/add-favourite/{userId} - Add a new favourite place.
         if(count($this->args) == 1 && $this->verb == 'add-favourite')
         {

@@ -12,7 +12,7 @@ use Models\Database;
 | to converse with the Database.  It has been abstracted from the endpoint
 | implementation as there may be a large number of queries within the file.
 |
-| @author - Alex Sims (Checkmates CTO)
+| @author - Alex Sims (Checkmates CTO) + Adam Stevenson
 |
 */
 
