@@ -107,7 +107,70 @@ feature would then require the extra URI's to be implemented...
 
 ##### GET
 * Retrieve all checkins for a specific user: `/api/v2/Checkin/{userId}`
-* Retrieve all checkins around a certain location: `/api/v2/Checkin/{long}/{lat}/{radius}`
+* Retrieve all checkins around a certain location: `/api/v2/Checkin/around-location/{long}/{lat}`. In order to use this resource a `session_token` and `device_id` must be sent in the header of the HTTP request, this is because GET request cannot receive a JSON payload.
+
+Example request: `/api/v2/Checkin/around-location/51.5099/-0.133541` 
+
+Headers:
+
+```json
+{
+    "device_id" : "some_id",
+    "session_token" : "some_token"
+}
+```
+
+Example response:
+
+```json
+{
+    "error": 200,
+    "message": "Successfully retrieved 2 users around your location!",
+    "data": {
+        "users": [
+            {
+                "Entity_Id": "1517",
+                "Profile_Pic_Url": "https://scontent.xx.fbcdn.net/hphotos-xpa1/v/l/t1.0-9/10858622_261291000707909_6269576909225534150_n.jpg?oh=761ff74185c308a1e2afad8154dc880d&oe=55C50924",
+                "Last_CheckIn_Lat": "51.5099",
+                "Last_CheckIn_Long": "-0.133541",
+                "first_name": "Jasosn",
+                "last_name": "",
+                "place_name": "McKinsey & Co",
+                "place_lat": "51.5099",
+                "place_long": "-0.133541",
+                "place_people": "505",
+                "checkin_photo": "./public/img/checkins/c1776747165884740.jpg",
+                "checkin_comments": "0",
+                "checkin_likes": "0",
+                "distance": "7493.854890264675",
+                "FC": "3",
+                "date": "2015-06-17 12:15:40"
+            },
+            {
+                "Entity_Id": "1535",
+                "Profile_Pic_Url": "https://fbcdn-sphotos-g-a.akamaihd.net/hphotos-ak-xfp1/v/t1.0-9/p180x540/10364032_1450745385243813_2041085208857430323_n.jpg?oh=0f8971a5ba744ef6b2edafabce813e58&oe=5627CB8B&__gda__=1441985370_938410e9d763391fca77659f2d640fb3",
+                "Last_CheckIn_Lat": "51.5099",
+                "Last_CheckIn_Long": "-0.133541",
+                "first_name": "Davis",
+                "last_name": "",
+                "place_name": "McKinsey & Co",
+                "place_lat": "51.5099",
+                "place_long": "-0.133541",
+                "place_people": "505",
+                "checkin_photo": "",
+                "checkin_comments": "0",
+                "checkin_likes": "0",
+                "distance": "7493.854890264675",
+                "FC": "3",
+                "date": "2015-06-17 12:16:45"
+            }
+        ]
+    }
+}
+```
+
+This should provide you with all information necessary to build the map UI on the front end. 
+
 
 ##### PUT
 * Like a checkin, by specifying `like` we can filter what happens with the resource: `/api/v2/Checkin/like/{checkinId}`
