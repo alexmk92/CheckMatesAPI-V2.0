@@ -120,7 +120,7 @@ class Message
     public static function getChatMessages($friendId, $userId)
     {
         // Get all of the comments between the two people.
-        $query = "SELECT sender, receiver, Profile_Pic_Url, First_Name, Last_Name, message, msg_dt
+        $query = "SELECT mid, sender, receiver, Profile_Pic_Url, First_Name, Last_Name, message, msg_dt
                   FROM   entity
                   JOIN   chatmessages
                   ON     entity.Entity_Id = chatmessages.receiver
@@ -130,7 +130,7 @@ class Message
 
                   UNION ALL
 
-                  SELECT sender, receiver, Profile_Pic_Url, First_Name, Last_Name, message, msg_dt
+                  SELECT mid, sender, receiver, Profile_Pic_Url, First_Name, Last_Name, message, msg_dt
                   FROM   entity
                   JOIN   chatmessages
                   ON     entity.Entity_Id = chatmessages.receiver
@@ -153,6 +153,79 @@ class Message
         else
             // No results.
             return Array("error" => "200", "message" => "Query has executed successfully, with no results found.");
+    }
+
+    /*
+     |--------------------------------------------------------------------------
+     | GET CONVERSATIONS
+     |--------------------------------------------------------------------------
+     |
+     | For every conversation the user is involved with, get the first and last name of
+     | the friend. Accounts for blocked users.
+     | If anyone wants this behaviour changed, let me know - Adam.
+     | The thought process is that users will unblock people and then they will appear.
+     |
+     | Note: The two users need to be friends. Also, they must have at least one message that
+     |       has been sent between the two of them.
+     |
+     | @params $userId - The identifier of the user.
+     |
+     | @return         - Information about each user that the individual is talking to.
+     |
+     */
+
+    public static function getConversations($userId)
+    {
+        // Construct a query that will collect all of the entity information about users
+        // that are in a conversation with one another - akin to Skype.
+        // Accounts for blocked users currently. The blocker does not see the blocked, but
+        // the person who is blocked has no knowledge that hey have been blocked, because they
+        // still see the conversation.
+
+        $query = "
+                  SELECT DISTINCT Entity_Id, First_Name, Last_Name, Profile_Pic_Url, mid, message, msg_dt
+                  FROM   entity
+                  JOIN   friends
+                  ON     Entity_Id1 = Entity_Id
+                  JOIN   chatmessages
+                  ON     entity.Entity_Id = chatmessages.sender
+                  WHERE  receiver = :userId
+                  AND    Category != 4
+
+                  GROUP BY Entity_Id
+
+                  UNION ALL
+
+                  SELECT DISTINCT Entity_Id, First_Name, Last_Name, Profile_Pic_Url, mid, message, msg_dt
+                  FROM   entity
+                  JOIN   friends
+                  ON     Entity_Id2 = Entity_Id
+                  JOIN   chatmessages
+                  ON     entity.Entity_Id = chatmessages.receiver
+                  WHERE  sender = :userId
+                  AND    Category != 4
+
+                  GROUP BY Entity_Id
+                  ORDER BY msg_dt DESC
+
+                  ";
+
+        // TIMESTAMPDIFF(SECOND, msg_dt, :currentTime) as Ago
+
+        $now = gmdate('Y-m-d H:i:s', time());
+
+        // Bind the parameters to the query
+        $data = Array(":userId" => $userId, ":currentTime" => $now);
+
+        $conversations = Database::getInstance()->fetchAll($query, $data);
+
+        var_dump(count($conversations));
+
+        if(count($conversations) > 0)
+            return Array("error" => "200", "message" => "Successfully retrieved all conversations.", "payload" => $conversations);
+        else
+            return Array("error" => "200", "message" => "Query has returned with no conversations found. Either the "
+            ."two users are not friends, or no messages have been sent.", "payload" => $conversations);
     }
 
     /*
@@ -333,6 +406,36 @@ class Message
         else
             // If email has not sent successfully.
             return Array("error" => "400", "message" => "Error sending email.");
+
+    }
+
+    /*
+     |--------------------------------------------------------------------------
+     | (DELETE) Delete Message
+     |--------------------------------------------------------------------------
+     |
+     | Delete a message in a conversation between two people.
+     |
+     | @param $messageId - The identifier of the message.
+     |
+     | @return A success message dependent on whether or not the email sent successfully.
+     |
+     */
+
+    public static function deleteMessage($messageId)
+    {
+        // Prepare a query that's purpose will be to delete all records between a user and a current friend.
+        $query = "DELETE FROM chatmessages WHERE mid = :messageId ";
+
+        // Bind the parameters to the query
+        $data = Array(":messageId" => $messageId);
+
+        // Delete all records of friendship between the two users.
+        // If the query runs successfully, return a success 200 message.
+        if (Database::getInstance()->delete($query, $data))
+            return Array("error" => "200", "message" => "The message has been removed from the conversation.");
+        else
+            return Array("error" => "400", "message" => "Message cannot be removed: invalid identifier.");
 
     }
 }

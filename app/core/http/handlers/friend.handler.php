@@ -221,7 +221,13 @@ class Friend
      | (POST) ACCEPT FRIEND REQUEST
      |--------------------------------------------------------------------------
      |
-     | TODO: ADD DESCRIPTION
+     | Accept the friend request. Adds a row to the friends table using the two identifers provided.
+     |
+     | $friendId - The identifer of the friend.
+     |
+     | $payload  - the json encoded body to derive the entityId from.
+     |
+     | @return   - A success or failure message.
      |
      */
 

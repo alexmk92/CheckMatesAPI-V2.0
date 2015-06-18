@@ -126,10 +126,11 @@ class Message
         {
             return \Handlers\Message::getChatMessages($this->args[0], $userId);
         }
-
-        //*************************************************************************************//
-        //                        TODO: SECTION FOR UNIMPLEMENTED
-        //*************************************************************************************//
+        // /api/v2/Message/messages/{userId} - Get all of the conversations that a user is currently a part of.
+        if(count($this->args) == 1 && $this->verb == 'conversations')
+        {
+            return \Handlers\Message::getConversations($this->args[0]);
+        }
 
         // Unsupported handler
         else
@@ -171,6 +172,10 @@ class Message
         {
             return \Handlers\Message::reportEmail($payload, $this->args[0]);
         }
+        // Unsupported handler
+        else
+            throw new \Exception("No handler found for the GET resource of this URI, please check the documentation.");
+
     }
 
     /*
@@ -181,10 +186,19 @@ class Message
      | Calls the correct DELETE method relative to the matching URI template. The
      | transaction is handled in the handler class.
      |
+     |
      */
 
     private function _DELETE()
     {
+        // /api/v2/Message/delete-message/{messageId} - delete a message between two users.
+        if(count($this->args) == 1 && $this->verb == 'delete-message')
+        {
+            return \Handlers\Message::deleteMessage($this->args[0]);
+        }
+        // Unsupported handler
+        else
+            throw new \Exception("No handler found for the GET resource of this URI, please check the documentation.");
 
     }
 

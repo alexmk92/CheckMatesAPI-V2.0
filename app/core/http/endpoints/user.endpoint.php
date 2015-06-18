@@ -209,9 +209,6 @@ class User
                 $payload["long"] = $this->args[1];
             return \Handlers\User::updateLocation($payload);
         }
-        // /api/v2/User/friends/requests/respond
-        if(count($this->args) == 2 && $this->verb == "friends")
-            return \Handlers\User::respondToFriendRequest($payload);
 
         // /api/v2/User/update-settings/{userId} - Update the settings for the user with one or more values provided.
         if(count($this->args) == 1 && $this->verb == 'update-settings')
