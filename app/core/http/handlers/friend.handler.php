@@ -201,18 +201,18 @@ class Friend
                 else
                     // Only request sent.
                     return Array("error" => "207", "message" => "Partial success: A friend request has been sent, but without a notification",
-                                 "payload" => "");
+                        "payload" => "");
             }
             else
                 // Friend cannot be found.
                 return Array("error" => "400", "message" => "The identifier for the friend cannot be found. Please send".
-                             "a request to a established user. ", "payload" => "");
+                    "a request to a established user. ", "payload" => "");
 
         }
         else
             // Conflict with either friends or friend_requests table.
             return Array("error" => "409", "message" => "You are either already friends with this user, or a friend request has already"
-                                                       ." been sent." , "params" => "");
+                ." been sent." , "params" => "");
 
     }
 
@@ -361,22 +361,22 @@ class Friend
         return Array('error' => '200', 'message' => "{$msg} out of {$fCount} friends, {$iCount} were inserted, {$diff} were duplicates and {$aCount} of your friends does not have a Kinekt account.");
     }
 
-     /*
-     |--------------------------------------------------------------------------
-     | DELETE FRIEND
-     |--------------------------------------------------------------------------
-     |
-     | Removes a friend. It is presumed that the friend will be deleted from all categories.
-     | Note: when testing, if you send a friend request then delete, it will not be removed because it
-     | will be in the friend-requests table.
-     |
-     | @param $friendId - The identifer of the friend to remove.
-     |
-     | @param $payload  - ALl of the Curl JSON information.
-     |
-     | @return          A success or failure return array depending on the outcome.
-     |
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE FRIEND
+    |--------------------------------------------------------------------------
+    |
+    | Removes a friend. It is presumed that the friend will be deleted from all categories.
+    | Note: when testing, if you send a friend request then delete, it will not be removed because it
+    | will be in the friend-requests table.
+    |
+    | @param $friendId - The identifer of the friend to remove.
+    |
+    | @param $payload  - ALl of the Curl JSON information.
+    |
+    | @return          A success or failure return array depending on the outcome.
+    |
+    */
 
     public static function removeFriend($friendId, $payload)
     {
@@ -388,7 +388,7 @@ class Friend
             return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
 
         // Prepare a query that's purpose will be to delete all records between a user and a current friend.
-        $query = "DELETE FROM friends WHERE Entity_Id1 = :userId AND Entity_Id2 = :friendId ";
+        $query = "DELETE FROM friends WHERE Entity_Id1 = :userId AND Entity_Id2 = :friendId OR Entity_Id1 = :friendId AND Entity_Id2 = :userId";
 
         // Bind the parameters to the query
         $data = Array(":userId" => $user['entityId'], ":friendId" => $friendId);
@@ -399,7 +399,7 @@ class Friend
             return Array("error" => "200", "message" => "Friend has been removed successfully from all categories.", "params" => "");
         else
             return Array("error" => "409", "message" => "Conflict: The user and friend id specified have no relationship with "
-                            ."one another."
+                ."one another."
             , "params" => "");
 
     }
@@ -430,7 +430,7 @@ class Friend
             return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
 
         // Prepare a query that's purpose will be to delete all records between a user and a current friend.
-        $query = "DELETE FROM friend_requests WHERE Req_Sender = :friendId AND Req_Receiver = :userId ";
+        $query = "DELETE FROM friend_requests WHERE Req_Sender = :friendId AND Req_Receiver = :userId OR Req_Sender = :userId AND Req_Receiver = :friendId";
 
         // Bind the parameters to the query
         $data = Array(":userId" => $user['entityId'], ":friendId" => $friendId);
@@ -471,7 +471,8 @@ class Friend
         // So...more basic queries for that.
         $query = "UPDATE friends
                   SET Category = 4
-                  WHERE Entity_Id1 = :userId AND Entity_Id2 = :friendId ";
+                  WHERE Entity_Id1 = :userId AND Entity_Id2 = :friendId
+                     OR Entity_Id2 = :userId AND Entity_Id1 = :friendId";
 
         // Bind the parameters to the query
         $data = Array(":userId" => $userId, ":friendId" => $friendId);

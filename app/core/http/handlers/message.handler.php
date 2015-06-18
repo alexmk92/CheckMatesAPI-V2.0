@@ -146,12 +146,12 @@ class Message
         // Bind the parameters to the query
         $data = Array(":userId" => $userId, ":friendId" => $friendId);
 
-        $users = Database::getInstance()->fetchAll($query, $data);
+        $messages = Database::getInstance()->fetchAll($query, $data);
 
-        if(!empty($users))
+        if(!empty($messages))
         {
             // Send back the results.
-            return Array("error" => "200", "message" => "Successfully retrieved messages.", "payload" => $users);
+            return Array("error" => "200", "message" => "Successfully retrieved messages.", "payload" => $messages);
         }
         else
             // No results.
@@ -213,11 +213,8 @@ class Message
 
                   ";
 
-        // Todays time and date.
-        $now = gmdate('Y-m-d H:i:s', time());
-
         // Bind the parameters to the query.
-        $data = Array(":userId" => $userId, ":currentTime" => $now);
+        $data = Array(":userId" => $userId);
 
         $conversations = Database::getInstance()->fetchAll($query, $data);
 
@@ -418,24 +415,67 @@ class Message
      |
      | @param $messageId - The identifier of the message.
      |
-     | @return A success message dependent on whether or not the email sent successfully.
+     | @return A success message dependent on whether or not the message was deleted successfully.
      |
      */
 
     public static function deleteMessage($messageId)
     {
-        // Prepare a query that's purpose will be to delete all records between a user and a current friend.
+        // Prepare a query that's purpose will be to delete one message.
         $query = "DELETE FROM chatmessages WHERE mid = :messageId ";
 
         // Bind the parameters to the query
         $data = Array(":messageId" => $messageId);
 
-        // Delete all records of friendship between the two users.
+        // Delete a message using the mid.
         // If the query runs successfully, return a success 200 message.
         if (Database::getInstance()->delete($query, $data))
             return Array("error" => "200", "message" => "The message has been removed from the conversation.");
         else
             return Array("error" => "400", "message" => "Message cannot be removed: invalid identifier.");
+
+    }
+
+    /*
+     |--------------------------------------------------------------------------
+     | (DELETE) Delete All Message
+     |--------------------------------------------------------------------------
+     |
+     | Delete all messages in a conversation between two people.
+     |
+     | @param $friendId - The identifier of the friend.
+     |
+     | @param $payload  - The json encoded HTTP body.
+     |
+     | @return          - A success message dependent on whether the conversation
+     |                    was successfully deleted or not.
+     |
+     */
+
+    public static function deleteConversation($payload, $friendId)
+    {
+        // Authenticate the token.
+        $user = session::validateSession($payload['session_token'],$payload['device_id']);
+
+        // Check to see if the user has been retrieved and the token successfully authenticated.
+        if(empty($user))
+            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
+
+        // Prepare a query that's purpose will be to delete all conversation records between two people.
+        $query = " DELETE FROM chatmessages
+                   WHERE receiver = :userId   AND sender = :friendId
+                   OR    receiver = :friendId AND sender = :userId
+                   ";
+ 
+        // Bind the parameters to the query
+        $data = Array(":userId" => $user['entityId'], ":friendId" => $friendId);
+
+        // Delete all records of friendship between the two users.
+        // If the query runs successfully, return a success 200 message.
+        if (Database::getInstance()->delete($query, $data))
+            return Array("error" => "200", "message" => "The conversation has been deleted successfully.");
+        else
+            return Array("error" => "400", "message" => "The friend does not exist or there are no messages to delete.");
 
     }
 }

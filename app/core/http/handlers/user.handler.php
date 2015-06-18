@@ -41,7 +41,7 @@ class User
     |
     */
 
-    public static function getUsersAtLocation($long, $lat, $limit, $token, $deviceId)
+    public static function getUsersAtLocation($long, $lat, $token, $deviceId)
     {
         // Check login credentials were sent
         if(empty($token) || empty($deviceId))
@@ -52,11 +52,8 @@ class User
         if(array_key_exists("error", $user))
             return Array("error" => "401", "message" => "You are not authorised to access this resource, please re-login to generate a new session token.");
 
-        if(empty($limit) || $limit < 1)
-            $limit = 1;
-
         // Bind the values and start the query
-        $data = Array(":latitude" => $lat, ":longitude" => $long, ":setLimit" => $limit);
+        $data = Array(":latitude" => $lat, ":longitude" => $long);
         $query = "SELECT DISTINCT entity.Entity_Id,
                                   entity.First_Name AS first_name,
                                   entity.Last_Name AS last_name,
@@ -71,7 +68,6 @@ class User
                   AND   placeLng = :longitude
                   GROUP BY entity.Entity_Id
                   ORDER BY first_name ASC
-                  LIMIT :setLimit
                   ";
 
         $res = Database::getInstance()->fetchAll($query, $data);
@@ -419,6 +415,8 @@ class User
 
     public static function getScore($args)
     {
+
+
         return Array("error" => "501", "message" => "Not currently implemented.");
     }
 
@@ -501,12 +499,20 @@ class User
      | GET NOTIFICATIONS
      |--------------------------------------------------------------------------
      |
-     | TODO: ADD DESCRIPTION
+     | Get all of the notifications for the user.
+     |
+     | @header $session_token - The token for the session.
+     |
+     | @header $device_id     - The identifier of the device.
+     |
+     | @return                - A payload of notifications
      |
      */
 
-    public static function getNotifications($args)
+    public static function getNotifications($userId)
     {
+
+
         return Array("error" => "501", "message" => "Not currently implemented.");
     }
 
@@ -911,7 +917,7 @@ class User
         else
 
             // Conflict in terms of the primary key for the favourites table.
-            return Array("error" => "409", "message" => "Conflict: The specified identifer for the favourite place has not matched"
+            return Array("error" => "409", "message" => "Conflict: The specified identifier for the favourite place has not matched"
                                                        ." a record in the database.");
     }
 

@@ -52,7 +52,6 @@ class Database
 
         // Ensure that prepares are not being emulated as this leads to numeric values being quoted
         $this->connection->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE , $conn['fetch']);
-        $this->connection->setAttribute(\PDO::ATTR_EMULATE_PREPARES, FALSE);
 
         // Set the error mode.
         if($debug)

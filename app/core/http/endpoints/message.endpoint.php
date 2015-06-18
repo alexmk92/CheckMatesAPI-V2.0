@@ -191,10 +191,22 @@ class Message
 
     private function _DELETE()
     {
+        // Retrieve the payload and send with the friendId to the handler.
+        $payload = json_decode(file_get_contents('php://input'), true);
+
+        // Check for an invalid payload
+        if ($payload == null)
+            return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid User payload to the server.");
+
         // /api/v2/Message/delete-message/{messageId} - delete a message between two users.
         if(count($this->args) == 1 && $this->verb == 'delete-message')
         {
             return \Handlers\Message::deleteMessage($this->args[0]);
+        }
+        // /api/v2/Message/delete-conversation/{friendId} - delete a message between two users.
+        else if(count($this->args) == 1 && $this->verb == 'delete-conversation')
+        {
+            return \Handlers\Message::deleteConversation($payload, $this->args[0]);
         }
         // Unsupported handler
         else

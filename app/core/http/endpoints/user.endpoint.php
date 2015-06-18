@@ -133,18 +133,24 @@ class User
                     "device_id" => $headers["device_id"]
                 );
             }
-            // Set the default limit
-            if(count($this->args) == 2)
-                $this->args[2] = 0;
 
-            return \Handlers\User::getUsersAtLocation($this->args[0], $this->args[1], $this->args[2], $args["session_token"], $args["device_id"]);
+            return \Handlers\User::getUsersAtLocation($this->args[0], $this->args[1], $args["session_token"], $args["device_id"]);
         }
         // /api/v2/User/favorite-place/{userId} - Returns users favorite places
         else if(count($this->args) == 1 && $this->verb == "favorite-places")
         {
             return \Handlers\User::getFavoritePlaces($this->args[0]);
         }
-
+        // /api/v2/User/preferences/{userId} - Get the preferences for a user.
+        else if(count($this->args) == 1 && $this->verb == 'preferences')
+        {
+            return \Handlers\User::getPreferences($this->args[0]);
+        }
+        // /api/v2/User/settings/{userId} - Get the settings of the user.
+        else if(count($this->args) == 1 && $this->verb == 'settings')
+        {
+            return \Handlers\User::getSettings($this->args[0]);
+        }
 
         //*************************************************************************************//
         //                        TODO: SECTION FOR UNIMPLEMENTED
@@ -164,16 +170,6 @@ class User
         else if(count($this->args) == 1 && $this->verb == 'profile')
         {
             return \Handlers\User::getProfile($this->args[0]);
-        }
-        // /api/v2/User/preferences/{userId} - Get the preferences for a user.
-        else if(count($this->args) == 1 && $this->verb == 'preferences')
-        {
-            return \Handlers\User::getPreferences($this->args[0]);
-        }
-        // /api/v2/User/settings/{userId} - Get the settings of the user.
-        else if(count($this->args) == 1 && $this->verb == 'settings')
-        {
-            return \Handlers\User::getSettings($this->args[0]);
         }
         // /api/v2/User/notifications/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(GETNOTIFICATIONS)
         else if(count($this->args) == 1 && $this->verb == 'notifications')
