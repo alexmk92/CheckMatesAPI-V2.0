@@ -152,17 +152,12 @@ class User
         {
             return \Handlers\User::getProfile($this->args[0]);
         }
-        // /api/v2/User/preferences/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(GETPROFILE)
+        // /api/v2/User/preferences/{userId} - Get the preferences for a user.
         else if(count($this->args) == 1 && $this->verb == 'preferences')
         {
             return \Handlers\User::getPreferences($this->args[0]);
         }
-        // /api/v2/User/recent-user/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(GETRECENTUSER)
-        else if(count($this->args) == 1 && $this->verb == 'recent-user')
-        {
-            return \Handlers\User::getRecentUser($this->args[0]);
-        }
-        // /api/v2/User/settings/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(GETSETTINGS)
+        // /api/v2/User/settings/{userId} - Get the settings of the user.
         else if(count($this->args) == 1 && $this->verb == 'settings')
         {
             return \Handlers\User::getSettings($this->args[0]);

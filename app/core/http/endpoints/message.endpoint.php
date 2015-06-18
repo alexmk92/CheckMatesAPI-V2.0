@@ -122,12 +122,12 @@ class Message
             return \Handlers\Message::getComments($this->args[0], $userId);
         }
         // /api/v2/Message/messages/{friendId} - Get all of the messages between a friend and the user that made the request.
-        if(count($this->args) == 1 && $this->verb == 'messages')
+        else if(count($this->args) == 1 && $this->verb == 'messages')
         {
             return \Handlers\Message::getChatMessages($this->args[0], $userId);
         }
-        // /api/v2/Message/messages/{userId} - Get all of the conversations that a user is currently a part of.
-        if(count($this->args) == 1 && $this->verb == 'conversations')
+        // /api/v2/Message/conversations/{userId} - Get all of the conversations that a user is currently a part of.
+        else if(count($this->args) == 1 && $this->verb == 'conversations')
         {
             return \Handlers\Message::getConversations($this->args[0]);
         }
@@ -163,12 +163,12 @@ class Message
             return \Handlers\Message::addComment($this->args[0], $payload);
         }
         // /api/v2/Message/send-message/{friendId} - Send a message to a friend.
-        if(count($this->args) == 1 && $this->verb == 'send-message')
+        else if(count($this->args) == 1 && $this->verb == 'send-message')
         {
             return \Handlers\Message::sendMessage($this->args[0], $payload);
         }
         // /api/v2/Message/report-email/{$reportId} - Report a message, along with the user information of the person who sent it.
-        if(count($this->args) == 1 && $this->verb == 'report-email')
+        else if(count($this->args) == 1 && $this->verb == 'report-email')
         {
             return \Handlers\Message::reportEmail($payload, $this->args[0]);
         }

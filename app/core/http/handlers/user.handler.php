@@ -411,13 +411,29 @@ class User
      | GET PREFERENCES
      |--------------------------------------------------------------------------
      |
-     | TODO: ADD DESCRIPTION
+     | Get the users preferences.
+     |
+     | @param userId - The identifier of the user.
+     |
+     | @return       - A payload with the settings of the user.
      |
      */
 
-    public static function getPreferences($args)
+    public static function getPreferences($userId)
     {
-        return Array("error" => "501", "message" => "Not currently implemented.");
+        $query = "SELECT DISTINCT Pref_Chk_Exp,Pref_Facebook, Pref_Kinekt,
+                                  Pref_Everyone,Pref_Sex, Pref_Lower_Age,Pref_Upper_Age
+                  FROM  preferences
+                  WHERE Entity_Id = :userId";
+
+        $data = Array(":userId" => $userId);
+
+        $res = Database::getInstance()->fetch($query, $data);
+
+        if(!empty($res))
+            return Array("error" => "200", "message" => "Successfully retrieved the users preferences.", "payload" => $res);
+        else
+            return Array("error" => "409", "message" => "Conflict: no user matches identifier provided.");
     }
 
     /*
@@ -425,13 +441,29 @@ class User
      | GET SETTINGS
      |--------------------------------------------------------------------------
      |
-     | TODO: ADD DESCRIPTION
+     | Get the settings of a user.
+     |
+     | @param userId - The identifier of the user.
+     |
+     | @return       - A payload with the settings of the user.
      |
      */
 
-    public static function getSettings($args)
+    public static function getSettings($userId)
     {
-        return Array("error" => "501", "message" => "Not currently implemented.");
+        $query = "SELECT DISTINCT Pri_CheckIn, Pri_Visability, Notif_Tag,Notif_Msg,
+                                  Notif_New_Friend,Notif_Friend_Request, Notif_CheckIn_Activity
+                  FROM  setting
+                  WHERE Entity_Id = :userId";
+
+        $data = Array(":userId" => $userId);
+
+        $res = Database::getInstance()->fetch($query, $data);
+
+        if(!empty($res))
+            return Array("error" => "200", "message" => "Successfully retrieved the users settings.", "payload" => $res);
+        else
+            return Array("error" => "409", "message" => "Conflict: no user matches identifier provided.");
     }
 
     /*
@@ -444,20 +476,6 @@ class User
      */
 
     public static function getNotifications($args)
-    {
-        return Array("error" => "501", "message" => "Not currently implemented.");
-    }
-
-    /*
-     |--------------------------------------------------------------------------
-     | GET RECENT USER
-     |--------------------------------------------------------------------------
-     |
-     | TODO: ADD DESCRIPTION
-     |
-     */
-
-    public static function getRecentUser($args)
     {
         return Array("error" => "501", "message" => "Not currently implemented.");
     }

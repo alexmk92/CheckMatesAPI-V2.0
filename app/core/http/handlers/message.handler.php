@@ -109,6 +109,9 @@ class Message
      | Get chat messages between two users. Basically a history of communications
      | between the two of them.
      |
+     | @header entityId  - The identifier of the user. GET request does not allow for
+     |                     a JSON body.
+     |
      | @params $friendId - The Identifier of the friend.
      |
      | @params $userId   - The identifier of the individual that made the request.
@@ -210,16 +213,13 @@ class Message
 
                   ";
 
-        // TIMESTAMPDIFF(SECOND, msg_dt, :currentTime) as Ago
-
+        // Todays time and date.
         $now = gmdate('Y-m-d H:i:s', time());
 
-        // Bind the parameters to the query
+        // Bind the parameters to the query.
         $data = Array(":userId" => $userId, ":currentTime" => $now);
 
         $conversations = Database::getInstance()->fetchAll($query, $data);
-
-        var_dump(count($conversations));
 
         if(count($conversations) > 0)
             return Array("error" => "200", "message" => "Successfully retrieved all conversations.", "payload" => $conversations);
