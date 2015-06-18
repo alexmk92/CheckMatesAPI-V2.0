@@ -41,15 +41,45 @@ class User
     |
     */
 
-    public static function getUsersAtLocation($lat, $long, $radius, $limit)
+    public static function getUsersAtLocation($long, $lat, $limit, $token, $deviceId)
     {
-        $DB = Database::getInstance();
+        // Check login credentials were sent
+        if(empty($token) || empty($deviceId))
+            return Array("error" => "401", "message" => "Unauthorised: No session token was provided in the payload.");
 
-        $data = Array(":lat" => $lat, ":long" => $long, "radius" => $radius, "limit" => $limit);
+        // Validate the session and ensure that the session was set, if not return a 401
+        $user = Session::validateSession($token, $deviceId);
+        if(array_key_exists("error", $user))
+            return Array("error" => "401", "message" => "You are not authorised to access this resource, please re-login to generate a new session token.");
 
-        $query = "SELECT * FROM entity WHERE entity_id = :entity_id";
+        if(empty($limit) || $limit < 1)
+            $limit = 1;
 
-        return $DB->fetchAll($query, $data);
+        // Bind the values and start the query
+        $data = Array(":latitude" => $lat, ":longitude" => $long, ":setLimit" => $limit);
+        $query = "SELECT DISTINCT entity.Entity_Id,
+                                  entity.First_Name AS first_name,
+                                  entity.Last_Name AS last_name,
+                                  entity.Profile_Pic_Url AS profilePic,
+                                  checkinArchive.placeLat AS latitude,
+                                  checkinArchive.placeLng AS longitude,
+                                  checkinArchive.placeName
+                  FROM entity
+                  JOIN checkinArchive
+                    ON checkinArchive.entityId = entity.Entity_Id
+                  WHERE placeLat = :latitude
+                  AND   placeLng = :longitude
+                  GROUP BY entity.Entity_Id
+                  ORDER BY first_name ASC
+                  LIMIT :setLimit
+                  ";
+
+        $res = Database::getInstance()->fetchAll($query, $data);
+
+        if(count($res) == 0)
+            return Array("error" => "200", "message" => "Congratulations, you are the first person to check into this location");
+        else
+            return Array("error" => "200", "message" => "Successfully retrieved " . count($res) . " users at this location.", "payload" => $res);
     }
 
     /*

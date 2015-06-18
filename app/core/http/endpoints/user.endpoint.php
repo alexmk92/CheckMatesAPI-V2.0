@@ -121,10 +121,23 @@ class User
         {
             return \Handlers\User::get($this->args[0]);
         }
-        // /api/v2/User/at-location/{lat}/{long}/{radius}/{limit} - Returns list of users at location
-        else if(count($this->args) == 4 && $this->verb == "at-location")
+        // /api/v2/User/at-location/{long}/{lat}/{limit*} - Returns list of users at location
+        else if((count($this->args) == 3 || count($this->args) == 2) && $this->verb == "at-location")
         {
-            return \Handlers\User::getUsersAtLocation($this->args[0], $this->args[1], $this->args[2], $this->args[3]);
+            // Get auth information from the header
+            $headers = apache_request_headers();
+            if(!empty($headers))
+            {
+                $args = Array(
+                    "session_token" => $headers["session_token"],
+                    "device_id" => $headers["device_id"]
+                );
+            }
+            // Set the default limit
+            if(count($this->args) == 2)
+                $this->args[2] = 0;
+
+            return \Handlers\User::getUsersAtLocation($this->args[0], $this->args[1], $this->args[2], $args["session_token"], $args["device_id"]);
         }
         // /api/v2/User/favorite-place/{userId} - Returns users favorite places
         else if(count($this->args) == 1 && $this->verb == "favorite-places")

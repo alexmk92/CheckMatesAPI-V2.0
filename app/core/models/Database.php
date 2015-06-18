@@ -50,7 +50,9 @@ class Database
         $conn = include "./app/core/conf/database.php";
         $this->connection = new \PDO('mysql:host='.$conn['db_host'].'; dbname='.$conn['db_name'].';charset=utf8', $conn['db_user'], $conn['db_pass']);
 
+        // Ensure that prepares are not being emulated as this leads to numeric values being quoted
         $this->connection->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE , $conn['fetch']);
+        $this->connection->setAttribute(\PDO::ATTR_EMULATE_PREPARES, FALSE);
 
         // Set the error mode.
         if($debug)
