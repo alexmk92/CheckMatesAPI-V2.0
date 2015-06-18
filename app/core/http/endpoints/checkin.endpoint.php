@@ -87,7 +87,7 @@ class Checkin
             case "DELETE" : return $this->_DELETE();
                 break;
             default       : throw new \Exception("Unsupported header type for resource: Checkin");
-                break;
+            break;
         }
     }
 
@@ -118,33 +118,15 @@ class Checkin
             }
             return \Handlers\Checkin::getCheckins($args);
         }
-        // /api/v2/Checkin/for-user/{userId}
-        else if(count($this->args) == 1 && $this->verb == "for-user")
-        {
-            $headers = apache_request_headers();
-            if(!empty($headers))
-            {
-                $args = Array(
-                    "session_token" => $headers["session_token"],
-                    "device_id" => $headers["device_id"],
-                    "entityId" => $this->args[0]
-                );
-            }
-            return \Handlers\Checkin::getUserCheckins($args);
-        }
         // /api/v2/Checkin/{CheckinId} - Returns the Checkin
         else if(count($this->args) == 1 && $this->verb == "")
         {
-            $headers = apache_request_headers();
-            if(!empty($headers))
-            {
-                $args = Array(
-                    "session_token" => $headers["session_token"],
-                    "device_id" => $headers["device_id"],
-                    "checkinId" => $this->args[0]
-                );
-            }
-            return \Handlers\Checkin::get($args);
+            return \Handlers\Checkin::get($this->args[0]);
+        }
+        // /api/v2/Checkin/at-location/{lat}/{long}/{radius}/{limit} - Returns list of Checkins at location
+        else if(count($this->args) == 4 && $this->verb == "at-location")
+        {
+            return \Handlers\Checkin::getCheckinsAtLocation($this->args[0], $this->args[1], $this->args[2], $this->args[3]);
         }
         // /api/v2/Checkin/users-at/{CheckinId} - Returns the list of users at the checkin
         else if(count($this->args) == 1 && $this->verb == 'users-at')

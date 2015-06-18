@@ -187,7 +187,6 @@ class Checkin
                         checkins.place_lat,
                         checkins.place_long,
                         checkins.place_people,
-                        checkins.chk_id AS checkin_id,
                         checkins.img_url AS checkin_photo,
                         COUNT(checkin_comments.Chk_Id) AS checkin_comments,
                         COUNT(checkin_likes.Chk_Id) AS checkin_likes,
@@ -240,37 +239,6 @@ class Checkin
         }
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Get User Checkins
-    |--------------------------------------------------------------------------
-    |
-    | Retrieve all checkins for a user after we authenticate that the user is
-    | valid.
-    |
-    */
-
-    public static function getUserCheckins($args)
-    {
-        // Check login credentials were sent
-        if(empty($args["session_token"]) || empty($args["device_id"]))
-            return Array("error" => "401", "message" => "Unauthorised: No session token was provided in the payload.");
-
-        // Validate the session and ensure that the session was set, if not return a 401
-        $user = Session::validateSession($args["session_token"], $args["device_id"]);
-        if(array_key_exists("error", $user))
-            return Array("error" => "401", "message" => "You are not authorised to access this resource, please re-login to generate a new session token.");
-
-        $query = "SELECT * FROM checkins WHERE Entity_Id = :entityId ORDER BY chk_id DESC";
-        $data  = Array(":entityId" => $args["entityId"]);
-
-        $res = Database::getInstance()->fetchAll($query, $data);
-
-        if(count($res) == 0 || empty($res))
-            return Array("error" => "404", "message" => "This user does not have any checkins");
-        else
-            return Array("error" => "200", "message" => "Successfully retrieved " . count($res) . " checkins for this user.", "payload" => $res);
-    }
 
     /*
     |--------------------------------------------------------------------------
@@ -586,6 +554,84 @@ class Checkin
 
     /*
     |--------------------------------------------------------------------------
+    | Get People At Location
+    |--------------------------------------------------------------------------
+    |
+    | Returns a list of people who also checked in to a specific location.
+    | This will retrieve every user at that specific lat/long and then wil l
+    | provide enough information to be filtered on the front end.
+    |
+    | @param $place    - The name of the place that is to be returned
+    | @param $lat      - The latitude of the place to be returned
+    | @param $long     - The longitude of the place to be returned.
+    | @param $entityId - The id of the user who just made a checkin
+    |
+    | @return $array   - Returns an array of users and their relation to the
+    |                    current user.
+    |
+    */
+
+    private static function getPeopleAtLocation($place, $lat, $long, $entityId)
+    {
+        // Prepare for the LIKE clause
+        $place = "%" . $place . "%";
+
+        $query = "
+            SELECT
+                entity.entity_id,
+                entity.first_name,
+                entity.last_name,
+                entity.profile_pic_url,
+                TIMESTAMPDIFF(MINUTE, entity.last_checkin_dt, :now) AS ago,
+                friends.category
+            FROM entity
+            JOIN checkins
+              ON checkins.entity_id = entity.entity_id
+            JOIN friends
+              ON entity.entity_id = friends.entity_id2 OR entity.entity_id = friends.entity_id1
+            WHERE entity_id IN
+            (
+                SELECT entity_id1 FROM friends WHERE entity_id2 = :entId
+                UNION ALL
+                SELECT entity_id2 FROM friends WHERE entity_id1 = :entId
+            )
+            AND checkins.Place_Name LIKE :place
+            AND checkins.Place_Lat  =    :lat
+            AND checkins.Place_Long =    :lng
+
+
+        ";
+
+        $data = Array(
+            ":place" => $place,
+            ":lat"   => $lat,
+            ":lng"   => $long,
+            ":entId" => $entityId
+        );
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Get Latest Checkin
+    |--------------------------------------------------------------------------
+    |
+    | Returns the latest checkin for the specified user.
+    |
+    | @param $args   - Array to specify which resource to delete
+    |
+    | @return $array - Returns the response object, detailing if the resource
+    |                  was deleted successfully or if anything went wrong.
+    |
+    */
+
+    private static function getLatestCheckin($userId)
+    {
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | Delete Checkin
     |--------------------------------------------------------------------------
     |
@@ -679,36 +725,31 @@ class Checkin
 
     /*
     |--------------------------------------------------------------------------
-    | GET CHECKIN
+    | GET USER MAPS
     |--------------------------------------------------------------------------
     |
     | TODO: ADD DESCRIPTION
     |
     */
 
-    public static function get($args)
+    public static function getUserMaps($args)
     {
-        // Check login credentials were sent
-        if(empty($args["session_token"]) || empty($args["device_id"]))
-            return Array("error" => "401", "message" => "Unauthorised: No session token was provided in the payload.");
-
-        // Validate the session and ensure that the session was set, if not return a 401
-        $user = Session::validateSession($args["session_token"], $args["device_id"]);
-        if(array_key_exists("error", $user))
-            return Array("error" => "401", "message" => "You are not authorised to access this resource, please re-login to generate a new session token.");
-
-        $query = "SELECT * FROM checkins WHERE chk_id = :checkinId";
-        $data  = Array(":checkinId" => $args["checkinId"]);
-
-        $res = Database::getInstance()->fetchAll($query, $data);
-
-        if(count($res) == 0 || empty($res))
-            return Array("error" => "404", "message" => "This checkin does not exist");
-        else
-            return Array("error" => "200", "message" => "Successfully retrieved the Checkin.", "payload" => $res);
+        return Array("error" => "501", "message" => "Not currently implemented.");
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | GET PROFILE MAPS
+    |--------------------------------------------------------------------------
+    |
+    | TODO: ADD DESCRIPTION
+    |
+    */
 
+    public static function getProfileMaps($args)
+    {
+        return Array("error" => "501", "message" => "Not currently implemented.");
+    }
 
 
 }
