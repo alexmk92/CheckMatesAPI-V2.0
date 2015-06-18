@@ -599,12 +599,16 @@ class User
         // Count keeps track of the index of the foreach. When the index is equal to the size
         // of the array of values, we don't include a comma and then move on to the WHERE clause
         // of the query.
+        $data = Array();
         $count = 0;
         foreach($foundSettings as $setting)
         {
             // Find tag name and get value from array. Concatenate both together.
             $tagName = array_search($setting, $foundSettings);
-            $query .= ' ' . $tagName . ' = ' . $foundSettings[$tagName];
+            $query .= ' ' . $tagName . ' = ' . ":" . $tagName;
+
+            // Bind the tag and value.
+            $data[":" . $tagName] = $foundSettings[$tagName];
 
             // If we exhaust all values, don't include a comma at the end of the query.
             if($count == count($foundSettings) -1){} // Don't include.
@@ -620,8 +624,8 @@ class User
         //                 WHERE Entity_Id = :userId
         $query .= ' WHERE Entity_Id = :userId';
 
-        // Bind the parameter to the query
-        $data = Array(":userId" => $user['entityId']);
+        // Bind user parameter to the query.
+        $data[":userId"] = $user['entityId'];
 
         // Perform the update
         if (Database::getInstance()->update($query, $data))
