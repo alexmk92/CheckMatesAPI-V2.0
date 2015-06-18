@@ -41,17 +41,8 @@ class User
     |
     */
 
-    public static function getUsersAtLocation($long, $lat, $token, $deviceId)
+    public static function getUsersAtLocation($long, $lat, $user)
     {
-        // Check login credentials were sent
-        if(empty($token) || empty($deviceId))
-            return Array("error" => "401", "message" => "Unauthorised: No session token was provided in the payload.");
-
-        // Validate the session and ensure that the session was set, if not return a 401
-        $user = Session::validateSession($token, $deviceId);
-        if(array_key_exists("error", $user))
-            return Array("error" => "401", "message" => "You are not authorised to access this resource, please re-login to generate a new session token.");
-
         // Bind the values and start the query
         $data = Array(":latitude" => $lat, ":longitude" => $long);
         $query = "SELECT DISTINCT entity.Entity_Id,
@@ -92,13 +83,8 @@ class User
     |
     */
 
-    public static function updateLocation($args)
+    public static function updateLocation($args, $user)
     {
-        if(empty($args["session_token"]) || empty($args["device_id"]))
-            return Array('error' => '401', 'message' => "Un-Authorised: The resource you're trying to update does not match your session token.");
-
-        $user = Session::validateSession($args["session_token"], $args["device_id"]);
-
         $query = "UPDATE entity SET last_checkin_lat = :lat, Last_CheckIn_Long = :lng WHERE entity_id = :entityId";
         $data  = Array(
             ":lat"      => $args["lat"],
@@ -276,7 +262,7 @@ class User
     {
         // Ensure we have a valid object, if any of the major determinate factors are null then
         // echo a 400 back to the user
-        if($args == null || !isset($args['facebook_id']) || $args['facebook_id'] == '' || !isset($args['device_id']) || !isset($args['push_token']))
+        if(empty($args) || empty($args['facebook_id']) || empty($args['push_token']) || empty($args["device_id"]))
             return Array('error' => '400', 'message' => "Sorry, no data was passed to the server.  Please ensure the user object is sent via JSON in the HTTP body");
 
         // Check if the user already exists in the system, if they don't then sign them up to the system
@@ -567,15 +553,8 @@ class User
      |
      */
 
-    public static function updateSettings($payload, $userId)
+    public static function updateSettings($payload, $userId, $user)
     {
-        // Authenticate the token.
-        $user = session::validateSession($payload['session_token'],$payload['device_id']);
-
-        // Check to see if the user has been retrieved and the token successfully authenticated.
-        if(empty($user))
-            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
-
         if($userId != $user['entityId'])
             return Array("error" => "400", "message" => "Bad request. Somehow the entity_id of the validated session does not match the identifier".
                 " of the sent user provided by the parameter.", "payload" => "");
@@ -658,15 +637,8 @@ class User
      | @return            - The new value of the score with a success message, else a failure message.
      |
      */
-    public static function updateScore($payload, $scoreValue)
+    public static function updateScore($payload, $scoreValue, $user)
     {
-        // Authenticate the token.
-        $user = session::validateSession($payload['session_token'],$payload['device_id']);
-
-        // Check to see if the user has been retrieved and the token successfully authenticated.
-        if(empty($user))
-            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
-
         $query = "UPDATE entity
                   SET    Score = Score + :scoreValue
                   WHERE  Entity_Id = :userId
@@ -703,15 +675,8 @@ class User
      |
      */
 
-    public static function addFavourite($payload, $userId)
+    public static function addFavourite($payload, $userId, $user)
     {
-        // Authenticate the token.
-        $user = session::validateSession($payload['session_token'],$payload['device_id']);
-
-        // Check to see if the user has been retrieved and the token successfully authenticated.
-        if(empty($user))
-            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
-
         if($userId != $user['entityId'])
             return Array("error" => "400", "message" => "Bad request. Somehow the entity_id of the validated session does not match the identifier".
                 " of the sent user provided by the parameter.", "payload" => "");
@@ -752,15 +717,8 @@ class User
      |
      */
 
-    public static function deleteAccount($payload, $userId)
+    public static function deleteAccount($payload, $userId, $user)
     {
-        // Authenticate the token.
-        $user = session::validateSession($payload['session_token'],$payload['device_id']);
-
-        // Check to see if the user has been retrieved and the token successfully authenticated.
-        if(empty($user))
-            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
-
         if($userId != $user['entityId'])
             return Array("error" => "400", "message" => "Bad request. Somehow the entity_id of the validated session does not match the identifier".
                                                     " of the sent user provided by the parameter.", "payload" => "");
@@ -891,11 +849,8 @@ class User
      |
      */
 
-    public static function removeFavourite($likeId, $payload)
+    public static function removeFavourite($likeId, $payload, $user)
     {
-        // Authenticate the token.
-        $user = session::validateSession($payload['session_token'],$payload['device_id']);
-
         // Check to see if the user has been retrieved and the token successfully authenticated.
         if(empty($user))
             return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");

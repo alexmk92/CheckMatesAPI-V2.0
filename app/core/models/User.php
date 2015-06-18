@@ -38,9 +38,31 @@ class User
     |
     */
 
-    private function __construct($user)
+    private function __construct()
+    {
+    }
+
+    public function setUser($user)
     {
         $this->user = $user;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Get instance
+    |--------------------------------------------------------------------------
+    |
+    | Returns the set instance to ensure only one socket stays open.
+    |
+    | @return Database - The instance of this class.
+    |
+    */
+
+    public static function getInstance($debug = false)
+    {
+        $object = __CLASS__;
+        !isset(self::$instance) ? self::$instance = new $object($debug) : false;
+        return self::$instance;
     }
 
     /*
@@ -52,7 +74,7 @@ class User
     |
     */
 
-    private function fetch()
+    public function fetch()
     {
         return $this->user;
     }

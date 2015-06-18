@@ -160,6 +160,26 @@ class Database
 
     /*
     |--------------------------------------------------------------------------
+    | Set Emulate Prepares
+    |--------------------------------------------------------------------------
+    |
+    | Tells the Database engine whether or not to enable emulated prepares.
+    | This is used to prevent PDO from type inferring values to strings.
+    |
+    | @param $value - The value to set, either true or false
+    |
+    */
+
+    public function setEmulatePrepares($value = true)
+    {
+        if($value != true || $value != false)
+            $value = true;
+
+        $this->connection->setAttribute(\PDO::ATTR_EMULATE_PREPARES, $value);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | Delete Record
     |--------------------------------------------------------------------------
     |

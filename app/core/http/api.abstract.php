@@ -151,6 +151,32 @@ abstract class API
     
     public function _callResource()
     {
+        /*
+        * Authorise the session here, if the session isn't set then we can return
+         * an error 401 back to the client - only bypass auth if we are not logging in or signing up
+         */
+
+        $header = apache_request_headers();
+
+        // Login shouldn't fail this check
+        if((empty($header["session_token"]) || empty($header["device_id"])) && $this->verb != "login")
+        {
+            return $this->_setResponse(Array("error" => "401", "message" => "Unauthorised: No session token or device was provided in the header."));
+        }
+        if($this->verb != "login")
+        {
+            // Ensure the request is valid
+            if(empty($header["session_token"]) || empty($header["device_id"]))
+                return $this->_setResponse(Array("error" => "401", "message" => "Unauthorised: No session token or device was provided in the header."));
+
+            // Validate the session and ensure that the session was set, if not return a 401
+            $user = \Handlers\Session::validateSession($header["session_token"], $header["device_id"]);
+            if(array_key_exists("error", $user))
+                return $this->_setResponse(Array("error" => "401", "message" => "You are not authorised to access this resource, please re-login to generate a new session token."));
+            else
+                \Models\User::getInstance()->setUser($user);
+        }
+
         // Check if the endpoint exists in the application by testing if this
         // method instance has an endpoint stub with the given name
         if ((int)method_exists($this, $this->endpoint) > 0) {

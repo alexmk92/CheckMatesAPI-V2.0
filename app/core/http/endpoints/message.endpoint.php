@@ -51,6 +51,8 @@ class Message
 
     private $method;
 
+    private $user;
+
     /*
      |--------------------------------------------------------------------------
      | Constructor
@@ -68,6 +70,7 @@ class Message
         $this->verb   = $info['verb'];
         $this->args   = $info['args'];
         $this->method = $info['method'];
+        $this->user   = \Models\User::getInstance()->fetch();
     }
 
     /*
@@ -107,19 +110,12 @@ class Message
 
     private function _GET()
     {
-        $userId = "";
+        $userId = $this->user["entityId"];
 
-        // Retrieve the userId from the headers that have been sent as a part of the GET HTTP Request.
-        foreach (getallheaders() as $header => $value) {
-
-            // Retrieve the identifier of the user that made the request.
-            if(strtoupper($header) == "ENTITYID")
-                $userId = $value;
-        }
         // /api/v2/Message/comments/{CheckinId} - Get all the comments for a checkIn.
         if(count($this->args) == 1 && $this->verb == 'comments')
         {
-            return \Handlers\Message::getComments($this->args[0], $userId);
+            return \Handlers\Message::getComments($this->args[0], $userId, $this->user);
         }
         // /api/v2/Message/messages/{friendId} - Get all of the messages between a friend and the user that made the request.
         else if(count($this->args) == 1 && $this->verb == 'messages')
@@ -160,17 +156,17 @@ class Message
         // /api/v2/Message/add-comment/{CheckinId} - Add new comment to a checkin
         if(count($this->args) == 1 && $this->verb == 'add-comment')
         {
-            return \Handlers\Message::addComment($this->args[0], $payload);
+            return \Handlers\Message::addComment($this->args[0], $payload, $this->user);
         }
         // /api/v2/Message/send-message/{friendId} - Send a message to a friend.
         else if(count($this->args) == 1 && $this->verb == 'send-message')
         {
-            return \Handlers\Message::sendMessage($this->args[0], $payload);
+            return \Handlers\Message::sendMessage($this->args[0], $payload, $this->user);
         }
         // /api/v2/Message/report-email/{$reportId} - Report a message, along with the user information of the person who sent it.
         else if(count($this->args) == 1 && $this->verb == 'report-email')
         {
-            return \Handlers\Message::reportEmail($payload, $this->args[0]);
+            return \Handlers\Message::reportEmail($payload, $this->args[0], $this->user);
         }
         // Unsupported handler
         else
@@ -206,7 +202,7 @@ class Message
         // /api/v2/Message/delete-conversation/{friendId} - delete a message between two users.
         else if(count($this->args) == 1 && $this->verb == 'delete-conversation')
         {
-            return \Handlers\Message::deleteConversation($payload, $this->args[0]);
+            return \Handlers\Message::deleteConversation($payload, $this->args[0], $this->user);
         }
         // Unsupported handler
         else

@@ -25,9 +25,7 @@ require './app/core/models/Database.php';
 require './app/core/http/api.implementation.php';
 
 if (!array_key_exists('HTTP_ORIGIN', $_SERVER))
-{
 	$_SERVER['HTTP_ORIGIN'] = $_SERVER['SERVER_NAME'];
-}
 
 /*
 * Finally, we make the call to the API and echo the response back to the

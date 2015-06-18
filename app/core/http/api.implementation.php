@@ -16,6 +16,7 @@
 
 require 'api.abstract.php';
 require './app/core/models/User.php';
+require './app/core/http/handlers/session.handler.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -60,22 +61,6 @@ class CheckmatesAPI extends API
         */
 
         parent::__construct($request);
-
-        /*
-        * Authorise the session here, if the session isn't set then we can return
-         * an error 401 back to the client.
-         */
-
-        /*
-        if(empty($args["session_token"]) || empty($args["device_id"]))
-            return Array("error" => "401", "message" => "Unauthorised: No session token was provided in the payload.");
-
-        // Validate the session and ensure that the session was set, if not return a 401
-        $user = Session::validateSession($args["session_token"], $args["device_id"]);
-        if($user["error"] != 200)
-            return Array("error" => "401", "message" => "You are not authorised to access this resource, please re-login to generate a new session token.");
-        */
-
     }
 
     /*

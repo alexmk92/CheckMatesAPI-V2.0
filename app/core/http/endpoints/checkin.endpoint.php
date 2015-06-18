@@ -45,6 +45,8 @@ class Checkin
 
     private $method;
 
+    private $user;
+
     /*
     |--------------------------------------------------------------------------
     | Constructor
@@ -62,6 +64,7 @@ class Checkin
         $this->verb   = $info['verb'];
         $this->args   = $info['args'];
         $this->method = $info['method'];
+        $this->user   = \Models\User::getInstance()->fetch();
     }
 
     /*
@@ -116,7 +119,7 @@ class Checkin
                     "device_id" => $headers["device_id"]
                 );
             }
-            return \Handlers\Checkin::getCheckins($args);
+            return \Handlers\Checkin::getCheckins($args, $this->user);
         }
         // /api/v2/Checkin/for-user/{userId}
         else if(count($this->args) == 1 && $this->verb == "for-user")
@@ -130,7 +133,7 @@ class Checkin
                     "entityId" => $this->args[0]
                 );
             }
-            return \Handlers\Checkin::getUserCheckins($args);
+            return \Handlers\Checkin::getUserCheckins($args, $this->user);
         }
         // /api/v2/Checkin/{CheckinId} - Returns the Checkin
         else if(count($this->args) == 1 && $this->verb == "")
@@ -144,7 +147,7 @@ class Checkin
                     "checkinId" => $this->args[0]
                 );
             }
-            return \Handlers\Checkin::get($args);
+            return \Handlers\Checkin::get($args, $this->user);
         }
         // /api/v2/Checkin/users-at/{CheckinId} - Returns the list of users at the checkin
         else if(count($this->args) == 1 && $this->verb == 'users-at')
@@ -213,7 +216,7 @@ class Checkin
 
         // /api/v2/Checkin/ Posts the new checkin that the user has sent in the multipart body - this will only post checkin and not the image
         if(count($this->args) == 0 && $this->verb == "")
-            return \Handlers\Checkin::createCheckin($payload);
+            return \Handlers\Checkin::createCheckin($payload, $this->user);
 
     }
 
@@ -229,6 +232,8 @@ class Checkin
 
     private function _DELETE()
     {
-
+        // Delete the checkin /api/v2/Checkin/delete-checkin/{checkinId}
+        if($this->verb == "delete-checkin" && count($this->args) == 1)
+            return \Handlers\Checkin::deleteCheckin($this->args[0], $this->user["userId"]);
     }
 }

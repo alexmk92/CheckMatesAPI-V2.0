@@ -46,6 +46,8 @@ class Friend
 
     private $method;
 
+    private $user;
+
     /*
         |--------------------------------------------------------------------------
         | Constructor
@@ -63,6 +65,7 @@ class Friend
         $this->verb   = $info['verb'];
         $this->args   = $info['args'];
         $this->method = $info['method'];
+        $this->user   = \Models\User::getInstance()->fetch();
     }
 
     /*
@@ -139,12 +142,12 @@ class Friend
         // /api/v2/Friend/send-request/{friendId} - Sends a friend request.
         if(count($this->args) == 1 && $this->verb == 'send-request')
         {
-            return \Handlers\Friend::sendFriendRequest($this->args[0], $payload);
+            return \Handlers\Friend::sendFriendRequest($this->args[0], $payload, $this->user);
         }
         // /api/v2/Friend/accept-request/{friendId} - Accepts a friend request.
         else if(count($this->args) == 1 && $this->verb == 'accept-request')
         {
-            return \Handlers\Friend::acceptFriendRequest($this->args[0], $payload);
+            return \Handlers\Friend::acceptFriendRequest($this->args[0], $payload, $this->user);
         }
         // Unsupported handler
         else
@@ -166,15 +169,7 @@ class Friend
         // /api/v2/Friend/block/{friendId} - Blocks communication between two users. Initiated by the entityId.
         if(count($this->args) == 1 && $this->verb == 'block')
         {
-            $userId = "";
-
-            // Retrieve the userId from the headers that have been sent as a part of the PUT HTTP Request.
-            foreach (getallheaders() as $header => $value) {
-
-                // If we find the entityId, collect it.
-                if(strtoupper($header) == "ENTITYID")
-                    $userId = $value;
-            }
+            $userId = $this->user["entityId"];
 
             if(empty($userId))
                 return array("error" => "422", "message" => "Unprocessable entity: The underpinning logic of the
@@ -210,12 +205,12 @@ class Friend
         // /api/v2/Friend/remove-friend/{friendId} - Deletes a friend taking into account different categories.
         if(count($this->args) == 1 && $this->verb == 'remove-friend')
         {
-            return \Handlers\Friend::removeFriend($this->args[0], $payload);
+            return \Handlers\Friend::removeFriend($this->args[0], $payload, $this->user);
         }
         // /api/v2/Friend/reject-request/{friendId} - Deletes a request between a user and the potential friend.
         else if(count($this->args) == 1 && $this->verb == 'reject-request')
         {
-            return \Handlers\Friend::rejectFriendRequest($this->args[0], $payload);
+            return \Handlers\Friend::rejectFriendRequest($this->args[0], $payload, $this->user);
         }
         // Unsupported handler
         else

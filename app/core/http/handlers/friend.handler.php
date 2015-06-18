@@ -131,11 +131,8 @@ class Friend
      |
      */
 
-    public static function sendFriendRequest($friendId, $payload)
+    public static function sendFriendRequest($friendId, $payload, $user)
     {
-        // Authenticate the token.
-        $user = session::validateSession($payload['session_token'],$payload['device_id']);
-
         // Check to see if the user has been retrieved and the token successfully authenticated.
         if(empty($user))
             return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
@@ -231,11 +228,8 @@ class Friend
      |
      */
 
-    public static function acceptFriendRequest($friendId, $payload)
+    public static function acceptFriendRequest($friendId, $payload, $user)
     {
-        // Authenticate the token.
-        $user = session::validateSession($payload['session_token'],$payload['device_id']);
-
         // Check to see if the user has been retrieved and the token successfully authenticated.
         if(empty($user))
             return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
@@ -378,11 +372,8 @@ class Friend
     |
     */
 
-    public static function removeFriend($friendId, $payload)
+    public static function removeFriend($friendId, $payload, $user)
     {
-        // Authenticate the token.
-        $user = session::validateSession($payload['session_token'],$payload['device_id']);
-
         // Check to see if the user has been retrieved and the token successfully authenticated.
         if(empty($user))
             return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
@@ -420,11 +411,8 @@ class Friend
     | @return          A success or failure return array depending on the outcome.
     |
     */
-    public static function rejectFriendRequest($friendId, $payload)
+    public static function rejectFriendRequest($friendId, $payload, $user)
     {
-        // Authenticate the token.
-        $user = session::validateSession($payload['session_token'],$payload['device_id']);
-
         // Check to see if the user has been retrieved and the token successfully authenticated.
         if(empty($user))
             return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");

@@ -22,84 +22,6 @@ require_once "./app/core/http/handlers/session.handler.php";
 class Message
 {
 
-    /*
-     |--------------------------------------------------------------------------
-     | GET COMMENTS
-     |--------------------------------------------------------------------------
-     |
-     | Get all of the comments for a checkin.
-     |
-     | @param $checkInId - The identifier for the checkIn.
-     |
-     | @param $userId    - The identifier of the user that called the endpoint.
-     |
-     | @return             A list of comments about a checkIn with/or a response message.
-     */
-
-    public static function getComments($checkInId, $userId)
-    {
-
-        // Get all of the comments
-        $query = "SELECT ent.Entity_Id, ent.Profile_Pic_Url, ent.First_Name, ent.Last_Name, ent.Last_CheckIn_Place, comments.Content
-                  FROM   checkin_comments comments
-                  JOIN   entity ent
-                  ON     comments.Entity_Id = ent.Entity_Id
-                  WHERE  comments.Chk_Id = :checkInId
-                  ";
-
-        // Bind the parameters to the query
-        $data = Array(":checkInId" => $checkInId);
-
-        $checkInComments = Database::getInstance()->fetchAll($query, $data);
-
-        if(!empty($checkInComments))
-        {
-            // Check to see if any comments are authored by a blocked user. If so remove those comments from
-            // the array that will be returned as the payload.
-            $query = "
-                  SELECT Entity_Id2
-                  FROM  friends
-                  WHERE Entity_Id1 = :userId
-                  AND   Category   = 4
-                  ";
-
-            // Bind the parameters to the query
-            $data = Array(":userId" => $userId);
-
-            // Get the blocked users
-            $blockedUsers = Database::getInstance()->fetchAll($query, $data);
-
-            if(!empty($blockedUsers))
-            {
-                // Cycle through. If we have any comments that are authored by a blocked user, then remove them
-                // from the array.
-                $count = 0;
-                foreach ($checkInComments as $comment) {
-                    foreach ($blockedUsers as $blockedUser) {
-
-                        // If we find a blocked user, remove them from the results array.
-                        if ($comment['Entity_Id'] == $blockedUser['Entity_Id2'])
-                            unset($checkInComments[$count]);
-                    }
-
-                    $count++;
-                }
-
-                // Since splice didn't work, I had to use unset, which meant that the array's index's got all messed up.
-                // Effectively, splice does a similar thing to this by reassigning an array, so it's not too bad of a cost
-                // to use array_values to fix the indexing.
-                $finalComments = array_values($checkInComments);
-
-                return Array("error" => "200", "message" => "Results have been collected successfully.", "payload" => $finalComments);
-            }
-            else
-                // No blocked users, so return array in normal format.
-                return Array("error" => "200", "message" => "Results have been collected successfully.", "payload" => $checkInComments);
-        }
-         else
-             // No results found.
-             return Array("error" => "200", "message" => "Logic has completed successfully, but no results were found.");
-    }
 
     /*
      |--------------------------------------------------------------------------
@@ -227,47 +149,6 @@ class Message
 
     /*
      |--------------------------------------------------------------------------
-     | (POST) ADD COMMENT
-     |--------------------------------------------------------------------------
-     |
-     | Add a new comment to a checkin.
-     |
-     | @param $checkInId - The identifier of the checkin.
-     |
-     | @param $payload   - The json encoded user information: we use entityId and message.
-     |
-     | @return           - A success or failure message depending on the outcome.
-     |
-     */
-
-    public static function addComment($checkInId, $payload)
-    {
-        // Authenticate the token.
-        $user = session::validateSession($payload['session_token'],$payload['device_id']);
-
-        // Check to see if the user has been retrieved and the token successfully authenticated.
-        if(empty($user))
-            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
-
-        // Prepare a query that's purpose will be to add a new comment to a check in
-        $query = "INSERT INTO checkin_comments(Entity_Id, Chk_Id, Content)
-                  VALUES (:userId, :checkInId, :message)
-                 ";
-
-        // Bind the parameters to the query
-        $data = Array(":userId" => $user['entityId'], ":checkInId" => $checkInId, ":message" => $payload['message']);
-
-        // Perform the insert, then increment count if this wasn't a duplicate record
-        if (Database::getInstance()->insert($query, $data)) {
-
-            return Array("error" => "200", "message" => "Comment has been added successfully.");
-        }
-        else
-            return Array("error" => "400", "message" => "Adding the new comment has failed.");
-    }
-
-    /*
-     |--------------------------------------------------------------------------
      | (POST) SEND MESSAGE
      |--------------------------------------------------------------------------
      |
@@ -282,11 +163,8 @@ class Message
      |
      */
 
-    public static function sendMessage($friendId, $payload)
+    public static function sendMessage($friendId, $payload, $user)
     {
-        // Authenticate the token.
-        $user = session::validateSession($payload['session_token'],$payload['device_id']);
-
         // Check to see if the user has been retrieved and the token successfully authenticated.
         if(empty($user))
             return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
@@ -331,11 +209,8 @@ class Message
      |
      */
 
-    public static function reportEmail($payload, $reportId)
+    public static function reportEmail($payload, $reportId, $user)
     {
-        // Authenticate the token.
-        $user = session::validateSession($payload['session_token'],$payload['device_id']);
-
         // Check to see if the user has been retrieved and the token successfully authenticated.
         if(empty($user))
             return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
@@ -452,11 +327,8 @@ class Message
      |
      */
 
-    public static function deleteConversation($payload, $friendId)
+    public static function deleteConversation($payload, $friendId, $user)
     {
-        // Authenticate the token.
-        $user = session::validateSession($payload['session_token'],$payload['device_id']);
-
         // Check to see if the user has been retrieved and the token successfully authenticated.
         if(empty($user))
             return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");

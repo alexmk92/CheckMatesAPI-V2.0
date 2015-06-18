@@ -52,6 +52,8 @@ class User
 
     private $file;
 
+    private $user;
+
     /*
     |--------------------------------------------------------------------------
     | Constructor
@@ -70,6 +72,7 @@ class User
         $this->args   = $info['args'];
         $this->method = $info['method'];
         $this->file   = $info['file'];
+        $this->user   = \Models\User::getInstance()->fetch();
     }
 
     /*
@@ -124,17 +127,7 @@ class User
         // /api/v2/User/at-location/{long}/{lat}/{limit*} - Returns list of users at location
         else if((count($this->args) == 3 || count($this->args) == 2) && $this->verb == "at-location")
         {
-            // Get auth information from the header
-            $headers = apache_request_headers();
-            if(!empty($headers))
-            {
-                $args = Array(
-                    "session_token" => $headers["session_token"],
-                    "device_id" => $headers["device_id"]
-                );
-            }
-
-            return \Handlers\User::getUsersAtLocation($this->args[0], $this->args[1], $args["session_token"], $args["device_id"]);
+            return \Handlers\User::getUsersAtLocation($this->args[0], $this->args[1], $this->user);
         }
         // /api/v2/User/favorite-place/{userId} - Returns users favorite places
         else if(count($this->args) == 1 && $this->verb == "favorite-places")
@@ -151,33 +144,26 @@ class User
         {
             return \Handlers\User::getSettings($this->args[0]);
         }
-
-        //*************************************************************************************//
-        //                        TODO: SECTION FOR UNIMPLEMENTED
-        //*************************************************************************************//
-
-        // /api/v2/User/list/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(GETLISTS)
+        // /api/v2/User/list/{CheckinId}
         else if(count($this->args) == 1 && $this->verb == 'list')
         {
             return \Handlers\User::getLists($this->args[0]);
         }
-        // /api/v2/User/score/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(GETSCORES)
+        // /api/v2/User/score/{CheckinId}
         else if(count($this->args) == 1 && $this->verb == 'score')
         {
             return \Handlers\User::getScores($this->args[0]);
         }
-        // /api/v2/User/profile/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(GETPROFILE)
+        // /api/v2/User/profile/{CheckinId}
         else if(count($this->args) == 1 && $this->verb == 'profile')
         {
             return \Handlers\User::getProfile($this->args[0]);
         }
-        // /api/v2/User/notifications/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(GETNOTIFICATIONS)
+        // /api/v2/User/notifications/{CheckinId}
         else if(count($this->args) == 1 && $this->verb == 'notifications')
         {
             return \Handlers\User::getNotifications($this->args[0]);
         }
-
-
         // throw an exception if no handler found
         else
         {
@@ -211,18 +197,18 @@ class User
                 $payload["lat"] = $this->args[0];
             if(empty($payload["long"]))
                 $payload["long"] = $this->args[1];
-            return \Handlers\User::updateLocation($payload);
+            return \Handlers\User::updateLocation($payload, $this->user);
         }
 
         // /api/v2/User/update-settings/{userId} - Update the settings for the user with one or more values provided.
         if(count($this->args) == 1 && $this->verb == 'update-settings')
         {
-            return \Handlers\User::updateSettings($payload, $this->args[0]);
+            return \Handlers\User::updateSettings($payload, $this->args[0], $this->user);
         }
         // /api/v2/User/update-score/{scoreValue} - Update a users score - add to it.
         if(count($this->args) == 1 && $this->verb == 'update-score')
         {
-            return \Handlers\User::updateScore($payload, $this->args[0]);
+            return \Handlers\User::updateScore($payload, $this->args[0], $this->user);
         }
 
         //*************************************************************************************//
@@ -266,13 +252,13 @@ class User
             return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid User payload to the server.");
 
         // /api/v2/User/ Performs a login function, if the user does not exist they will be registered.
-        if(count($this->args) == 0 && $this->verb == "")
+        if(count($this->args) == 0 && $this->verb == "login")
             return \Handlers\User::login($payload);
 
         // /api/v2/User/add-favourite/{userId} - Add a new favourite place.
         if(count($this->args) == 1 && $this->verb == 'add-favourite')
         {
-            return \Handlers\User::addFavourite($payload, $this->args[0]);
+            return \Handlers\User::addFavourite($payload, $this->args[0], $this->user);
         }
         // throw an exception if no handler found
         else
@@ -303,12 +289,12 @@ class User
         // /api/v2/User/remove-user/{userId} - Delete the users account.
         if(count($this->args) == 1 && $this->verb == 'remove-user')
         {
-            return \Handlers\User::deleteAccount($payload, $this->args[0]);
+            return \Handlers\User::deleteAccount($payload, $this->args[0], $this->user);
         }
         // /api/v2/User/remove-favourite-place/{likeId} - Remove a favourite place.
         if(count($this->args) == 1 && $this->verb == 'remove-favourite')
         {
-            return \Handlers\User::removeFavourite($this->args[0], $payload);
+            return \Handlers\User::removeFavourite($this->args[0], $payload, $this->user);
         }
         // throw an exception if no handler found
         else
