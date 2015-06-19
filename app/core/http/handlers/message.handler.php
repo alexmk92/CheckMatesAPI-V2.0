@@ -102,33 +102,34 @@ class Message
     public static function getConversations($userId)
     {
         // Construct a query that will collect all of the entity information about users
-        // that are in a conversation with one another - akin to Skype.
-        // Accounts for blocked users currently. The blocker does not see the blocked, but
-        // the person who is blocked has no knowledge that hey have been blocked, because they
-        // still see the conversation.
-
+        // that are in a conversation with each other.
         $query = "
-                  SELECT DISTINCT Entity_Id, First_Name, Last_Name, Profile_Pic_Url, mid, message, msg_dt
-                  FROM   entity
-                  JOIN   friends
-                  ON     Entity_Id1 = Entity_Id
-                  JOIN   chatmessages
-                  ON     entity.Entity_Id = chatmessages.sender
-                  WHERE  receiver = :userId
-                  AND    Category != 4
+                  SELECT * FROM
+                  (
 
-                  GROUP BY Entity_Id
+                      SELECT DISTINCT Entity_Id, First_Name, Last_Name, Profile_Pic_Url, mid, message, msg_dt
+                      FROM   entity
+                      JOIN   friends
+                      ON     Entity_Id1 = Entity_Id
+                      JOIN   chatmessages
+                      ON     entity.Entity_Id = chatmessages.sender
+                      WHERE  receiver = :userId
+                      AND    Category != 4
 
-                  UNION ALL
+                      UNION ALL
 
-                  SELECT DISTINCT Entity_Id, First_Name, Last_Name, Profile_Pic_Url, mid, message, msg_dt
-                  FROM   entity
-                  JOIN   friends
-                  ON     Entity_Id2 = Entity_Id
-                  JOIN   chatmessages
-                  ON     entity.Entity_Id = chatmessages.receiver
-                  WHERE  sender = :userId
-                  AND    Category != 4
+                      SELECT DISTINCT Entity_Id, First_Name, Last_Name, Profile_Pic_Url, mid, message, msg_dt
+                      FROM   entity
+                      JOIN   friends
+                      ON     Entity_Id2 = Entity_Id
+                      JOIN   chatmessages
+                      ON     entity.Entity_Id = chatmessages.receiver
+                      WHERE  sender = :userId
+                      AND    Category != 4
+
+                      ORDER BY mid DESC
+
+                  ) initialResults
 
                   GROUP BY Entity_Id
                   ORDER BY msg_dt DESC
