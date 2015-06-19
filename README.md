@@ -82,6 +82,38 @@ The above describes an empty result set
 }
 ```
 
+4) A Users notifciations can be retrieved at: `/api/v2/User/notifications/{userId}` 
+
+Example response:
+
+```json
+{
+    "error": 200,
+    "message": "You have 1 new notifications!",
+    "data": [
+        {
+            "notif_id": "3079",
+            "notif_type": "3",
+            "sender": "1531",
+            "receiver": "1527",
+            "message": "Davis Allie wants to add you as a friend.",
+            "notif_dt": "2015-06-15 12:29:58",
+            "ref": null
+        }
+    ]
+}
+```
+
+OR
+
+```json
+{
+    "error": 404,
+    "message": "No new notifications.",
+    "data": "No data available for this resource."
+}
+```
+
 The above describes a result set limited to 2 results to save bandwidth, this was requested using: `http://alexsims.me/checkmates/api/v2/User/at-location/-0.133541/51.5099/2`
 
 ##### PUT
@@ -114,8 +146,115 @@ The above describes a result set limited to 2 results to save bandwidth, this wa
     "session_token" : "some_token"
 }
 ```
-
 If this information is not correct then a 401 will be returned. An error 500 may also be returned if the resource does not update, this normally means that the Database could not be reached.
+
+3) A Users preferences can be updated at the URI: `/api/v2/User/update-preferences/{userId}` as usual a `session_token` and `device_id` must be provided in the HTTP header to authenticate the request.  In addition to this a JSON object must be sent in the request body that contains at least one value from the preferences table either:
+
+1) Pref_Facebook
+2) Pref_Kinekt
+3) Pref_Everyone
+4) Pref_Sex
+5) Pref_Lower_Age
+6) Pref_Upper_Age
+7) Pref_Chk_Exp
+
+If any of the values supplied are the same as a value present in the database, then an error `400` will be returned due to the UPDATE query failing as the rows were the same.  To avoid this please only send CHANGED values.   Finally, if you provide a `userId` in the URI that does not match the `userId` that the session belongs to, then a `401` error will be returned, this dictates that you are trying to modify somebody elses preferences. **IMPORTANT** The key values here are case sensitive so please ensure the input payload matches the parameters above, failure to do so will result in a `400` with the response:
+
+```json
+{
+    "error": 400,
+    "message": "Updating has failed because at least one preferences tag needs to be provided, please check your input payload as it is case sensitive.  i.e. Pref_Facebook is not the same as pref_facebook",
+    "data": "No data available for this resource."
+}
+```
+
+Example Input Payload:
+
+```json
+{
+    "Pref_Facebook" : "1",
+    "Pref_Kinekt" : "1"
+}
+```
+
+Example Response:
+
+```json
+{
+    "error": 409,
+    "message": "The values could not be changed as they match existing values in the system.",
+    "data": "No data available for this resource."
+}
+```
+
+The above occurs when the one or more parameters are the same as what currently exist in the DB
+
+``` json
+{
+    "error": 200,
+    "message": "The preferences have been changed successfully.",
+    "data": "No data available for this resource."
+}
+```
+
+If all values provided are unique, then the preferences will update successfully.
+
+Finally, note that more than one parameter can be sent, you need not limit yourself.
+
+4) A Users settings can be updated at the URI: `/api/v2/User/update-preferences/{userId}` as usual a `session_token` and `device_id` must be provided in the HTTP header to authenticate the request.  In addition to this a JSON object must be sent in the request body that contains at least one value from the preferences table either:
+
+1) privacyCheckin
+2) privacyVisibility
+3) notifTag
+4) notifMessages
+5) notifNewFriends
+6) notifFriendRequests
+7) notifCheckinActivity
+8) listVisibility
+
+If any of the values supplied are the same as a value present in the database, then an error `400` will be returned due to the UPDATE query failing as the rows were the same.  To avoid this please only send CHANGED values.   Finally, if you provide a `userId` in the URI that does not match the `userId` that the session belongs to, then a `401` error will be returned, this dictates that you are trying to modify somebody elses preferences. **IMPORTANT** The key values here are case sensitive so please ensure the input payload matches the parameters above, failure to do so will result in a `400` with the response:
+
+```json
+{
+    "error": 400,
+    "message": "Updating has failed because at least one preferences tag needs to be provided, please check your input payload as it is case sensitive.  i.e. Pref_Facebook is not the same as pref_facebook",
+    "data": "No data available for this resource."
+}
+```
+
+Example Input Payload:
+
+```json
+{
+    "Pref_Facebook" : "1",
+    "Pref_Kinekt" : "1"
+}
+```
+
+Example Response:
+
+```json
+{
+    "error": 409,
+    "message": "The values could not be changed as they match existing values in the system.",
+    "data": "No data available for this resource."
+}
+```
+
+The above occurs when the one or more parameters are the same as what currently exist in the DB
+
+``` json
+{
+    "error": 200,
+    "message": "The preferences have been changed successfully.",
+    "data": "No data available for this resource."
+}
+```
+
+If all values provided are unique, then the preferences will update successfully.
+
+Finally, note that more than one parameter can be sent, you need not limit yourself.
+
 
 ##### POST
 A new user can be inserted by sending a JSON object in the body of the HTTP request to `/api/v2/User/login`, conversely signing in is handled at the same endpoint by sending the same JSON object most of the information for this object should be derived from the Facebook graph API:
