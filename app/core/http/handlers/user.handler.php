@@ -43,30 +43,180 @@ class User
 
     public static function getUsersAtLocation($long, $lat, $user)
     {
+        // Get the users privacy settings
+        if(empty($user))
+            return Array("error" => "401", "message" => "You are not authorised to access this resource, please re-login to generate a new session token.");
+
+        // Get the preferences for this user, this can then be used to select checkins which are only relevant to this user.
+        $query = "SELECT
+                          last_checkin_lat                AS last_lat,
+                          last_checkin_long               AS last_long,
+                          Last_Checkin_Country            AS last_country,
+                          TIMESTAMPDIFF(YEAR, DOB, NOW()) AS age,
+                          Pref_Chk_Exp                    AS expiry,
+                          Pri_Visability                  AS visability,
+                          Pref_Facebook                   AS facebook,
+                          Pref_Kinekt                     AS kinekt,
+                          Pref_Everyone                   AS everyone,
+                          Pref_Sex                        AS sex,
+                          Pref_Lower_age                  AS lowerAge,
+                          Pref_Upper_Age                  AS upperAge
+
+                  FROM entity
+                  JOIN preferences
+                    ON preferences.Entity_Id = entity.Entity_Id
+                  JOIN setting
+                    ON setting.Entity_Id = entity.Entity_Id
+                  WHERE entity.Entity_id = :entityId
+                    OR entity.Fb_Id = :entityId";
+
+        $data = Array(":entityId" => $user["entityId"]);
+        $userPreferences = json_decode(json_encode(Database::getInstance()->fetch($query, $data)), true);
+
+        // Check for a bad response
+        if(empty($userPreferences))
+            return Array("error" => "404", "message" => "No preferences were found for this user so the operation could not complete, please ensure you sent a valid entity id");
+
+        // Determine the radius that the spatial query will be set too
+        $spatialFilter = "";
+        $userFilter    = "0";
+        $data          = Array();
+
+        // Determine the radius to show - we reinitialise the data array here for the next query
+        switch($userPreferences["visability"])
+        {
+            case 1:
+                $spatialFilter = "(3958 * acos( cos( radians ( :currLat ) ) * cos ( radians( ent.Last_Checkin_Lat ) ) * cos ( radians( ent.Last_Checkin_Long ) - radians( :currLong ) + sin( radians( :currLat ) * sin ( radians( ent.Last_Checkin_Lat ) ) ) < = 150";
+                $data          = Array(":currLat" => $lat, ":currLong" => $long);
+                break;
+            case 2:
+                $spatialFilter = "ent.Last_Checkin_Country = :lastCountry";
+                $data          = Array(":lastCountry" => $userPreferences["last_country"]);
+                break;
+            default:
+                $data          = Array();
+                break;
+        }
+
+        // Determine what age users to show - if we max on the app show oldest users
+        // max it to some erroneous value for people with ridiculous Facebook birthdays
+        if($userPreferences["upperAge"] == 50)
+            $userPreferences["upperAge"] = 130;
+
+        // Check if we need to get Facebook users, Kinekt users or both
+        if(($userPreferences["facebook"] == 1 || $userPreferences["kinekt"] == 1) && $userPreferences["everyone"] != 1)
+        {
+            if(empty($data[":category"]))
+            {
+                if($userPreferences["facebook"] == 1 && $userPreferences["kinekt"] == 1)
+                    $data[":category"] = "1 OR Category = 2";
+                else
+                {
+                    if($userPreferences["facebook"] == 1)
+                        $data[":category"] = "1";
+                    if($userPreferences["kinekt"] == 1)
+                        $data[":category"] = "2";
+                }
+            }
+
+            $userFilter .= " OR ent.Entity_Id IN (
+                                                      SELECT DISTINCT entity_id
+                                                      FROM entity
+                                                      JOIN friends
+                                                      ON entity.entity_id = friends.entity_id2 OR entity.entity_id = friends.entity_id1
+                                                      WHERE entity_id IN
+                                                      (
+                                                            SELECT entity_id1 FROM friends WHERE entity_id2 = :entityId AND Category = :category
+                                                            UNION ALL
+                                                            SELECT entity_id2 FROM friends WHERE entity_id1 = :entityId AND Category = :category
+                                                      )
+                                                  )";
+        }
+        // Check if we need to get everyone
+        if($userPreferences["everyone"] == 1)
+        {
+            $userFilter = "0 OR setting.Pri_CheckIn = 2
+                            AND TIMESTAMPDIFF(YEAR, ent.DOB, NOW()) BETWEEN :lowerAge AND :upperAge";
+
+            // Bind the new params to our data array
+            if(empty($data[":lowerAge"]))
+                $data[":lowerAge"] = $userPreferences["lowerAge"];
+            if(empty($data[":upperAge"]))
+                $data[":upperAge"] = $userPreferences["upperAge"];
+        }
+
+        // Check what sexes we need to retrieve
+        switch($userPreferences["sex"])
+        {
+            case 1:
+                $userFilter .= " AND ent.Sex = 1";
+                break;
+            case 2:
+                $userFilter .= " AND ent.Sex = 2";
+                break;
+        }
+
+        // Perform the rest of the binding
+        if(empty($data[":entityId"]))
+            $data[":entityId"] = $user["entityId"];
+        if(empty($data[":currLat"]))
+            $data[":currLat"] = $lat;
+        if(empty($data[":currLong"]))
+            $data[":currLong"] = $long;
+
+        // Build the final condition
+        if(empty($spatialFilter))
+            $spatialFilter = "(" . $userFilter . ")";
+        else
+            $spatialFilter .= " AND (" . $userFilter . ")";
+
         // Bind the values and start the query
-        $data = Array(":latitude" => $lat, ":longitude" => $long);
+        $data = Array(":currLat" => $lat, ":currLong" => $long, ":entityId" => $user["entityId"]);
         $query = "SELECT DISTINCT entity.Entity_Id,
                                   entity.First_Name AS first_name,
                                   entity.Last_Name AS last_name,
-                                  entity.Profile_Pic_Url AS profilePic,
-                                  checkinArchive.placeLat AS latitude,
-                                  checkinArchive.placeLng AS longitude,
-                                  checkinArchive.placeName
+                                  entity.Profile_Pic_Url AS profile_pic,
+                                  entity.Last_CheckIn_Country AS last_country,
+                                  entity.Last_CheckIn_Dt AS last_checkin_date,
+                                  entity.Last_CheckIn_Lat AS last_checkin_lat,
+                                  entity.Last_CheckIn_Long AS last_checkin_long,
+                                  entity.Sex,
+                                  TIMESTAMPDIFF(YEAR, entity.DOB, NOW()) AS Age,
+                                  (6371 * acos( cos( radians(:currLat) ) * cos( radians(entity.Last_CheckIn_Lat) ) * cos( radians(entity.Last_CheckIn_Long) - radians(:currLong) ) + sin( radians(:currLat) ) * sin( radians(entity.Last_CheckIn_Lat) ) ) ) AS distance
                   FROM entity
-                  JOIN checkinArchive
-                    ON checkinArchive.entityId = entity.Entity_Id
-                  WHERE placeLat = :latitude
-                  AND   placeLng = :longitude
+                      LEFT JOIN setting
+                           ON setting.Entity_Id = entity.Entity_Id
+                      LEFT JOIN preferences
+                           ON preferences.Entity_Id = entity.Entity_Id
+                  WHERE
+                      entity.Entity_Id = setting.Entity_Id AND
+                      entity.Entity_Id != :entityId AND
+                      entity.Create_Dt != entity.Last_CheckIn_Dt
                   GROUP BY entity.Entity_Id
-                  ORDER BY first_name ASC
+                  ORDER BY distance ASC
                   ";
 
+        // Get the results and build the response payload
         $res = Database::getInstance()->fetchAll($query, $data);
-
-        if(count($res) == 0)
-            return Array("error" => "200", "message" => "Congratulations, you are the first person to check into this location");
+        if(empty($res))
+            return Array("error" => "404", "message" => "Sorry, it doesn't look like there have been any checkins recently.  Update your privacy settings to see more users!");
+        // Ensure all privacy is taken care of here...i.e. no facebook friends must be returned with no last name
         else
-            return Array("error" => "200", "message" => "Successfully retrieved " . count($res) . " users at this location.", "payload" => $res);
+        {
+            $users = Array();
+
+            foreach($res as $user)
+            {
+                if(empty($user["FC"]))
+                    $user["FC"] = "3";
+                if($user["FC"] != 2)
+                    $user["last_name"] = "";
+
+                array_push($users, $user);
+            }
+
+            return Array("error" => "200", "message" => "Successfully retrieved " . count($res) . " users around your location!", "payload" => Array("users" => $users));
+        }
     }
 
     /*

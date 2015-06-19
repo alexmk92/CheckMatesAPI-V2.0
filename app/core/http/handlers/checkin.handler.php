@@ -119,9 +119,9 @@ class Checkin
                                                       ON entity.entity_id = friends.entity_id2 OR entity.entity_id = friends.entity_id1
                                                       WHERE entity_id IN
                                                       (
-                                                            SELECT entity_id1 FROM friends WHERE entity_id2 = :entityId AND Category :category
+                                                            SELECT entity_id1 FROM friends WHERE entity_id2 = :entityId AND Category = :category
                                                             UNION ALL
-                                                            SELECT entity_id2 FROM friends WHERE entity_id1 = :entityId AND Category :category
+                                                            SELECT entity_id2 FROM friends WHERE entity_id1 = :entityId AND Category = :category
                                                       )
                                                   )";
         }
@@ -136,17 +136,17 @@ class Checkin
                 $data[":lowerAge"] = $userPreferences["lowerAge"];
             if(empty($data[":upperAge"]))
                 $data[":upperAge"] = $userPreferences["upperAge"];
+        }
 
-            // Check what sexes we need to retrieve
-            switch($userPreferences["sex"])
-            {
-                case 1:
-                    $userFilter .= " AND ent.Sex = 1";
-                    break;
-                case 2:
-                    $userFilter .= " AND ent.Sex = 2";
-                    break;
-            }
+        // Check what sexes we need to retrieve
+        switch($userPreferences["sex"])
+        {
+            case 1:
+                $userFilter .= " AND ent.Sex = 1";
+                break;
+            case 2:
+                $userFilter .= " AND ent.Sex = 2";
+                break;
         }
 
         // Perform the rest of the binding
@@ -277,10 +277,10 @@ class Checkin
     public static function createCheckin($args, $token)
     {
         // Extract the data from the payload
-        $args  = $args["args"];
-
         if(!empty($args["image"]["image"]))
             $image = $args["image"]["image"];
+
+        $args  = $args["args"];
 
         // Reference a new push server
         $server = new \PushServer();
@@ -549,7 +549,12 @@ class Checkin
         {
             if($res["error"] == 200 || $res["error"] == 400)
             {
-                $people = self::getPeopleAtLocation($args["place_name"], $args["place_lat"], $args["place_long"], $token["entityId"]);
+                $people  = self::getUsersAtLocation($args["place_long"], $args["place_lat"]);
+                if($res["error"] >= 400)
+                    $res["error"] = 200;
+                else
+                    $res["error"] = 203;
+
                 $res["message"] = "The Checkin was created successfully.";
                 $res["payload"] = Array("details" => $placeData, "tagged_pushes" => $taggedPushes, "friend_pushes" => $friendPushes, "people" => $people);
                 return $res;
@@ -559,6 +564,52 @@ class Checkin
         }
         else
             return Array("error" => "500", "message" => "Internal server error whilst creating this checkin.");
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Get Users at Location
+    |--------------------------------------------------------------------------
+    |
+    | Retrieves all users at a specific location within a given radius.
+    |
+    | @param $lat    - The latitude of the geo-location point
+    | @param $long   - The longitude of the geo-location point
+    | @param $radius - Radius of search in km, capped at 200.
+    | @param $limit  - The maximum amount of users to be returned as a result
+    |                  of the query.
+    |
+    | @return $data - The JSON encoded array containing all results from the
+    |                 query.
+    |
+    */
+
+    private static function getUsersAtLocation($long, $lat)
+    {
+        // Bind the values and start the query
+        $data = Array(":latitude" => $lat, ":longitude" => $long);
+        $query = "SELECT DISTINCT entity.Entity_Id,
+                                  entity.First_Name AS first_name,
+                                  entity.Last_Name AS last_name,
+                                  entity.Profile_Pic_Url AS profilePic,
+                                  checkinArchive.placeLat AS latitude,
+                                  checkinArchive.placeLng AS longitude,
+                                  checkinArchive.placeName
+                  FROM entity
+                  JOIN checkinArchive
+                    ON checkinArchive.entityId = entity.Entity_Id
+                  WHERE placeLat = :latitude
+                  AND   placeLng = :longitude
+                  GROUP BY entity.Entity_Id
+                  ORDER BY first_name ASC
+                  ";
+
+        $res = Database::getInstance()->fetchAll($query, $data);
+
+        if(count($res) == 0)
+            return Array("error" => "200", "message" => "Congratulations, you are the first person to check into this location");
+        else
+            return Array("error" => "200", "message" => "Successfully retrieved " . count($res) . " users at this location.", "payload" => $res);
     }
 
     /*
@@ -794,7 +845,7 @@ class Checkin
         $data  = Array(":checkinId" => $chkId);
 
         $res = Database::getInstance()->fetch($query, $data);
-        return $res;
+        return $res[0];
     }
 
 

@@ -45,26 +45,39 @@ The above describes an empty result set
 ```json
 {
     "error": 200,
-    "message": "Successfully retrieved 2 users at this location.",
+    "message": "Successfully retrieved 2 around your location.",
     "data": [
-        {
-            "Entity_Id": "1535",
-            "first_name": "Davis",
-            "last_name": "Allie",
-            "profilePic": "https://scontent.xx.fbcdn.net/hphotos-xfp1/v/t1.0-9/p180x540/10364032_1450745385243813_2041085208857430323_n.jpg?oh=0f8971a5ba744ef6b2edafabce813e58&oe=5627CB8B",
-            "latitude": "51.5099",
-            "longitude": "-0.133541",
-            "placeName": "McKinsey & Co"
-        },
-        {
-            "Entity_Id": "1512",
-            "first_name": "Jason",
-            "last_name": "Sims",
-            "profilePic": "https://scontent.xx.fbcdn.net/hphotos-xpa1/v/l/t1.0-9/10858622_261291000707909_6269576909225534150_n.jpg?oh=761ff74185c308a1e2afad8154dc880d&oe=55C50924",
-            "latitude": "51.5099",
-            "longitude": "-0.133541",
-            "placeName": "McKinsey & Co"
-        }
+        "users" : 
+        [
+            {
+                "Entity_Id": "1535",
+                "first_name": "Davis",
+                "last_name": "",
+                "profile_pic": "https://scontent.xx.fbcdn.net/hphotos-xfp1/v/t1.0-9/p180x540/10364032_1450745385243813_2041085208857430323_n.jpg?oh=0f8971a5ba744ef6b2edafabce813e58&oe=5627CB8B",
+                "last_country": "United Kingdom",
+                "last_checkin_date": "2015-06-17 12:16:45",
+                "last_checkin_lat": "51.5099",
+                "last_checkin_long": "-0.133541",
+                "Sex": "1",
+                "Age": null,
+                "distance": "0",
+                "FC": "3"
+            },
+            {
+                "Entity_Id": "1518",
+                "first_name": "Jason",
+                "last_name": "",
+                "profile_pic": "https://scontent.xx.fbcdn.net/hphotos-xpa1/v/l/t1.0-9/10858622_261291000707909_6269576909225534150_n.jpg?oh=761ff74185c308a1e2afad8154dc880d&oe=55C50924",
+                "last_country": null,
+                "last_checkin_date": "2015-06-07 06:49:31",
+                "last_checkin_lat": "",
+                "last_checkin_long": "",
+                "Sex": "1",
+                "Age": "22",
+                "distance": "5727.653311770566",
+                "FC": "3"
+            }
+        ]
     ]
 }
 ```
@@ -360,7 +373,78 @@ Like a checkin, by specifying `like` we can filter what happens with the resourc
 ##### POST
 Post a new comment on a checkin by specifying the `comment` filter in the URI: `/api/v2/Checkin/comment/{checkinId}`
 
-Create a new checkin, send the checkin information in the body of the HTTP request: `/api/v2/Checkin` **NOTE** Images and form data must be sent as `multipart/form-data` for this request, failure to do so will result in a 400 being returned.
+Create a new checkin, send the checkin information in the body of the HTTP request: `/api/v2/Checkin` **NOTE** Images and form data must be sent as `multipart/form-data` for this request, failure to do so will result in a 400 being returned, session_token and device_id must also be provided in the header as usual.
+
+The multi-part/form-data object must contain the following values:
+
+```json
+{
+    "image" : "path to image on your file system (T_FILE)",
+    "place_name" : "some_name (T_STRING)",
+    "place_lat" : "some_lat (T_STRING)",
+    "place_long" : "some_long (T_STRING)",
+    "place_country" : "some_country (T_STRING)",
+    "place_category" : "some category i.e. office, this derives an image from the maps API (T_STRING)",
+    "cat_id" : "The id of the category used, derived from maps API (T_STRING)",
+    "place_people" : "number of people who have checked in here, derived from maps API (T_STRING)",
+    "place_url" : "URL to the badge image for this place, derived from maps API (T_STRING)",
+    "message" : "The message associated with this checkin (T_STRING)",
+    "tagged_users" : "An array of user ids who are tagged in this checkin in the format: [id1, id2, id3] (T_STRING)"
+}
+```
+
+This will return the newly created checkin along with other details in the payload such as the checkins history and details about how many push notifications were returned.  `5xx` errors will be returned if error messages returned by nested queries in the operation do not return an error in the `2xx` or `4xx` range, this should never happen and displays a complete system failure.   Other than that expect `200` when the request is successful but not all push notifications were sent, or `203` on a completely successful insert and notification round.  Expect `401` for unauthorised and `400` for a bad request. 
+
+Example Response:
+
+```json
+{  
+   "error":400,
+   "message":"The Checkin was created successfully.",
+   "data":{  
+      "details":{  
+         ":entityId":"1517",
+         ":placeName":"McKinsey & Co",
+         ":placeLat":"51.5099",
+         ":placeLong":"-0.133541",
+         ":placeCountry":"United Kingdom",
+         ":placeCategory":"Office",
+         ":placePeople":"505",
+         ":message":"Hello this is my message.",
+         ":taggedIds":"[1, 222, 2]",
+         ":chkDt":"2015-06-19 07:30:08",
+         ":placePicUrl":"146.185.147.142/checkmates/public/img/4bf58dd8d48988d124941735.png",
+         ":imageUrl":"./public/img/checkins/c1210212912303096.png"
+      },
+      "tagged_pushes":"0/1 pushes were sent to tagged user recipients",
+      "friend_pushes":"2/3 pushes were sent to friends who wish to receive notifications.",
+      "people":{  
+         "error":"200",
+         "message":"Successfully retrieved 2 users at this location.",
+         "payload":[  
+            {  
+               "Entity_Id":"1535",
+               "first_name":"Davis",
+               "last_name":"Allie",
+               "profilePic":"https:\/\/scontent.xx.fbcdn.net\/hphotos-xfp1\/v\/t1.0-9\/p180x540\/10364032_1450745385243813_2041085208857430323_n.jpg?oh=0f8971a5ba744ef6b2edafabce813e58&oe=5627CB8B",
+               "latitude":"51.5099",
+               "longitude":"-0.133541",
+               "placeName":"McKinsey & Co"
+            },
+            {  
+               "Entity_Id":"1512",
+               "first_name":"Jason",
+               "last_name":"Sims",
+               "profilePic":"https:\/\/scontent.xx.fbcdn.net\/hphotos-xpa1\/v\/l\/t1.0-9\/10858622_261291000707909_6269576909225534150_n.jpg?oh=761ff74185c308a1e2afad8154dc880d&oe=55C50924",
+               "latitude":"51.5099",
+               "longitude":"-0.133541",
+               "placeName":"McKinsey & Co"
+            }
+         ]
+      }
+   }
+}
+```
 
 ##### DELETE
 Delete a checkin: `/api/v2/Checkin/{checkinId}`
