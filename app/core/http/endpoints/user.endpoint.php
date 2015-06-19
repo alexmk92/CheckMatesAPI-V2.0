@@ -220,10 +220,10 @@ class User
         {
             return \Handlers\User::updateFavourite($this->args[0]);
         }
-        // /api/v2/User/update-preference/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(UPDATEPREFERENCES)
-        if(count($this->args) == 1 && $this->verb == 'update-preference')
+        // /api/v2/User/update-preference/{userId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(UPDATEPREFERENCES)
+        if(count($this->args) == 1 && $this->verb == 'update-preferences')
         {
-            return \Handlers\User::updatePreferences($this->args[0]);
+            return \Handlers\User::updatePreferences($payload, $this->args[0], $this->user);
         }
         // throw an exception if no handler found
         else

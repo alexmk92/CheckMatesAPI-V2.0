@@ -316,16 +316,20 @@ class User
     public static function get($userId)
     {
         $data = Array(":entity_id" => $userId);
-        $query = "SELECT DISTINCT entity.*, friends.Category
+        $query = "SELECT DISTINCT entity.*, friends.Category, preferences.*, setting.*
                   FROM entity
+                  JOIN preferences
+                    ON entity.Entity_Id = preferences.Entity_Id
+                  JOIN setting
+                    ON entity.Entity_Id = setting.Entity_Id
                   JOIN friends
-                  ON entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2
-                  WHERE entity_id = :entity_id
-                  OR fb_id = :entity_id
-                  AND friends.Category != 4";
+                    ON entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2
+                  WHERE entity.Entity_Id = :entity_id
+                  OR entity.Fb_Id = :entity_id
+                  AND friends.Category != 4
+                  GROUP BY entity.Entity_Id";
 
         $res = Database::getInstance()->fetch($query, $data);
-
         // Attempt to get a user without a friend connection
         if(empty($res))
         {
@@ -335,6 +339,52 @@ class User
                       OR fb_id = :entity_id";
 
             $res = Database::getInstance()->fetch($query, $data);
+        }
+        else
+        {
+            $arr = Array(
+
+                            "entity_id" => $res->Entity_Id,
+                            "first_name" => $res->First_Name,
+                            "last_name" => $res->Last_Name,
+                            "email" => $res->Email,
+                            "profile_pic" => $res->Profile_Pic_Url,
+                            "sex" => $res->Sex,
+                            "DOB" => $res->DOB,
+                            "about" => $res->About,
+                            "create_dt" => $res->Create_Dt,
+                            "last_checkin_lat" => $res->Last_CheckIn_Lat,
+                            "last_checkin_long" => $res->Last_CheckIn_Long,
+                            "last_checkin_place" => $res->Last_CheckIn_Place,
+                            "last_checkin_country" => $res->Last_CheckIn_Country,
+                            "score" => $res->Score,
+                            "score_flag" => $res->Score_Flag,
+                            "image_urls" => $res->Image_Urls,
+                            "category" => empty($res->Category) ? 3 : $res->Category,
+
+                        "preferences" =>
+                        Array(
+                            "facebook" => $res->Pref_Facebook,
+                            "kinekt" => $res->Pref_Kinekt,
+                            "everyone" => $res->Pref_Everyone,
+                            "sex" => $res->Pref_Sex,
+                            "lower_age" => $res->Pref_Lower_Age,
+                            "upper_age" => $res->Pref_Upper_Age,
+                            "checkin_expiry" => $res->Pref_Chk_Exp
+                        ),
+                        "settings" =>
+                        Array(
+                            "privacy_checkin" => $res->Pri_CheckIn,
+                            "visibility" => $res->Pri_Visability,
+                            "notification_tag" => $res->Notif_Tag,
+                            "notification_message" => $res->Notif_Msg,
+                            "notification_new_friend" => $res->Notif_New_Friend,
+                            "notification_friend_request" => $res->Notif_Friend_Request,
+                            "notification_checkin_activity" => $res->Notif_CheckIn_Activity
+                        )
+            );
+
+            return Array("error" => "200", "message" => "Successfully retrieved the user with id: " . $userId, "payload" => $arr);
         }
         if(empty($res))
             return Array("error" => "404", "message" => "Sorry, the user with id: " . $userId . " does not exist on the server.");
@@ -422,11 +472,11 @@ class User
             $userExists["payload"] = json_decode(json_encode($userExists["payload"]), true);
 
             // Ensure we have a valid session
-            $token = Session::setSession($userExists["payload"]["Entity_Id"], $args);
+            $token = Session::setSession($userExists["payload"]["entity_id"], $args);
 
             // Update the users details, this includes updating the ABOUT info and profile pictures,
             // We do this here as profile info may have changed on Facebook since the last login.
-            $response = self::updateProfile($userExists["payload"]["Entity_Id"], $args);
+            $response = self::updateProfile($userExists["payload"]["entity_id"], $args);
 
             if($response["error"] == "400")
                 return $response;
@@ -434,7 +484,7 @@ class User
             // Check if there are any mutual friends to add - we do that here instead of on sign up as every time
             // we log in to the app more of our friends may have signed up to the app through FB
             if($args["friends"] != "")
-                $response = Friend::addFriends($args['friends'], '1', $userExists["payload"]["Entity_Id"]);
+                $response = Friend::addFriends($args['friends'], '1', $userExists["payload"]["entity_id"]);
 
             // Override the payload as we are logging in, we don't want a list of all friends.
             $response["message"] = "You were logged in successfully, friends may have been updated: " . $response["message"];
@@ -468,10 +518,6 @@ class User
         // Check for users under 18
         if (time() - strtotime($args['dob']) <= 18 * 31536000 || $args['dob'] == null)
             return Array('error' => '400', 'message' => 'Bad request, you must be 18 years or older.');
-
-        // Check if the user already exists
-        $query = "SELECT fb_id FROM entity WHERE fb_id = :facebook_id";
-        $data  = Array(":facebook_id" => $args['facebook_id']);
 
         // We know our user is old enough, insert the new user.
         $query = "INSERT IGNORE INTO entity(fb_id, first_name, last_name, email, profile_pic_url, sex, dob, about, create_dt, last_checkin_dt, image_urls, score)
@@ -520,24 +566,14 @@ class User
         $data  = Array(":entityId" => $id, ":a" => 1, ":b" => 3, ":c" => 1, ":d" => 1, ":e" => 1, ":f" => 1, ":g" => 1);
         Database::getInstance()->insert($query, $data);
 
+        // Get the preferences
+        $settings = Array("privacy_checkin" => 1, "privacy_visibility" => 3, "notification_tag" => 1, "notification_msg" => 1, "notification_new_friend" => 1, "notification_friend_request" => 1, "notification_checkin_activity" => 1);
+        $preferences = Array("facebook" => 1, "kinekt" => "1", "everyone" => "1", "sex" => "3", "lower_age" => 18, "upper_age" => 100, "checkin_expiry" => 8);
+
         if($id > 0)
-            return Array('error' => '200', 'message' => 'The user was created successfully.', 'payload' => Array('entity_id' => $id, 'entity_data' => $args, "session" => $token));
+            return Array('error' => '200', 'message' => 'The user was created successfully.', 'payload' => Array('entity_id' => $id, 'entity_data' => $args, "preferences" => $preferences, "settings" => $settings, "session" => $token));
         else
             return Array('error' => '500', 'message' => 'There was an internal error when creating the user listed in the payload.  Please try again.', 'payload' => Array('entity_id' => $id, 'entity_data' => $args));
-    }
-
-    /*
-     |--------------------------------------------------------------------------
-     | GET LISTS
-     |--------------------------------------------------------------------------
-     |
-     | TODO: ADD DESCRIPTION
-     |
-     */
-
-    public static function getLists($args)
-    {
-        return Array("error" => "501", "message" => "Not currently implemented.");
     }
 
     /*
@@ -647,9 +683,14 @@ class User
 
     public static function getNotifications($userId)
     {
+        $query = "SELECT * FROM notifications WHERE receiver = :entityId";
+        $data  = Array(":entityId" => $userId);
 
-
-        return Array("error" => "501", "message" => "Not currently implemented.");
+        $res   = Database::getInstance()->fetchAll($query, $data);
+        if(count($res) == 0)
+            return Array("error" => "404", "message" => "No new notifications.");
+        else
+            return Array("error" => "200", "message" => "You have " . count($res) . " new notifications!", "payload" => $res);
     }
 
     /*
@@ -671,13 +712,88 @@ class User
      | (PUT) UPDATE PREFERENCES
      |--------------------------------------------------------------------------
      |
-     | TODO: ADD DESCRIPTION
+     | Update the preferences for the user. Requires at least one of the values of the
+     | settings table to be sent in the JSON body, else an error is returned.
+     |
+     | @param $payload - The JSON encoded body for the PUT HTTP request.
+     |                   Requires at least one of the following values to be specified:
+     |                   1) Pref_Facebook
+     |                   2) Pref_Kinekt
+     |                   3) Pref_Everyone
+     |                   4) Pref_Sex
+     |                   5) Pref_Lower_Age
+     |                   6) Pref_Upper_Age
+     |                   7) Pref_Chk_Exp
+     |
+     | @param $userId  - The identifer of the user.
      |
      */
 
-    public static function updatePreferences($args)
+    public static function updatePreferences($payload, $userId, $user)
     {
-        return Array("error" => "501", "message" => "Not currently implemented.");
+        if($userId != $user['entityId'])
+            return Array("error" => "401", "message" => "Un-Authorised.  The user requesting this resource does not match the entity that this resource belongs to, please login with the correct account and try again.", "payload" => "");
+
+        // Check to see what JSON body values we have.
+        $foundSettings = Array();
+
+        // Check if values exist, and if so add to an array of values using the names of the columns from the database.
+        if(isset($payload['Pref_Facebook']))   $foundSettings['Pref_Facebook']    = $payload['Pref_Facebook'];
+        if(isset($payload['Pref_Kinekt']))     $foundSettings['Pref_Kinekt']      = $payload['Pref_Kinekt'];
+        if(isset($payload['Pref_Everyone']))   $foundSettings['Pref_Everyone']    = $payload['Pref_Everyone'];
+        if(isset($payload['Pref_Sex']))        $foundSettings['Pref_Sex']         = $payload['Pref_Sex'];
+        if(isset($payload['Pref_Lower_Age']))  $foundSettings['Pref_Lower_Age']   = $payload['Pref_Lower_Age'];
+        if(isset($payload['Pref_Upper_Age']))  $foundSettings['Pref_Upper_Age']   = $payload['Pref_Upper_Age'];
+        if(isset($payload['Pref_Chk_Exp']))    $foundSettings['Pref_Chk_Exp']     = $payload['Pref_Chk_Exp'];
+
+        // If we have found no matching values, then return an error.
+        if(count($foundSettings) == 0)
+            return Array("error" => "400", "message" => "Updating has failed because at least one preferences tag needs to be provided, please check your input payload as it is case sensitive.  i.e. Pref_Facebook is not the same as pref_facebook");
+
+        // Create the variable that will form the query for the SQL update operation.
+        // Note: it is meant to be 'update settings set ', so ignore red error warning.
+        $query = 'UPDATE preferences
+                  SET';
+
+        // For each tag we have, add column name and value.
+        // Count keeps track of the index of the foreach. When the index is equal to the size
+        // of the array of values, we don't include a comma and then move on to the WHERE clause
+        // of the query.
+        $data = Array();
+        $count = 0;
+        foreach($foundSettings as $setting)
+        {
+            // Find tag name and get value from array. Concatenate both together.
+            $tagName = array_search($setting, $foundSettings);
+            $query .= ' ' . $tagName . ' = ' . ":" . $tagName;
+
+            // Bind the tag and value.
+            $data[":" . $tagName] = $foundSettings[$tagName];
+
+            // If we exhaust all values, don't include a comma at the end of the query.
+            if($count == count($foundSettings) -1){} // Don't include.
+            else
+                $query .= ', ';                      // Include.
+
+            $count++;
+        }
+
+        // Finally add the WHERE clause and do the normal stuff of appending the userId.
+        // Example output: UPDATE setting
+        //                 SET Pri_Visability = 2, Notif_New_Friend = 1, Notif_CheckIn_Activity = 0
+        //                 WHERE Entity_Id = :userId
+        $query .= ' WHERE Entity_Id = :userId';
+
+        // Bind user parameter to the query.
+        $data[":userId"] = $user['entityId'];
+
+        // Perform the update
+        if (Database::getInstance()->update($query, $data))
+            return Array("error" => "200", "message" => "The preferences have been changed successfully.");
+        else
+            // If the values of the settings are the same as before the query was performed.
+            // Let me know if you want this check done above - Adam.
+            return Array("error" => "409", "message" => "The values could not be changed as they match existing values in the system.");
     }
 
     /*
@@ -697,6 +813,7 @@ class User
      |                   5) notifNewFriends
      |                   6) notifFriendRequests
      |                   7) notifCheckinActivity
+     |                   8) listVisibility
      |
      | @param $userId  - The identifer of the user.
      |
@@ -720,6 +837,7 @@ class User
         if(isset($payload['notifNewFriends']))      $foundSettings['Notif_New_Friend']       = $payload['notifNewFriends'];
         if(isset($payload['notifFriendRequests']))  $foundSettings['Notif_Friend_Request']   = $payload['notifFriendRequests'];
         if(isset($payload['notifCheckinActivity'])) $foundSettings['Notif_CheckIn_Activity'] = $payload['notifCheckinActivity'];
+        if(isset($payload['listVisibility']))       $foundSettings['list_visibility']        = $payload['listVisibility'];
 
         // If we have found no matching values, then return an error.
         if(count($foundSettings) == 0)
