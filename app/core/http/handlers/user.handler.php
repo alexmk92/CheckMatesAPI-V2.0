@@ -70,6 +70,7 @@ class User
                   WHERE entity.Entity_id = :entityId
                     OR entity.Fb_Id = :entityId";
 
+        //return Array("error" => "200", "message" => "Test", "payload" => Array("user" => var_dump($user)));
         $data = Array(":entityId" => $user["entityId"]);
         $userPreferences = json_decode(json_encode(Database::getInstance()->fetch($query, $data)), true);
 
