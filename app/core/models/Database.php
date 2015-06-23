@@ -93,7 +93,9 @@ class Database
 
     public function fetch($query, $data = null)
     {
+        set_error_handler(function() {});
         $stmt = $this->prepareQuery($query, $data);
+        restore_error_handler();
         return  $stmt->fetchObject();
     }
 
@@ -111,7 +113,12 @@ class Database
 
     public function fetchAll($query, $data = null)
     {
+        if(strpos($query, 'LIMIT') !== FALSE)
+            $this->connection->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);
+
+        set_error_handler(function() {});
         $stmt = $this->prepareQuery($query, $data);
+        restore_error_handler();
         return  $stmt->fetchAll();
     }
 
@@ -123,6 +130,8 @@ class Database
     | Inserts a new record into the database, based on the variables passed by
     | the client.  These are sanitised in the prepare statement.
     |
+    | We surpress error handling here to avoid array to string conversion errors.
+    |
     | @param $query - The query to be executed
     | @param $data  - Key value pairs of data to be bound to query
     |
@@ -133,7 +142,9 @@ class Database
 
     public function insert($query, $data)
     {
+        set_error_handler(function() {});
         $this->connection->prepare($query)->execute($data);
+        restore_error_handler();
         return $this->connection->lastInsertId();
     }
 
@@ -154,7 +165,9 @@ class Database
 
     public function update($query, $data)
     {
+        set_error_handler(function() {});
         $stmt = $this->prepareQuery($query, $data);
+        restore_error_handler();
         return $stmt->rowCount();
     }
 
@@ -170,11 +183,8 @@ class Database
     |
     */
 
-    public function setEmulatePrepares($value = true)
+    public function setEmulatePrepares($value)
     {
-        if($value != true || $value != false)
-            $value = true;
-
         $this->connection->setAttribute(\PDO::ATTR_EMULATE_PREPARES, $value);
     }
 
@@ -195,7 +205,9 @@ class Database
 
     public function delete($query, $data)
     {
+        set_error_handler(function() {});
         $stmt = $this->prepareQuery($query, $data);
+        restore_error_handler();
         return $stmt->rowCount();
     }
 
@@ -219,8 +231,10 @@ class Database
 
     private function prepareQuery($query, $data = null)
     {
+        set_error_handler(function() {});
         $stmt = $this->connection->prepare($query);
         $stmt->execute($data);
+        restore_error_handler();
         return $stmt;
     }
 }

@@ -448,58 +448,62 @@ class Checkin
             return Array("error" => "500", "message" => "Internal server error when attempting to create the new Checkin. Please try again.");
         }
 
+        // Default response for pushes
+        $taggedUsers = "0";
+        $taggedPushes = "No push notifications were sent as there were no tagged user recipients";
+
         // Update score of tagged users and notify them
-        $taggedUsers = $args["tagged_users"];
-        $taggedCount = count($taggedUsers);
-        $success     = 0;
-        if($taggedCount > 0) {
+        if(array_key_exists("tagged_users", $args))
+        {
+            $taggedUsers = $args["tagged_users"];
+            $taggedCount = count($taggedUsers);
+            $success     = 0;
+            if($taggedCount > 0) {
 
-            $taggedUsers = rtrim(implode(",", json_decode($args["tagged_users"])), ",");
+                $taggedUsers = rtrim(implode(",", json_decode($args["tagged_users"])), ",");
 
-            foreach (json_decode($args["tagged_users"]) as $taggedUser) {
-                // Perform the tag query
-                $query = "INSERT INTO tags(checkin_id, person_id) VALUES(:checkinId, :personId)";
-                $data = Array(
-                    ":checkinId" => $res,
-                    ":personId" => (int)$taggedUser
-                );
-
-                Database::getInstance()->insert($query, $data);
-
-                // Notify the user, only if they prompted to recieve notifications
-                $query = "SELECT entity_id FROM setting WHERE entity_id = :userId AND notif_tag = 1";
-                $data = Array("userId" => (int)$taggedUser);
-
-                // This expression will result to std::object or false - this is why we perform a boolean check
-                $recipient = Database::getInstance()->fetch($query, $data);
-                if ($recipient) {
-                    // Configure the push payload, we trim the name so that if it was Alexander John, it becomes Alexander.
-                    $pushPayload = Array(
-                        "senderId" => $token["entityId"],
-                        "senderName" => $token["firstName"] . " " . $token["lastName"],
-                        "receiver" => (int)$taggedUser,
-                        "message" => substr($token["firstName"], 0, strrpos($token["firstName"], " ")) . " has tagged you in a checkin.",
-                        "type" => 3,
-                        "date" => $now,
-                        "messageId" => NULL,
-                        "messageType" => NULL
+                foreach (json_decode($args["tagged_users"]) as $taggedUser) {
+                    // Perform the tag query
+                    $query = "INSERT INTO tags(checkin_id, person_id) VALUES(:checkinId, :personId)";
+                    $data = Array(
+                        ":checkinId" => $res,
+                        ":personId" => (int)$taggedUser
                     );
 
-                    $res = $server->sendNotification($pushPayload);
-                    if($res["error"] == 203)
-                        $success++;
+                    Database::getInstance()->insert($query, $data);
+
+                    // Notify the user, only if they prompted to recieve notifications
+                    $query = "SELECT entity_id FROM setting WHERE entity_id = :userId AND notif_tag = 1";
+                    $data = Array("userId" => (int)$taggedUser);
+
+                    // This expression will result to std::object or false - this is why we perform a boolean check
+                    $recipient = Database::getInstance()->fetch($query, $data);
+                    if ($recipient) {
+                        // Configure the push payload, we trim the name so that if it was Alexander John, it becomes Alexander.
+                        $pushPayload = Array(
+                            "senderId" => $token["entityId"],
+                            "senderName" => $token["firstName"] . " " . $token["lastName"],
+                            "receiver" => (int)$taggedUser,
+                            "message" => substr($token["firstName"], 0, strrpos($token["firstName"], " ")) . " has tagged you in a checkin.",
+                            "type" => 3,
+                            "date" => $now,
+                            "messageId" => NULL,
+                            "messageType" => NULL
+                        );
+
+                        $res = $server->sendNotification($pushPayload);
+                        if($res["error"] == 203)
+                            $success++;
+                    }
                 }
+
+                if ($success > 0)
+                    $res["error"] = 200;
+
+                // Update the master payload
+                $taggedPushes = $success . "/" . $taggedCount . " pushes were sent to tagged user recipients";
             }
-
-            if ($success > 0)
-                $res["error"] = 200;
-
-            // Update the master payload
-            $taggedPushes = $success . "/" . $taggedCount . " pushes were sent to tagged user recipients";
         }
-        // Notify friends that you were tagged here, only select friends who wish to be notified
-        else
-            $taggedUsers = "0";
 
         // Set up friend push variables
         $filter      = Array("tagged" => $taggedUsers);
