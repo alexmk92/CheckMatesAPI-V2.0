@@ -98,7 +98,7 @@ class User
             case "DELETE" : return $this->_DELETE();
                 break;
             default       : throw new \Exception("Unsupported header type for resource: User");
-                break;
+            break;
         }
     }
 
@@ -127,7 +127,9 @@ class User
         // /api/v2/User/at-location/{long}/{lat}/{limit*} - Returns list of users at location
         else if((count($this->args) == 3 || count($this->args) == 2) && $this->verb == "at-location")
         {
-            return \Handlers\User::getUsersAtLocation($this->args[0], $this->args[1], $this->user);
+            if(empty($this->args[2]))
+                $this->args[2] = 200;
+            return \Handlers\User::getUsersAtLocation($this->args[0], $this->args[1], $this->args[2], $this->user);
         }
         // /api/v2/User/favorite-place/{userId} - Returns users favorite places
         else if(count($this->args) == 1 && $this->verb == "favorite-places")

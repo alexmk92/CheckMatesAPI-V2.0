@@ -41,7 +41,7 @@ class User
     |
     */
 
-    public static function getUsersAtLocation($long, $lat, $user)
+    public static function getUsersAtLocation($long, $lat, $limit = 250, $user)
     {
         // Get the users privacy settings
         if(empty($user))
@@ -70,7 +70,6 @@ class User
                   WHERE entity.Entity_id = :entityId
                     OR entity.Fb_Id = :entityId";
 
-        //return Array("error" => "200", "message" => "Test", "payload" => Array("user" => var_dump($user)));
         $data = Array(":entityId" => $user["entityId"]);
         $userPreferences = json_decode(json_encode(Database::getInstance()->fetch($query, $data)), true);
 
@@ -198,7 +197,9 @@ class User
                   ";
 
         // Get the results and build the response payload
+        // we set emulate prepares to false and then true here to allow the LIMIT to be bound successfully
         $res = Database::getInstance()->fetchAll($query, $data);
+
         if(empty($res))
             return Array("error" => "404", "message" => "Sorry, it doesn't look like there have been any checkins recently.  Update your privacy settings to see more users!");
         // Ensure all privacy is taken care of here...i.e. no facebook friends must be returned with no last name
@@ -206,8 +207,13 @@ class User
         {
             $users = Array();
 
-            foreach($res as $user)
+            if($limit > count($res))
+                $limit = count($res);
+
+            for($i = 0; $i < $limit; $i++)
             {
+                $user = $res[$i];
+
                 if(empty($user["FC"]))
                     $user["FC"] = "3";
                 if($user["FC"] != 2)
@@ -216,7 +222,7 @@ class User
                 array_push($users, $user);
             }
 
-            return Array("error" => "200", "message" => "Successfully retrieved " . count($res) . " users around your location!", "payload" => Array("users" => $users));
+            return Array("error" => "200", "message" => "Successfully retrieved " . $limit . " users around your location!", "payload" => Array("users" => $users));
         }
     }
 
@@ -319,98 +325,89 @@ class User
         $data = Array(":entity_id" => $userId);
         $query = "SELECT DISTINCT entity.*, friends.Category, preferences.*, setting.*
                   FROM entity
-                  JOIN preferences
+                  LEFT JOIN preferences
                     ON entity.Entity_Id = preferences.Entity_Id
-                  JOIN setting
+                  LEFT JOIN setting
                     ON entity.Entity_Id = setting.Entity_Id
-                  JOIN friends
+                  LEFT JOIN friends
                     ON entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2
                   WHERE entity.Entity_Id = :entity_id
                   OR entity.Fb_Id = :entity_id
-                  AND friends.Category != 4
                   GROUP BY entity.Entity_Id";
 
         $res = Database::getInstance()->fetch($query, $data);
-        // Attempt to get a user without a friend connection
-        if(empty($res))
-        {
-            $query = "SELECT DISTINCT entity.*
-                      FROM entity
-                      WHERE entity_id = :entity_id
-                      OR fb_id = :entity_id";
-
-            $res = Database::getInstance()->fetch($query, $data);
-        }
-        else
-        {
+        if(!empty($res)) {
             $arr = Array(
 
-                            "entity_id" => $res->Entity_Id,
-                            "first_name" => $res->First_Name,
-                            "last_name" => $res->Last_Name,
-                            "email" => $res->Email,
-                            "profile_pic" => $res->Profile_Pic_Url,
-                            "sex" => $res->Sex,
-                            "DOB" => $res->DOB,
-                            "about" => $res->About,
-                            "create_dt" => $res->Create_Dt,
-                            "last_checkin_lat" => $res->Last_CheckIn_Lat,
-                            "last_checkin_long" => $res->Last_CheckIn_Long,
-                            "last_checkin_place" => $res->Last_CheckIn_Place,
-                            "last_checkin_country" => $res->Last_CheckIn_Country,
-                            "score" => $res->Score,
-                            "score_flag" => $res->Score_Flag,
-                            "image_urls" => $res->Image_Urls,
-                            "category" => empty($res->Category) ? 3 : $res->Category,
+                "entity_id" => $res->Entity_Id,
+                "first_name" => $res->First_Name,
+                "last_name" => $res->Last_Name,
+                "email" => $res->Email,
+                "profile_pic" => $res->Profile_Pic_Url,
+                "sex" => $res->Sex,
+                "DOB" => $res->DOB,
+                "about" => $res->About,
+                "create_dt" => $res->Create_Dt,
+                "last_checkin_lat" => $res->Last_CheckIn_Lat,
+                "last_checkin_long" => $res->Last_CheckIn_Long,
+                "last_checkin_place" => $res->Last_CheckIn_Place,
+                "last_checkin_country" => $res->Last_CheckIn_Country,
+                "score" => $res->Score,
+                "score_flag" => $res->Score_Flag,
+                "image_urls" => $res->Image_Urls,
+                "category" => empty($res->Category) ? 3 : $res->Category,
 
-                        "preferences" =>
-                        Array(
-                            "facebook" => $res->Pref_Facebook,
-                            "kinekt" => $res->Pref_Kinekt,
-                            "everyone" => $res->Pref_Everyone,
-                            "sex" => $res->Pref_Sex,
-                            "lower_age" => $res->Pref_Lower_Age,
-                            "upper_age" => $res->Pref_Upper_Age,
-                            "checkin_expiry" => $res->Pref_Chk_Exp
-                        ),
-                        "settings" =>
-                        Array(
-                            "privacy_checkin" => $res->Pri_CheckIn,
-                            "visibility" => $res->Pri_Visability,
-                            "notification_tag" => $res->Notif_Tag,
-                            "notification_message" => $res->Notif_Msg,
-                            "notification_new_friend" => $res->Notif_New_Friend,
-                            "notification_friend_request" => $res->Notif_Friend_Request,
-                            "notification_checkin_activity" => $res->Notif_CheckIn_Activity
-                        )
+                "preferences" =>
+                    Array(
+                        "facebook" => $res->Pref_Facebook,
+                        "kinekt" => $res->Pref_Kinekt,
+                        "everyone" => $res->Pref_Everyone,
+                        "sex" => $res->Pref_Sex,
+                        "lower_age" => $res->Pref_Lower_Age,
+                        "upper_age" => $res->Pref_Upper_Age,
+                        "checkin_expiry" => $res->Pref_Chk_Exp
+                    ),
+                "settings" =>
+                    Array(
+                        "privacy_checkin" => $res->Pri_CheckIn,
+                        "visibility" => $res->Pri_Visability,
+                        "notification_tag" => $res->Notif_Tag,
+                        "notification_message" => $res->Notif_Msg,
+                        "notification_new_friend" => $res->Notif_New_Friend,
+                        "notification_friend_request" => $res->Notif_Friend_Request,
+                        "notification_checkin_activity" => $res->Notif_CheckIn_Activity,
+                        "list_visibility" => $res->list_visibility
+                    )
             );
 
             return Array("error" => "200", "message" => "Successfully retrieved the user with id: " . $userId, "payload" => $arr);
         }
-        if(empty($res))
+        else if(empty($res))
             return Array("error" => "404", "message" => "Sorry, the user with id: " . $userId . " does not exist on the server.");
+        else
+        {
+            if(empty($res->Category))
+                $res->Category = 3;
 
-        if(empty($res->Category))
-            $res->Category = 3;
-
-        return Array("error" => "200", "message" => "Successfully retrieved the user with id: " . $userId, "payload" => $res);
+            return Array("error" => "200", "message" => "Successfully retrieved the user with id: " . $userId, "payload" => $res);
+        }
     }
 
-   /*
-   |--------------------------------------------------------------------------
-   | Update Profile
-   |--------------------------------------------------------------------------
-   |
-   | Updates the users profile such as there name, about and profile pics.
-   | This will only update on the database if the cached result doesn't match.
-   |
-   | @param $userId      - The user we are updating info for.
-   | @param $data        - The new array of information to set for this user.
-   | @param $setResponse - Determines if we echo a response to the client
-   |                       when this call succeeds. By default this will happen
-   |                       however we don't want this to happen when logging in
-   |
-   */
+    /*
+    |--------------------------------------------------------------------------
+    | Update Profile
+    |--------------------------------------------------------------------------
+    |
+    | Updates the users profile such as there name, about and profile pics.
+    | This will only update on the database if the cached result doesn't match.
+    |
+    | @param $userId      - The user we are updating info for.
+    | @param $data        - The new array of information to set for this user.
+    | @param $setResponse - Determines if we echo a response to the client
+    |                       when this call succeeds. By default this will happen
+    |                       however we don't want this to happen when logging in
+    |
+    */
 
     public static function updateProfile($userId, $data)
     {
@@ -431,13 +428,13 @@ class User
                   WHERE  entity_id       = :entId";
 
         $data  = Array(":firstName"  => $data['first_name'],
-                       ":lastName"   => $data['last_name'],
-                       ":email"      => $data['email'],
-                       ":sex"        => $data['sex'],
-                       ":dob"        => $data['dob'],
-                       ":images"     => $data['images'],
-                       ":entId"      => $userId,
-                       ":profilePic" => $data['pic_url']);
+            ":lastName"   => $data['last_name'],
+            ":email"      => $data['email'],
+            ":sex"        => $data['sex'],
+            ":dob"        => $data['dob'],
+            ":images"     => $data['images'],
+            ":entId"      => $userId,
+            ":profilePic" => $data['pic_url']);
 
         // Perform the update on the database
         $res = Database::getInstance()->update($query, $data);
@@ -470,6 +467,7 @@ class User
         $userExists = self::get($args['facebook_id']);
         if($userExists["error"] != 404)
         {
+
             $userExists["payload"] = json_decode(json_encode($userExists["payload"]), true);
 
             // Ensure we have a valid session
@@ -497,22 +495,22 @@ class User
             return self::signup($args);
     }
 
-   /*
-   |--------------------------------------------------------------------------
-   | Sign Up
-   |--------------------------------------------------------------------------
-   |
-   | Creates a new user in the database, only if they are 18 or older.
-   |
-   | @param $args : The JSON payload sent to the server detailing the information
-   |                on this user.  An invalid insert will result in a 400 error
-   |                being returned to the client.
-   |
-   | @return $arr : An array containing either an error detailing what went
-   |                wrong with the request, or a payload holding all user info
-   |                to be manipulated by the client.
-   |
-   */
+    /*
+    |--------------------------------------------------------------------------
+    | Sign Up
+    |--------------------------------------------------------------------------
+    |
+    | Creates a new user in the database, only if they are 18 or older.
+    |
+    | @param $args : The JSON payload sent to the server detailing the information
+    |                on this user.  An invalid insert will result in a 400 error
+    |                being returned to the client.
+    |
+    | @return $arr : An array containing either an error detailing what went
+    |                wrong with the request, or a payload holding all user info
+    |                to be manipulated by the client.
+    |
+    */
 
     public static function signup($args)
     {
@@ -569,7 +567,7 @@ class User
 
         // Get the preferences
         $settings = Array("privacy_checkin" => 1, "privacy_visibility" => 3, "notification_tag" => 1, "notification_msg" => 1, "notification_new_friend" => 1, "notification_friend_request" => 1, "notification_checkin_activity" => 1);
-        $preferences = Array("facebook" => 1, "kinekt" => "1", "everyone" => "1", "sex" => "3", "lower_age" => 18, "upper_age" => 100, "checkin_expiry" => 8);
+        $preferences = Array("facebook" => 1, "kinekt" => 1, "everyone" => 1, "sex" => 3, "lower_age" => 18, "upper_age" => 100, "checkin_expiry" => 8);
 
         if($id > 0)
             return Array('error' => '200', 'message' => 'The user was created successfully.', 'payload' => Array('entity_id' => $id, 'entity_data' => $args, "preferences" => $preferences, "settings" => $settings, "session" => $token));
@@ -762,14 +760,13 @@ class User
         // of the query.
         $data = Array();
         $count = 0;
-        foreach($foundSettings as $setting)
+        foreach($foundSettings as $k => $v)
         {
             // Find tag name and get value from array. Concatenate both together.
-            $tagName = array_search($setting, $foundSettings);
-            $query .= ' ' . $tagName . ' = ' . ":" . $tagName;
+            $query .= ' ' . $k . ' = ' . ":" . $k;
 
             // Bind the tag and value.
-            $data[":" . $tagName] = $foundSettings[$tagName];
+            $data[":" . $k] = $v;
 
             // If we exhaust all values, don't include a comma at the end of the query.
             if($count == count($foundSettings) -1){} // Don't include.
@@ -855,14 +852,13 @@ class User
         // of the query.
         $data = Array();
         $count = 0;
-        foreach($foundSettings as $setting)
+        foreach($foundSettings as $k => $v)
         {
             // Find tag name and get value from array. Concatenate both together.
-            $tagName = array_search($setting, $foundSettings);
-            $query .= ' ' . $tagName . ' = ' . ":" . $tagName;
+            $query .= ' ' . $k . ' = ' . ":" . $k;
 
             // Bind the tag and value.
-            $data[":" . $tagName] = $foundSettings[$tagName];
+            $data[":" . $k] = $v;
 
             // If we exhaust all values, don't include a comma at the end of the query.
             if($count == count($foundSettings) -1){} // Don't include.
@@ -990,7 +986,7 @@ class User
     {
         if($userId != $user['entityId'])
             return Array("error" => "400", "message" => "Bad request. Somehow the entity_id of the validated session does not match the identifier".
-                                                    " of the sent user provided by the parameter.", "payload" => "");
+                " of the sent user provided by the parameter.", "payload" => "");
 
         // Bind the parameters to the query - do this at the top level because it will be used a lot below.
         $data = Array(":userId" => $user['entityId']);
@@ -1142,7 +1138,7 @@ class User
 
             // Conflict in terms of the primary key for the favourites table.
             return Array("error" => "409", "message" => "Conflict: The specified identifier for the favourite place has not matched"
-                                                       ." a record in the database.");
+                ." a record in the database.");
     }
 
 
