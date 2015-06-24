@@ -122,12 +122,12 @@ class User
         // /api/v2/User/{userId} - Returns the user
         else if(count($this->args) == 1 && $this->verb == "")
         {
-            return \Handlers\User::get($this->args[0]);
+            return \Handlers\User::get($this->args[0], $this->user);
         }
         // /api/v2/User/at-location/{long}/{lat}/{limit*} - Returns list of users at location
         else if((count($this->args) == 3 || count($this->args) == 2) && $this->verb == "at-location")
         {
-            if(empty($this->args[2]))
+            if(count($this->args) == 2)
                 $this->args[2] = 200;
             return \Handlers\User::getUsersAtLocation($this->args[0], $this->args[1], $this->args[2], $this->user);
         }

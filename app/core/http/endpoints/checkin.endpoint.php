@@ -121,6 +121,11 @@ class Checkin
             }
             return \Handlers\Checkin::getCheckins($args, $this->user);
         }
+        // /api/v2/Checkin/activities/{userId}
+        else if(count($this->args) == 1 && $this->verb == "activities")
+        {
+            return \Handlers\Checkin::getActivities($this->args[0]);
+        }
         // /api/v2/Checkin/for-user/{userId}
         else if(count($this->args) == 1 && $this->verb == "for-user")
         {

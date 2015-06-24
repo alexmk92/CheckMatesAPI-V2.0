@@ -518,6 +518,8 @@ Example response:
 
 This should provide you with all information necessary to build the map UI on the front end. 
 
+3) Get all Activities for your friends at `/api/v2/Checkin/activities/{userId}` no JSON body is required, just send auth data in the HTTP header.
+
 
 ##### PUT
 Like a checkin, by specifying `like` we can filter what happens with the resource: `/api/v2/Checkin/like/{checkinId}`

@@ -91,6 +91,22 @@ class Friend
 
     /*
     |--------------------------------------------------------------------------
+    | Get Suggested Friends
+    |--------------------------------------------------------------------------
+    |
+    | Returns a list of suggested friends, this is calculated by determining
+    | friends of a mutual friends
+    |
+    */
+
+    public static function getSuggestedFriends($userId)
+    {
+        // Find all mutual friends for this user
+       // $query = "SELECT * FROM "
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | Get Friends Requests
     |--------------------------------------------------------------------------
     |

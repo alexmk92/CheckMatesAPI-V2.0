@@ -172,6 +172,7 @@ class Checkin
                         ent.Last_CheckIn_Lat,
                         ent.Last_CheckIn_Long,
                         ent.First_Name AS first_name,
+                        ent.Last_CheckIn_Dt AS last_checkin,
                         ent.Last_Name AS last_name,
                         checkins.place_name,
                         checkins.place_lat,
@@ -188,7 +189,7 @@ class Checkin
                             WHERE  (Entity_Id1 = ent.Entity_Id AND Entity_Id2 = :entityId)  OR
                                    (Entity_Id2 = ent.Entity_Id AND Entity_Id1 = :entityId)
                         ) AS FC,
-                        ent.Last_Checkin_Dt AS date
+                        checkins.Chk_Dt AS date
                   FROM  entity ent
                   JOIN  checkins
                   ON    ent.Entity_Id = checkins.Entity_Id
@@ -228,6 +229,75 @@ class Checkin
 
             return Array("error" => "200", "message" => "Successfully retrieved " . count($res) . " users around your location!", "payload" => Array("users" => $users));
         }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Get Activities
+    |--------------------------------------------------------------------------
+    |
+    | Retrieve all checkins for a user combined with their friends, this will
+    | be organised in the list view
+    |
+    | @param $userId - the id of the user who we are retrieving activities for
+    |
+    */
+
+    public static function getActivities($userId)
+    {
+        // Build the query
+        $query = "SELECT
+                        E.Entity_Id,
+                        E.Profile_Pic_Url,
+                        E.Last_CheckIn_Lat,
+                        E.Last_CheckIn_Long,
+                        E.First_Name AS first_name,
+                        E.Last_Name AS last_name,
+                        C.place_name,
+                        C.place_lat,
+                        C.place_long,
+                        C.place_people,
+                        C.chk_id AS checkin_id,
+                        C.img_url AS checkin_photo,
+                        C.Chk_Dt AS date
+                  FROM
+                        checkins C
+                  JOIN
+                  (
+                        SELECT entity_id1
+                          FROM friends
+                         WHERE entity_id2 = :userId
+
+                         UNION
+
+                        SELECT entity_id2
+                          FROM friends
+                         WHERE entity_id1 = :userId
+
+                         UNION
+
+                        SELECT :userId
+                          FROM DUAL
+                  ) m
+                  ON
+                        C.Entity_Id = m.Entity_Id1
+                  JOIN
+                        entity E
+                  ON
+                        C.Entity_Id = E.Entity_Id
+                  GROUP BY
+                        C.Chk_Id
+                  ORDER BY
+                        C.Chk_Dt DESC
+                  ";
+
+        $data = Array(":userId" => $userId);
+
+        $res = Database::getInstance()->fetchAll($query, $data);
+        if(count($res) > 0)
+            return Array("error" => "200", "message" => "Successfully retrieved " . count($res) . " checkins.", "payload" => $res);
+        else
+            return Array("error" => "404", "message" => "There were not activities to be returned for this user. Make a checkin!");
     }
 
     /*

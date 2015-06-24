@@ -274,9 +274,13 @@ class User
         $DB = Database::getInstance();
 
         $data = Array(":entity_id" => $userId);
-        $query = "SELECT * FROM favorites WHERE entity_id = :entity_id OR fb_id = :entity_id";
+        $query = "SELECT * FROM favorites WHERE favorites.Entity_Id = :entity_id";
 
-        return $DB->fetchAll($query, $data);
+        $res = $DB->fetchAll($query, $data);
+        if(count($res) > 0)
+            return $res;
+        else
+            return "This user has no favorite places";
     }
 
     /*
@@ -320,8 +324,9 @@ class User
     |
     */
 
-    public static function get($userId)
+    public static function get($userId, $user = null)
     {
+        // Build the return payload
         $data = Array(":entity_id" => $userId);
         $query = "SELECT DISTINCT entity.*, friends.Category, preferences.*, setting.*
                   FROM entity
@@ -356,7 +361,7 @@ class User
                 "score_flag" => $res->Score_Flag,
                 "image_urls" => $res->Image_Urls,
                 "category" => empty($res->Category) ? 3 : $res->Category,
-
+                "places" => self::getFavoritePlaces($userId),
                 "preferences" =>
                     Array(
                         "facebook" => $res->Pref_Facebook,
@@ -379,6 +384,13 @@ class User
                         "list_visibility" => $res->list_visibility
                     )
             );
+
+            // Set the mutual friend key only if this isnt your profile
+            if($user != null && $user["entityId"] != $userId)
+            {
+                $mutualFriends = self::getMutualFriends($user["entityId"], $userId);
+                $arr["mutual_friends"] = $mutualFriends;
+            }
 
             return Array("error" => "200", "message" => "Successfully retrieved the user with id: " . $userId, "payload" => $arr);
         }
@@ -573,6 +585,69 @@ class User
             return Array('error' => '200', 'message' => 'The user was created successfully.', 'payload' => Array('entity_id' => $id, 'entity_data' => $args, "preferences" => $preferences, "settings" => $settings, "session" => $token));
         else
             return Array('error' => '500', 'message' => 'There was an internal error when creating the user listed in the payload.  Please try again.', 'payload' => Array('entity_id' => $id, 'entity_data' => $args));
+    }
+
+    /*
+     |--------------------------------------------------------------------------
+     | GET MUTUAL FRIENDS
+     |--------------------------------------------------------------------------
+     |
+     | Returns a list of mutual friends between the logged in user and the
+     | specified friend.
+     |
+     */
+
+    private static function getMutualFriends($userId, $friendId)
+    {
+        // Check for an invalid match
+        if(($userId <= 0 || $friendId <= 0) || $userId == $friendId)
+            return "No mutual friends";
+
+        // Perform the query
+        $query = "
+                    SELECT First_Name AS first_name,
+                           Last_Name AS last_name,
+                           Profile_Pic_Url AS profile_pic,
+                           Entity_Id AS entity_id,
+                           DOB AS dob
+                    FROM
+                    (
+                        SELECT entity.First_Name,
+                               entity.Last_Name,
+                               entity.Profile_Pic_Url,
+                               entity.Entity_Id,
+                               entity.DOB
+                        FROM entity
+                        JOIN friends
+                          ON (entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2)
+                        WHERE (friends.Entity_Id1 = :userId OR friends.Entity_Id2 = :userId)
+
+                        UNION ALL
+
+                        SELECT entity.First_Name,
+                               entity.Last_Name,
+                               entity.Profile_Pic_Url,
+                               entity.Entity_Id,
+                               entity.DOB
+                        FROM entity
+                        JOIN friends
+                          ON (entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2)
+                        WHERE (friends.Entity_Id1 = :friendId OR friends.Entity_Id2 = :friendId)
+
+
+                    ) friend_list
+                    GROUP BY entity_id
+                    HAVING COUNT(*) = 2
+                    ORDER BY first_name ASC
+                 ";
+
+        $data = Array(":friendId" => $friendId, ":userId" => $userId);
+
+        $res = Database::getInstance()->fetchAll($query, $data);
+        if(count($res) == 0)
+            return "No mutual friends.";
+        else
+            return $res;
     }
 
     /*
