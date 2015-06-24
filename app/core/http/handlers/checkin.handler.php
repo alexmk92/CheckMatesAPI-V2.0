@@ -449,11 +449,11 @@ class Checkin
         }
 
         // Default response for pushes
-        $taggedUsers = "0";
+        $taggedUsers = "[]";
         $taggedPushes = "No push notifications were sent as there were no tagged user recipients";
 
         // Update score of tagged users and notify them
-        if(array_key_exists("tagged_users", $args))
+        if(array_key_exists("tagged_users", $args) && $args["tagged_users"] != "[]")
         {
             $taggedUsers = $args["tagged_users"];
             $taggedCount = count($taggedUsers);
@@ -512,7 +512,7 @@ class Checkin
         $success     = 0;
 
         // Send a push notification to each of these friends
-        if($friendCount > 0) {
+        if($friendCount > 0 && array_key_exists("payload", $friends)) {
             foreach ($friends["payload"] as $friend) {
 
                 // Notify the user, only if they prompted to recieve notifications
@@ -549,7 +549,7 @@ class Checkin
         }
 
         // Process the callback
-        if(array_key_exists("error", $res))
+        if(is_array($res) && array_key_exists("error", $res))
         {
             if($res["error"] == 200 || $res["error"] == 400)
             {
@@ -565,6 +565,12 @@ class Checkin
             }
             else
                 return Array("error" => "500", "message" => "Internal server error whilst creating this checkin.");
+        }
+        // Handle the case where no friends or tagged users were present (just the insert ID for a new checkin).
+        else if(!is_array($res) && $res > 0)
+        {
+            $people  = self::getUsersAtLocation($args["place_long"], $args["place_lat"]);
+            return Array("errorr" => "200", "message" => "The Checkin was created successfully.", "payload" => Array("details" => $placeData, "people" => $people));
         }
         else
             return Array("error" => "500", "message" => "Internal server error whilst creating this checkin.");
@@ -828,6 +834,21 @@ class Checkin
             // No results found.
             return Array("error" => "200", "message" => "Logic has completed successfully, but no results were found.");
     }
+
+    /*
+     |--------------------------------------------------------------------------
+     | GET ACTIVITIES
+     |--------------------------------------------------------------------------
+     |
+     | Get all of the recent activities for the users friends.
+     |
+     | @param $checkInId - The identifier for the checkIn.
+     |
+     | @param $userId    - The identifier of the user that called the endpoint.
+     |
+     | @return             A list of activities.
+     |
+     */
 
     /*
      |--------------------------------------------------------------------------
