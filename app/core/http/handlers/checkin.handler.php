@@ -253,13 +253,21 @@ class Checkin
                         E.Last_CheckIn_Long,
                         E.First_Name AS first_name,
                         E.Last_Name AS last_name,
+                        C.Chk_Id,
                         C.place_name,
                         C.place_lat,
                         C.place_long,
                         C.place_people,
                         C.chk_id AS checkin_id,
                         C.img_url AS checkin_photo,
-                        C.Chk_Dt AS date
+                        C.message,
+                        C.Chk_Dt AS date,
+                        C.Tagged_Ids,
+                        COUNT(DISTINCT CC.Comment_Id) AS num_comments,
+                        COUNT(DISTINCT CL.Like_Id) AS num_likes,
+                        (
+                          SELECT COUNT(1) FROM checkin_likes WHERE entity_id = :userId AND chk_id = C.chk_id
+                        ) liked
                   FROM
                         checkins C
                   JOIN
@@ -285,6 +293,14 @@ class Checkin
                         entity E
                   ON
                         C.Entity_Id = E.Entity_Id
+                  LEFT JOIN
+                        checkin_comments CC
+                    ON
+                        C.Chk_Id = CC.Chk_Id
+                  LEFT JOIN
+                        checkin_likes CL
+                    ON
+                        C.Chk_Id = CL.Chk_Id
                   GROUP BY
                         C.Chk_Id
                   ORDER BY
@@ -295,7 +311,10 @@ class Checkin
 
         $res = Database::getInstance()->fetchAll($query, $data);
         if(count($res) > 0)
+        {
             return Array("error" => "200", "message" => "Successfully retrieved " . count($res) . " checkins.", "payload" => $res);
+
+        }
         else
             return Array("error" => "404", "message" => "There were not activities to be returned for this user. Make a checkin!");
     }
@@ -315,15 +334,69 @@ class Checkin
         if(empty($user))
             return Array("error" => "401", "message" => "You are not authorised to access this resource, please re-login to generate a new session token.");
 
-        $query = "SELECT * FROM checkins WHERE Entity_Id = :entityId ORDER BY chk_id DESC";
+        $query = "SELECT checkins.*,
+                         entity.First_Name,
+                         entity.Last_Name,
+                         entity.Last_CheckIn_Dt checkin_date,
+                         entity.DOB,
+                         entity.Email,
+                         entity.Sex,
+                         entity.Score,
+                         COUNT(DISTINCT checkin_comments.Comment_Id) AS num_comments,
+                         COUNT(DISTINCT checkin_likes.Like_Id) AS num_likes,
+                         (
+                            SELECT COUNT(1) FROM checkin_likes WHERE entity_id = :entityId AND chk_id = checkins.chk_id
+                         ) liked
+                  FROM checkins
+                  JOIN entity
+                    ON checkins.Entity_Id = entity.Entity_Id
+                  LEFT JOIN
+                       checkin_comments
+                    ON checkins.Entity_Id = checkin_comments.Entity_Id
+                  LEFT JOIN
+                       checkin_likes
+                    ON checkins.Entity_Id = checkin_likes.Entity_Id
+                  WHERE checkins.Entity_Id = :entityId
+                  ORDER BY checkins.chk_id DESC";
         $data  = Array(":entityId" => $args["entityId"]);
-
         $res = Database::getInstance()->fetchAll($query, $data);
 
         if(count($res) == 0 || empty($res))
             return Array("error" => "404", "message" => "This user does not have any checkins");
         else
-            return Array("error" => "200", "message" => "Successfully retrieved " . count($res) . " checkins for this user.", "payload" => $res);
+        {
+            // Return tagged user ID's
+            $arr = json_decode(json_encode($res), true);
+            for($i = 0; $i < count($arr); $i++)
+            {
+                $tagged    = str_replace(Array("[", "]"), "", $arr[$i]["Tagged_Ids"]);
+                $taggedArr = explode(", ", $tagged);
+
+                $data = Array();
+                $query  = "SELECT first_name, last_name, email, profile_pic_url, entity_id
+                           FROM entity
+                           WHERE entity_id IN (
+                          ";
+
+                // binds the users to the IN query
+                for($i = 0; $i < count($taggedArr); $i++)
+                {
+                    $query .= ":allow_" . $i;
+                    $data[":allow_".$i] = $taggedArr[$i];
+                    if($i < count($taggedArr)-1)
+                        $query .= ",";
+                    else
+                        $query .= ")";
+                }
+
+                $res = Database::getInstance()->fetchAll($query, $data);
+                if(count($res) > 0)
+                    $arr[$i]["Tagged_Users"] = $res;
+            }
+
+            return Array("error" => "200", "message" => "Successfully retrieved " . count($res) . " checkins for this user.", "payload" => $arr);
+        }
+
     }
 
     /*

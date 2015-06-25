@@ -757,7 +757,11 @@ class User
 
     public static function getNotifications($userId)
     {
-        $query = "SELECT * FROM notifications WHERE receiver = :entityId";
+        $query = "SELECT notifications.*, entity.First_Name, entity.Last_Name, entity.Profile_Pic_Url
+                  FROM notifications
+                  JOIN entity
+                    ON notifications.sender = entity.Entity_Id
+                  WHERE receiver = :entityId";
         $data  = Array(":entityId" => $userId);
 
         $res   = Database::getInstance()->fetchAll($query, $data);

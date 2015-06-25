@@ -146,22 +146,22 @@ class User
         {
             return \Handlers\User::getSettings($this->args[0]);
         }
-        // /api/v2/User/list/{CheckinId}
+        // /api/v2/User/list/{userId}
         else if(count($this->args) == 1 && $this->verb == 'list')
         {
             return \Handlers\User::getLists($this->args[0]);
         }
-        // /api/v2/User/score/{CheckinId}
+        // /api/v2/User/score/{userId}
         else if(count($this->args) == 1 && $this->verb == 'score')
         {
             return \Handlers\User::getScores($this->args[0]);
         }
-        // /api/v2/User/profile/{CheckinId}
+        // /api/v2/User/profile/{userId}
         else if(count($this->args) == 1 && $this->verb == 'profile')
         {
             return \Handlers\User::getProfile($this->args[0]);
         }
-        // /api/v2/User/notifications/{CheckinId}
+        // /api/v2/User/notifications/{userId}
         else if(count($this->args) == 1 && $this->verb == 'notifications')
         {
             return \Handlers\User::getNotifications($this->args[0]);
