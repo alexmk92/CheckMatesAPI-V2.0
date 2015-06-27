@@ -612,6 +612,8 @@ All endpoints for a Friend request are detailed here.
 
 2) All friend requests for a specific user can be retrieved using `/api/v2/Friend/friend-requests/{userId}` this method should always respond with a `200` however the size of the returned payload may vary.
 
+3) Suggested friends can now be retrived at `/api/v2/Friend/suggested-friends/{userId}`
+
 ##### PUT
 1) A user can be blocked by sending a request to `/api/v2/block` a JSON object must also be sent which contains the ID of the logged in user 
 

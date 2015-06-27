@@ -312,7 +312,45 @@ class Checkin
         $res = Database::getInstance()->fetchAll($query, $data);
         if(count($res) > 0)
         {
-            return Array("error" => "200", "message" => "Successfully retrieved " . count($res) . " checkins.", "payload" => $res);
+            // Return tagged user ID's
+            $arr = json_decode(json_encode($res), true);
+            for($i = 0; $i < count($arr); $i++)
+            {
+                $tagged    = str_replace(Array("[", "]"), "", $arr[$i]["Tagged_Ids"]);
+                $taggedArr = explode(", ", $tagged);
+
+                $data = Array();
+                $query  = "SELECT first_name, last_name, email, profile_pic_url, entity_id
+                           FROM entity
+                           WHERE entity_id IN (
+                          ";
+
+                if(count($taggedArr) > 0 && !empty($taggedArr))
+                {
+                    // binds the users to the IN query
+                    for($j = 0; $j < count($taggedArr); $j++)
+                    {
+                        $query .= ":allow_" . $j;
+                        $data[":allow_".$j] = $taggedArr[$j];
+                        if($j < count($taggedArr)-1)
+                            $query .= ",";
+                        else
+                            $query .= ")";
+                    }
+                }
+                else
+                    $query .= "0)";
+
+
+                $res = Database::getInstance()->fetchAll($query, $data);
+                if(count($res) > 0)
+                {
+                    $arr[$i]["Tagged_Users"] = json_decode(json_encode($res), true);
+                }
+
+            }
+
+            return Array("error" => "200", "message" => "Successfully retrieved " . count($arr) . " checkins.", "payload" => $arr);
 
         }
         else
@@ -342,22 +380,20 @@ class Checkin
                          entity.Email,
                          entity.Sex,
                          entity.Score,
-                         COUNT(DISTINCT checkin_comments.Comment_Id) AS num_comments,
-                         COUNT(DISTINCT checkin_likes.Like_Id) AS num_likes,
+                         (
+                            SELECT COUNT(*) FROM checkin_comments WHERE chk_id = checkins.chk_id
+                         ) AS comment_count,
+                         (
+                            SELECT COUNT(*) FROM checkin_likes WHERE chk_id = checkins.chk_id
+                         ) AS like_count,
                          (
                             SELECT COUNT(1) FROM checkin_likes WHERE entity_id = :entityId AND chk_id = checkins.chk_id
                          ) liked
                   FROM checkins
                   JOIN entity
                     ON checkins.Entity_Id = entity.Entity_Id
-                  LEFT JOIN
-                       checkin_comments
-                    ON checkins.Entity_Id = checkin_comments.Entity_Id
-                  LEFT JOIN
-                       checkin_likes
-                    ON checkins.Entity_Id = checkin_likes.Entity_Id
                   WHERE checkins.Entity_Id = :entityId
-                  ORDER BY checkins.chk_id DESC";
+                  ORDER BY checkins.chk_dt DESC";
         $data  = Array(":entityId" => $args["entityId"]);
         $res = Database::getInstance()->fetchAll($query, $data);
 
@@ -367,6 +403,7 @@ class Checkin
         {
             // Return tagged user ID's
             $arr = json_decode(json_encode($res), true);
+
             for($i = 0; $i < count($arr); $i++)
             {
                 $tagged    = str_replace(Array("[", "]"), "", $arr[$i]["Tagged_Ids"]);
@@ -378,23 +415,32 @@ class Checkin
                            WHERE entity_id IN (
                           ";
 
-                // binds the users to the IN query
-                for($i = 0; $i < count($taggedArr); $i++)
+                if(count($taggedArr) > 0 && !empty($taggedArr))
                 {
-                    $query .= ":allow_" . $i;
-                    $data[":allow_".$i] = $taggedArr[$i];
-                    if($i < count($taggedArr)-1)
-                        $query .= ",";
-                    else
-                        $query .= ")";
+                    // binds the users to the IN query
+                    for($j = 0; $j < count($taggedArr); $j++)
+                    {
+                        $query .= ":allow_" . $j;
+                        $data[":allow_".$j] = $taggedArr[$j];
+                        if($j < count($taggedArr)-1)
+                            $query .= ",";
+                        else
+                            $query .= ")";
+                    }
                 }
+                else
+                    $query .= "0)";
+
 
                 $res = Database::getInstance()->fetchAll($query, $data);
                 if(count($res) > 0)
-                    $arr[$i]["Tagged_Users"] = $res;
+                {
+                    $arr[$i]["Tagged_Users"] = json_decode(json_encode($res), true);
+                }
+
             }
 
-            return Array("error" => "200", "message" => "Successfully retrieved " . count($res) . " checkins for this user.", "payload" => $arr);
+            return Array("error" => "200", "message" => "Successfully retrieved " . count($arr) . " checkins for this user.", "payload" => $arr);
         }
 
     }
@@ -460,7 +506,8 @@ class Checkin
             if(file_exists($file_to_open)) {
                 $placePic = TRUE;
             }
-            else {
+            else
+            {
                 $placePic = file_put_contents($file_to_open, file_get_contents($args["place_url"]));
                 $placeImageURL = SERVER_IP . "/" . $file_to_open;
             }
@@ -477,7 +524,10 @@ class Checkin
             if($res["error"] == 400)
                 return $res;
             else
-                $checkinImageURL = $res["imageUrl"];
+            {
+                $checkinImageURL = SERVER_IP . "/" . $res["imageUrl"];
+            }
+
         }
 
         // Perform the Checkin insert here...
@@ -694,7 +744,7 @@ class Checkin
         // Process the callback
         if(is_array($res) && array_key_exists("error", $res))
         {
-            if($res["error"] == 200 || $res["error"] == 400)
+            if(($res["error"] >= 200 && $res["error"] < 300) || $res["error"] == 400)
             {
                 $people  = self::getUsersAtLocation($args["place_long"], $args["place_lat"]);
                 if($res["error"] >= 400)
@@ -829,7 +879,9 @@ class Checkin
             $_FILES['file'] = $_FILES["image"];
             $temp = explode(".", $_FILES["file"]["name"]);
             $extension = end($temp);
-            $imageURL = './public/img/checkins/c' . (int)(((rand(21, 500) * rand(39, 9000)) / rand(3,9))) . time() * rand(2, 38) . "." . $extension;
+            $filename = (int)(((rand(21, 500) * rand(39, 9000)) / rand(3,9))) . time() * rand(2, 38) . "." . $extension;
+
+            $imageURL = './public/img/checkins/c' . $filename;
             if(in_array($extension, $allowedExts))
             {
                 if($_FILES['file']['error'] > 0)
@@ -843,7 +895,7 @@ class Checkin
         }
 
         // Final return type, should be 204, if 0 or array then the upload failed and we return an error back to the client.
-        return Array("error" => $flag, "imageUrl" => $imageURL);
+        return Array("error" => $flag, "imageUrl" => "public/img/checkins/" . "c" . $filename);
     }
 
     /*
@@ -857,21 +909,61 @@ class Checkin
 
     public static function get($args, $user)
     {
-        $query = "SELECT * FROM checkins WHERE chk_id = :checkinId";
+        $query = "SELECT checkins.*, entity.First_Name, entity.Last_Name, entity.Profile_Pic_Url
+                  FROM checkins
+                  JOIN entity
+                  ON checkins.Entity_Id = entity.Entity_Id
+                  WHERE chk_id = :checkinId";
+
         $data  = Array(":checkinId" => $args["checkinId"]);
 
-        $res = Database::getInstance()->fetchAll($query, $data);
+        $res = Database::getInstance()->fetch($query, $data);
 
         if(count($res) == 0 || empty($res))
             return Array("error" => "404", "message" => "This checkin does not exist");
-        else
-        {
+        else {
+            $res = json_decode(json_encode($res), true);
             $comments = self::getComments($args["checkinId"], $user["entityId"], $user);
-            if(empty($res["comments"]))
+            if (empty($res["comments"]))
                 $res["comments"] = $comments;
-            $like     = self::getLikes($args["checkinId"]);
-                $res["likes"] = $like;
-            return Array("error" => "200", "message" => "Successfully retrieved the Checkin.", "payload" => $res);
+            $like = self::getLikes($args["checkinId"]);
+            $res["likes"] = $like;
+
+            // get the tagged ID's
+            // Return tagged user ID's
+            $arr = json_decode(json_encode($res), true);
+
+            if (array_key_exists("Tagged_Ids", $arr)) {
+                $tagged = str_replace(Array("[", "]"), "", $arr["Tagged_Ids"]);
+                $taggedArr = explode(", ", $tagged);
+
+                $data = Array();
+                $query = "SELECT first_name, last_name, email, profile_pic_url, entity_id
+                           FROM entity
+                           WHERE entity_id IN (
+                          ";
+
+                if (count($taggedArr) > 0 && !empty($taggedArr)) {
+                    // binds the users to the IN query
+                    for ($j = 0; $j < count($taggedArr); $j++) {
+                        $query .= ":allow_" . $j;
+                        $data[":allow_" . $j] = $taggedArr[$j];
+                        if ($j < count($taggedArr) - 1)
+                            $query .= ",";
+                        else
+                            $query .= ")";
+                    }
+                } else
+                    $query .= "0)";
+
+
+                $res = Database::getInstance()->fetchAll($query, $data);
+                if (count($res) > 0) {
+                    $arr["Tagged_Users"] = json_decode(json_encode($res), true);
+                }
+        }
+
+            return Array("error" => "200", "message" => "Successfully retrieved the Checkin.", "payload" => $arr);
         }
 
     }
@@ -975,23 +1067,8 @@ class Checkin
         }
         else
             // No results found.
-            return Array("error" => "200", "message" => "Logic has completed successfully, but no results were found.");
+            return Array("error" => "200", "message" => "There were no comments for this checkin.");
     }
-
-    /*
-     |--------------------------------------------------------------------------
-     | GET ACTIVITIES
-     |--------------------------------------------------------------------------
-     |
-     | Get all of the recent activities for the users friends.
-     |
-     | @param $checkInId - The identifier for the checkIn.
-     |
-     | @param $userId    - The identifier of the user that called the endpoint.
-     |
-     | @return             A list of activities.
-     |
-     */
 
     /*
      |--------------------------------------------------------------------------
@@ -1009,11 +1086,11 @@ class Checkin
 
     private static function getLikes($chkId)
     {
-        $query = "SELECT COUNT(*) FROM checkin_likes WHERE Chk_Id = :checkinId";
+        $query = "SELECT COUNT(*) AS count FROM checkin_likes WHERE Chk_Id = :checkinId";
         $data  = Array(":checkinId" => $chkId);
 
         $res = Database::getInstance()->fetch($query, $data);
-        return $res[0];
+        return $res->count;
     }
 
 

@@ -86,8 +86,7 @@ class Session
         $query = "SELECT us.oid, us.expiry_gmt, us.device, us.type, us.sid,
                          ent.First_Name, ent.Last_Name, ent.Fb_Id, ent.Profile_Pic_Url
                   FROM user_sessions us, entity ent
-                  WHERE us.oid = ent.Entity_Id
-                  AND us.token = :token
+                  WHERE  us.token = :token
                   AND us.device = :device_id";
 
         $data  = Array(":token" => $token, ":device_id" => $deviceId);

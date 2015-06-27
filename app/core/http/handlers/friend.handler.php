@@ -62,6 +62,7 @@ class Friend
                     SELECT Entity_Id2 FROM friends WHERE Entity_Id1 = :entity_id AND Category != 4
                   )
                   AND Entity_Id NOT IN( :tagged )
+                  GROUP BY Entity_Id
                   ";
 
         // Check we received a valid object back to set the response.
@@ -102,7 +103,163 @@ class Friend
     public static function getSuggestedFriends($userId)
     {
         // Find all mutual friends for this user
-       // $query = "SELECT * FROM "
+       $query = "
+                  SELECT DISTINCT Entity_Id, Fb_Id, First_Name, Last_Name, Profile_Pic_Url, Last_CheckIn_Place, Category
+                  FROM entity
+                  JOIN friends F1
+                  ON entity.Entity_Id = F1.Entity_Id2 OR entity.Entity_Id = F1.Entity_Id1
+                  /* Friends of Friends */
+                  WHERE F1.Entity_Id2 IN
+                  (
+                    SELECT Entity_Id1
+                      FROM friends F
+                     WHERE F.Entity_Id2 = :userId
+                       AND F.Category != 4
+
+                     UNION
+
+                     SELECT Entity_Id2
+                      FROM friends F
+                     WHERE F.Entity_Id1 = :userId
+                       AND F.Category != 4
+                  )
+                  /* Exclude my friends */
+                  AND F1.Entity_Id1 NOT IN
+                  (
+                    SELECT Entity_Id1
+                      FROM friends F
+                     WHERE F.Entity_Id2 = :userId
+                       AND F.Category != 4
+
+                     UNION
+
+                     SELECT Entity_Id2
+                      FROM friends F
+                     WHERE F.Entity_Id1 = :userId
+                       AND F.Category != 4
+                  )
+                  /* Exclude self */
+                  AND F1.Entity_Id1 != :userId
+                  GROUP BY Entity_Id
+
+                  /* Perform again for userId 2 */
+                  UNION
+
+                  SELECT DISTINCT Entity_Id, Fb_Id, First_Name, Last_Name, Profile_Pic_Url, Last_CheckIn_Place, Category
+                  FROM entity
+                  JOIN friends F2
+                  ON entity.Entity_Id = F2.Entity_Id2 OR entity.Entity_Id = F2.Entity_Id1
+                  WHERE F2.Entity_Id1 IN
+                  (
+                    SELECT Entity_Id1
+                      FROM friends F
+                     WHERE F.Entity_Id2 = :userId
+                       AND F.Category != 4
+
+                     UNION
+
+                     SELECT Entity_Id2
+                      FROM friends F
+                     WHERE F.Entity_Id1 = :userId
+                       AND F.Category != 4
+                  )
+                  /* Exclude my friends */
+                  AND F2.Entity_Id2 NOT IN
+                  (
+                    SELECT Entity_Id1
+                      FROM friends F
+                     WHERE F.Entity_Id2 = :userId
+                       AND F.Category != 4
+
+                     UNION
+
+                     SELECT Entity_Id2
+                      FROM friends F
+                     WHERE F.Entity_Id1 = :userId
+                       AND F.Category != 4
+                  )
+                  AND F2.Entity_Id2 != :userId
+                  GROUP BY Entity_Id
+
+                ";
+
+        $data = Array(":userId" => $userId);
+
+        $res = Database::getInstance()->fetchAll($query, $data);
+        if(count($res) > 0) {
+            // Get the mutual friends of each users
+            $res = json_decode(json_encode($res), true);
+            for ($i = 0; $i < count($res); $i++) {
+                $mutual = self::getMutualFriends($userId, $res[$i]["Entity_Id"]);
+                $res[$i]["mutual_friends"] = count($mutual);
+            }
+            return Array("error" => "200", "message" => "We have suggested " . count($res) . " mutual friends for you.", "payload" => $res);
+        }
+        else
+            return Array("error" => "404", "message" => "We can't suggest any friends at this time, try adding somebody!");
+    }
+
+    /*
+     |--------------------------------------------------------------------------
+     | GET MUTUAL FRIENDS
+     |--------------------------------------------------------------------------
+     |
+     | Returns a list of mutual friends between the logged in user and the
+     | specified friend.
+     |
+     */
+
+    private static function getMutualFriends($userId, $friendId)
+    {
+        // Check for an invalid match
+        if(($userId <= 0 || $friendId <= 0) || $userId == $friendId)
+            return "No mutual friends";
+
+        // Perform the query
+        $query = "
+                    SELECT First_Name AS first_name,
+                           Last_Name AS last_name,
+                           Profile_Pic_Url AS profile_pic,
+                           Entity_Id AS entity_id,
+                           DOB AS dob
+                    FROM
+                    (
+                        SELECT entity.First_Name,
+                               entity.Last_Name,
+                               entity.Profile_Pic_Url,
+                               entity.Entity_Id,
+                               entity.DOB
+                        FROM entity
+                        JOIN friends
+                          ON (entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2)
+                        WHERE (friends.Entity_Id1 = :userId OR friends.Entity_Id2 = :userId)
+
+                        UNION ALL
+
+                        SELECT entity.First_Name,
+                               entity.Last_Name,
+                               entity.Profile_Pic_Url,
+                               entity.Entity_Id,
+                               entity.DOB
+                        FROM entity
+                        JOIN friends
+                          ON (entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2)
+                        WHERE (friends.Entity_Id1 = :friendId OR friends.Entity_Id2 = :friendId)
+
+
+                    ) friend_list
+                    GROUP BY entity_id
+                    HAVING COUNT(*) = 2
+                    ORDER BY first_name ASC
+                 ";
+
+        $data = Array(":friendId" => $friendId, ":userId" => $userId);
+
+        $res = Database::getInstance()->fetchAll($query, $data);
+        if(count($res) == 0)
+            return "No mutual friends.";
+        else
+            return $res;
     }
 
     /*
@@ -124,10 +281,21 @@ class Friend
         $DB = Database::getInstance();
 
         $data = Array(":entity_id" => $userId);
-        $query = "SELECT * FROM friend_requests WHERE req_receiver = :entity_id";
+        $query = "SELECT friend_requests.*, entity_id, first_name, last_name, profile_pic_url, email FROM friend_requests JOIN entity ON friend_requests.Req_Sender = entity.Entity_Id WHERE req_receiver = :entity_id";
 
         $requests = $DB->fetchAll($query, $data);
-        return Array("error" => "200", "message" => "Successfully returned friends for this user", "payload" => $requests);
+        if(count($requests) > 0)
+        {
+            // Get the mutual friends of each users
+            $res = json_decode(json_encode($requests), true);
+            for ($i = 0; $i < count($res); $i++) {
+                $mutual = self::getMutualFriends($userId, $res[$i]["entity_id"]);
+                $res[$i]["mutual_friends"] = count($mutual);
+            }
+            return Array("error" => "200", "message" => "Successfully returned friends for this user", "payload" => $res);
+        }
+        else
+            return Array("error" => "200", "message" => "No new friend requests.");
     }
 
     /*
@@ -147,7 +315,7 @@ class Friend
      |
      */
 
-    public static function sendFriendRequest($friendId, $payload, $user)
+    public static function sendFriendRequest($friendId, $user)
     {
         // Check to see if the user has been retrieved and the token successfully authenticated.
         if(empty($user))
@@ -218,8 +386,8 @@ class Friend
             }
             else
                 // Friend cannot be found.
-                return Array("error" => "400", "message" => "The identifier for the friend cannot be found. Please send".
-                    "a request to a established user. ", "payload" => "");
+                return Array("error" => "404", "message" => "The identifier for the friend cannot be found. Please send".
+                    " a request to an established user. ", "payload" => "");
 
         }
         else

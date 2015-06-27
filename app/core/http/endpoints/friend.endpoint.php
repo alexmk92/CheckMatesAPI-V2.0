@@ -108,12 +108,14 @@ class Friend
     private function _GET()
     {
         // /api/v2/Friend/{userId} - Returns the friends of the user
-        if(count($this->args) == 1)
+        if(count($this->args) == 1 && $this->verb == "")
             return \Handlers\Friend::getFriends($this->args[0]);
-
         // /api/v2/Friend/friend-requests/{userId} - Returns the requests for the user
         else if(count($this->args) == 1 && $this->verb == "friend-requests")
             return \Handlers\Friend::getFriendRequests($this->args[0]);
+        // /api/v2/Friend/suggested-friends/{userId}
+        else if(count($this->args) == 1 && $this->verb == "suggested-friends")
+            return \Handlers\Friend::getSuggestedFriends($this->args[0]);
 
         // Unsupported handler
         else
@@ -135,14 +137,10 @@ class Friend
         // Retrieve the payload and send with the friendId to the handler.
         $payload = json_decode(file_get_contents('php://input'), true);
 
-        // Check for an invalid payload
-        if ($payload == null)
-            return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid User payload to the server.");
-
         // /api/v2/Friend/send-request/{friendId} - Sends a friend request.
         if(count($this->args) == 1 && $this->verb == 'send-request')
         {
-            return \Handlers\Friend::sendFriendRequest($this->args[0], $payload, $this->user);
+            return \Handlers\Friend::sendFriendRequest($this->args[0], $this->user);
         }
         // /api/v2/Friend/accept-request/{friendId} - Accepts a friend request.
         else if(count($this->args) == 1 && $this->verb == 'accept-request')
