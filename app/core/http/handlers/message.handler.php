@@ -52,7 +52,6 @@ class Message
                   WHERE  sender = :friendId
                   AND    receiver = :userId
 
-
                   UNION ALL
 
                   SELECT mid, sender, receiver, Profile_Pic_Url, First_Name, Last_Name, message, msg_dt
@@ -107,10 +106,10 @@ class Message
                   SELECT * FROM
                   (
 
-                      SELECT DISTINCT Entity_Id, First_Name, Last_Name, Profile_Pic_Url, mid, message, msg_dt
+                      SELECT Entity_Id, First_Name, Last_Name, Profile_Pic_Url, mid, message, msg_dt
                       FROM   entity
                       JOIN   friends
-                      ON     Entity_Id1 = Entity_Id
+                      ON     Entity_Id1 = Entity_Id OR Entity_Id2 = Entity_Id
                       JOIN   chatmessages
                       ON     entity.Entity_Id = chatmessages.sender
                       WHERE  receiver = :userId
@@ -118,10 +117,10 @@ class Message
 
                       UNION ALL
 
-                      SELECT DISTINCT Entity_Id, First_Name, Last_Name, Profile_Pic_Url, mid, message, msg_dt
+                      SELECT Entity_Id, First_Name, Last_Name, Profile_Pic_Url, mid, message, msg_dt
                       FROM   entity
                       JOIN   friends
-                      ON     Entity_Id2 = Entity_Id
+                      ON     Entity_Id2 = Entity_Id OR Entity_Id1 = Entity_Id
                       JOIN   chatmessages
                       ON     entity.Entity_Id = chatmessages.receiver
                       WHERE  sender = :userId
