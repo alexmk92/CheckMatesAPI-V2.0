@@ -194,7 +194,9 @@ class Checkin
 
     private function _PUT()
     {
-
+        // api/v2/Checkin/like-checkin/{checkinId}
+        if(count($this->args) == 1 && $this->verb == "like-checkin")
+            return \Handlers\Checkin::likeCheckin($this->args[0], $this->user["entityId"]);
     }
 
     /*
@@ -222,6 +224,9 @@ class Checkin
         // /api/v2/Checkin/ Posts the new checkin that the user has sent in the multipart body - this will only post checkin and not the image
         if(count($this->args) == 0 && $this->verb == "")
             return \Handlers\Checkin::createCheckin($payload, $this->user);
+        // /api/v2/Checkin/add-comment/{checkinId}
+        if(count($this->args) == 1 && $this->verb == "add-comment")
+            return \Handlers\Checkin::addComment($this->args[0], $payload, $this->user);
 
     }
 

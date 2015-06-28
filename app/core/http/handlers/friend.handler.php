@@ -104,89 +104,51 @@ class Friend
     {
         // Find all mutual friends for this user
        $query = "
-                  SELECT DISTINCT Entity_Id, Fb_Id, First_Name, Last_Name, Profile_Pic_Url, Last_CheckIn_Place, Category
-                  FROM entity
-                  JOIN friends F1
-                  ON entity.Entity_Id = F1.Entity_Id2 OR entity.Entity_Id = F1.Entity_Id1
-                  /* Friends of Friends */
-                  WHERE F1.Entity_Id2 IN
-                  (
-                    SELECT Entity_Id1
-                      FROM friends F
-                     WHERE F.Entity_Id2 = :userId
-                       AND F.Category != 4
-
-                     UNION
-
-                     SELECT Entity_Id2
-                      FROM friends F
-                     WHERE F.Entity_Id1 = :userId
-                       AND F.Category != 4
-                  )
-                  /* Exclude my friends */
-                  AND F1.Entity_Id1 NOT IN
-                  (
-                    SELECT Entity_Id1
-                      FROM friends F
-                     WHERE F.Entity_Id2 = :userId
-                       AND F.Category != 4
-
-                     UNION
-
-                     SELECT Entity_Id2
-                      FROM friends F
-                     WHERE F.Entity_Id1 = :userId
-                       AND F.Category != 4
-                  )
-                  /* Exclude self */
-                  AND F1.Entity_Id1 != :userId
-                  GROUP BY Entity_Id
-
-                  /* Perform again for userId 2 */
-                  UNION
-
-                  SELECT DISTINCT Entity_Id, Fb_Id, First_Name, Last_Name, Profile_Pic_Url, Last_CheckIn_Place, Category
-                  FROM entity
-                  JOIN friends F2
-                  ON entity.Entity_Id = F2.Entity_Id2 OR entity.Entity_Id = F2.Entity_Id1
-                  WHERE F2.Entity_Id1 IN
-                  (
-                    SELECT Entity_Id1
-                      FROM friends F
-                     WHERE F.Entity_Id2 = :userId
-                       AND F.Category != 4
-
-                     UNION
-
-                     SELECT Entity_Id2
-                      FROM friends F
-                     WHERE F.Entity_Id1 = :userId
-                       AND F.Category != 4
-                  )
-                  /* Exclude my friends */
-                  AND F2.Entity_Id2 NOT IN
-                  (
-                    SELECT Entity_Id1
-                      FROM friends F
-                     WHERE F.Entity_Id2 = :userId
-                       AND F.Category != 4
-
-                     UNION
-
-                     SELECT Entity_Id2
-                      FROM friends F
-                     WHERE F.Entity_Id1 = :userId
-                       AND F.Category != 4
-                  )
-                  AND F2.Entity_Id2 != :userId
-                  GROUP BY Entity_Id
-
+                    SELECT y.Entity_Id2
+                      FROM friends x
+                      LEFT
+                      JOIN friends y
+                        ON y.Entity_Id1 = x.Entity_Id2
+                       AND y.Entity_Id2 <> x.Entity_Id1
+                      LEFT
+                      JOIN friends z
+                        ON z.Entity_Id2 = y.Entity_Id2
+                       AND z.Entity_Id1 = x.Entity_Id1
+                     WHERE x.Entity_Id1 = :user_id
+                       AND z.Entity_Id1 IS NULL
+                       AND y.Entity_Id2 IS NOT NULL
+                       AND y.Category != 4
+                       AND x.Category != 4
+                     GROUP
+                        BY y.Entity_Id2
+                    HAVING COUNT(*) >= 1;
                 ";
-
-        $data = Array(":userId" => $userId);
+        $data = Array(":user_id" => $userId);
 
         $res = Database::getInstance()->fetchAll($query, $data);
         if(count($res) > 0) {
+
+            // Get the names of these people
+            $query = "SELECT First_Name, Last_Name, Entity_Id, Profile_Pic_Url, Last_CheckIn_Dt
+                      FROM entity
+                      WHERE Entity_Id IN (";
+
+            $data = Array();
+            for($i = 0; $i < count($res); $i++)
+            {
+                $query .= ":user_" . $i;
+                $data[":user_".$i] = $res[$i]["Entity_Id2"];
+
+                if($i == count($res)-1)
+                    $query .= ")";
+                else
+                    $query .= ", ";
+            }
+
+            $res = Database::getInstance()->fetchAll($query, $data);
+            if(empty($res))
+                return Array("error" => "404", "message" => "None of your friends use the app, therefore we can't suggest mutual friends!");
+
             // Get the mutual friends of each users
             $res = json_decode(json_encode($res), true);
             for ($i = 0; $i < count($res); $i++) {
@@ -196,7 +158,7 @@ class Friend
             return Array("error" => "200", "message" => "We have suggested " . count($res) . " mutual friends for you.", "payload" => $res);
         }
         else
-            return Array("error" => "404", "message" => "We can't suggest any friends at this time, try adding somebody!");
+            return Array("error" => "404", "message" => "None of your friends use the app, therefore we can't suggest mutual friends!");
     }
 
     /*
@@ -431,34 +393,43 @@ class Friend
 
         if(Database::getInstance()->delete($query, $data)) {
 
-            // Prepare the query for adding a row into the friends table.
+            // Prepare the query for adding a row into the friends table - Insert the reciprecal to, this will improve performance
             $query = "INSERT INTO friends(Entity_Id1, Entity_Id2, Category)
                       VALUES              (:userId, :friendId, 2) ";
-
             // Bind the parameters to the query
             $data = Array(":userId" => $user['entityId'], ":friendId" => $friendId);
 
-            // Perform the insert, then increment count if this wasn't a duplicate record
-            if (Database::getInstance()->insert($query, $data)) {
+            if(Database::getInstance()->insert($query, $data)) {
+                $query = "INSERT INTO friends(Entity_Id1, Entity_Id2, Category)
+                      VALUES              (:friendId, :userId, 2) ";
+                // Bind the parameters to the query
+                $data = Array(":userId" => $user['entityId'], ":friendId" => $friendId);
 
-                $query = "SELECT Entity_Id, First_Name, Last_Name
+                // Perform the insert, then increment count if this wasn't a duplicate record
+                if (Database::getInstance()->insert($query, $data)) {
+
+                    $query = "SELECT Entity_Id, First_Name, Last_Name
                           FROM entity
                           WHERE Entity_Id = :friendId ";
 
-                $data = Array("friendId" => $friendId);
+                    $data = Array("friendId" => $friendId);
 
-                // This expression will result to std::object or false - this is why we perform a boolean check
-                $friend = Database::getInstance()->fetch($query, $data);
+                    // This expression will result to std::object or false - this is why we perform a boolean check
+                    $friend = Database::getInstance()->fetch($query, $data);
 
-                // Retrieve the friends name to make the return message more useful.
-                if ($friend) {
+                    // Retrieve the friends name to make the return message more useful.
+                    if ($friend) {
 
-                    return Array("error" => "200", "message" => "" . $friend->First_Name . " " . $friend->Last_Name . " has been added to your " .
-                        "friends list.", "payload" => "");
+                        return Array("error" => "200", "message" => "" . $friend->First_Name . " " . $friend->Last_Name . " has been added to your " .
+                            "friends list.", "payload" => "");
+                    } else
+                        // Retrieving friends first/last name has failed.
+                        return Array("error" => "400", "message" => "Error retrieving friend from the database.", "payload" => "");
                 } else
-                    // Retrieving friends first/last name has failed.
-                    return Array("error" => "400", "message" => "Error retrieving friend from the database.", "payload" => "");
-            } else
+                    // Inserting a new row into the friends table has failed.
+                    return Array("error" => "400", "message" => "Error adding friend. The query has failed.", "payload" => "");
+            }
+            else
                 // Inserting a new row into the friends table has failed.
                 return Array("error" => "400", "message" => "Error adding friend. The query has failed.", "payload" => "");
         }
