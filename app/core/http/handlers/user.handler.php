@@ -345,6 +345,7 @@ class User
             $arr = Array(
 
                 "entity_id" => $res->Entity_Id,
+                "facebook_id" => $res->Fb_Id,
                 "first_name" => $res->First_Name,
                 "last_name" => $res->Last_Name,
                 "email" => $res->Email,
@@ -357,6 +358,7 @@ class User
                 "last_checkin_long" => $res->Last_CheckIn_Long,
                 "last_checkin_place" => $res->Last_CheckIn_Place,
                 "last_checkin_country" => $res->Last_CheckIn_Country,
+                "last_checkin_date" => $res->Last_CheckIn_Dt,
                 "score" => $res->Score,
                 "score_flag" => $res->Score_Flag,
                 "image_urls" => $res->Image_Urls,

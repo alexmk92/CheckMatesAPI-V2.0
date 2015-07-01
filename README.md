@@ -150,19 +150,19 @@ If this information is not correct then a 401 will be returned. An error 500 may
 
 3) A Users preferences can be updated at the URI: `/api/v2/User/update-preferences/{userId}` as usual a `session_token` and `device_id` must be provided in the HTTP header to authenticate the request.  In addition to this a JSON object must be sent in the request body that contains at least one value from the preferences table either:
 
-1) Pref_Facebook
+1) Pref_Facebook : 1 = Visible to facebook friends, 0 = not visible to facebook friends
 
-2) Pref_Kinekt
+2) Pref_Kinekt : 1 = Visible to kinekt friends, 0 = not visible to kinekt friends
 
-3) Pref_Everyone
+3) Pref_Everyone : 1 = Visible to everybody, 0 = visible to nobody
 
-4) Pref_Sex
+4) Pref_Sex : 1 = only show males, 2 = only show females, 3 = show both sexes
 
-5) Pref_Lower_Age
+5) Pref_Lower_Age = The lower age boundary, if < 18 it will default to 18
 
-6) Pref_Upper_Age
+6) Pref_Upper_Age = The upper age boundary, if > 50 it will default to 50, but will change to 110 on queries for erroneous age groups
 
-7) Pref_Chk_Exp
+7) Pref_Chk_Exp = The duration in hours for your Checkins to expire, either 1, 4 or 8 can be sent. 
 
 If any of the values supplied are the same as a value present in the database, then an error `400` will be returned due to the UPDATE query failing as the rows were the same.  To avoid this please only send CHANGED values.   Finally, if you provide a `userId` in the URI that does not match the `userId` that the session belongs to, then a `401` error will be returned, this dictates that you are trying to modify somebody elses preferences. **IMPORTANT** The key values here are case sensitive so please ensure the input payload matches the parameters above, failure to do so will result in a `400` with the response:
 
@@ -209,21 +209,21 @@ Finally, note that more than one parameter can be sent, you need not limit yours
 
 4) A Users settings can be updated at the URI: `/api/v2/User/update-preferences/{userId}` as usual a `session_token` and `device_id` must be provided in the HTTP header to authenticate the request.  In addition to this a JSON object must be sent in the request body that contains at least one value from the preferences table either:
 
-1) privacyCheckin
+1) privacyCheckin : Either 1 or 2 where 1 means only friends can view checkins and 2 means everyone can
+  
+2) privacyVisibility : 1 = 500km radius, 2 = countrywide radius, 3 = worldwide radius - This determines who can see you on the map
 
-2) privacyVisibility
+3) notifTag : 1 = Recieve tag notifications, 0 = dont recieve tag notifications
 
-3) notifTag
+4) notifMessages : 1 = Receive message notifciations, 0 = dont receive message notifcations
 
-4) notifMessages
+5) notifNewFriends : 1 = Receive notifications for having a friend request accepted, 0 = dont receive notifications for this
 
-5) notifNewFriends
+6) notifFriendRequests : 1 = Receive notifications for being added as a friend, 0 = dont receive notifications for this
 
-6) notifFriendRequests
+7) notifCheckinActivity : 1 = Receive notifications for when something happens on a checkin you were a part of (comment or like etc)
 
-7) notifCheckinActivity
-
-8) listVisibility
+8) listVisibility : 1 = Visible on list view to everybody, 2 = Visible on listview to Friends, 3 = Hidden from list view
 
 If any of the values supplied are the same as a value present in the database, then an error `400` will be returned due to the UPDATE query failing as the rows were the same.  To avoid this please only send CHANGED values.   Finally, if you provide a `userId` in the URI that does not match the `userId` that the session belongs to, then a `401` error will be returned, this dictates that you are trying to modify somebody elses preferences. **IMPORTANT** The key values here are case sensitive so please ensure the input payload matches the parameters above, failure to do so will result in a `400` with the response:
 
