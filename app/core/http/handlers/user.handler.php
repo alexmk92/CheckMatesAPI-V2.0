@@ -1199,7 +1199,7 @@ class User
      |
      */
 
-    public static function removeFavourite($likeId, $payload, $user)
+    public static function removeFavourite($likeId, $user)
     {
         // Check to see if the user has been retrieved and the token successfully authenticated.
         if(empty($user))
@@ -1216,14 +1216,9 @@ class User
 
         // Remove from favourites.
         if (Database::getInstance()->delete($query, $data))
-
-            // Favourite place has been removed.
             return Array("error" => "200", "message" => "This place has been successfully removed from your favourites.");
         else
-
-            // Conflict in terms of the primary key for the favourites table.
-            return Array("error" => "409", "message" => "Conflict: The specified identifier for the favourite place has not matched"
-                ." a record in the database.");
+            return Array("error" => "409", "message" => "Could not remove the favourite as it does not belong to you.");
     }
 
 

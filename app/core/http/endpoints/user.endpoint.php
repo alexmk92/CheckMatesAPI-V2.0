@@ -253,7 +253,7 @@ class User
         if ($payload == null)
             return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid User payload to the server.");
 
-        // /api/v2/User/ Performs a login function, if the user does not exist they will be registered.
+        // /api/v2/User/ Performs a loginlogin function, if the user does not exist they will be registered.
         if(count($this->args) == 0 && $this->verb == "login")
             return \Handlers\User::login($payload);
 
@@ -284,19 +284,15 @@ class User
         // Get the payload and decode it to a PHP array, set true to ensure assoc behaviour.
         $payload = json_decode(file_get_contents('php://input'), true);
 
-        // Check for an invalid payload
-        if ($payload == null)
-            return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid User payload to the server.");
-
         // /api/v2/User/remove-user/{userId} - Delete the users account.
         if(count($this->args) == 1 && $this->verb == 'remove-user')
         {
             return \Handlers\User::deleteAccount($payload, $this->args[0], $this->user);
         }
-        // /api/v2/User/remove-favourite-place/{likeId} - Remove a favourite place.
+        // /api/v2/User/remove-favourite/{likeId} - Remove a favourite place.
         if(count($this->args) == 1 && $this->verb == 'remove-favourite')
         {
-            return \Handlers\User::removeFavourite($this->args[0], $payload, $this->user);
+            return \Handlers\User::removeFavourite($this->args[0], $this->user);
         }
         // throw an exception if no handler found
         else

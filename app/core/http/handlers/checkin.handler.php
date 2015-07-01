@@ -497,7 +497,7 @@ class Checkin
         if(empty($args["place_url"]))
             $args["place_url"] = "";
         if(empty($args["tagged_users"]))
-            $args["tagged_users"] = Array();
+            $args["tagged_users"] = "[]";
 
         // Set the place badge image.
         if(!empty($args["cat_id"]))
@@ -1067,7 +1067,7 @@ class Checkin
         }
         else
             // No results found.
-            return Array("error" => "200", "message" => "There were no comments for this checkin.");
+            return Array("error" => "200", "message" => "There were no comments for this checkin.", "payload" => "No comments for this checkin");
     }
 
     /*
