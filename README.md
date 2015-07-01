@@ -336,6 +336,25 @@ All information on the user is returned once they have been logged in or signed 
 }
 ```
 
+2) A users favorite places can be appended to by using `/api/v2/add-favourite/{userId}`.  The JSON payload needs the following information:
+
+```json
+{
+    "picUrl" : "https://assets-cdn.github.com/images/modules/open_graph/github-mark.png",
+    "placeName" : "Github HQ"
+}
+```
+
+This test request will respond with a 200 if it was successful, otherwise the following message will be returned:
+
+```json
+{
+    "error": 409,
+    "message": "This place is already in your favourites list.",
+    "data": "No data available for this resource."
+}
+```
+
 ##### DELETE
 A user can be deleted by sending a single userId to the URI: `/api/v2/User/{userId}` - deleting a user through this interface will delete all of their posts, messages, checkins and all other information, this request must be authenticated by sending a `session_token` and `device_id` to the API. If the senderID does not match userID then the request will fail by returning a `401` code.
 

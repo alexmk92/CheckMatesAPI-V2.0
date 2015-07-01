@@ -271,12 +271,12 @@ class User
 
     public static function getFavoritePlaces($userId)
     {
-        $DB = Database::getInstance();
-
         $data = Array(":entity_id" => $userId);
-        $query = "SELECT * FROM favorites WHERE favorites.Entity_Id = :entity_id";
+        $query = "SELECT Place_Pic_Url, Like_Id, Entity_Id, Place_Name
+                  FROM favorites
+                  WHERE favorites.Entity_Id = :entity_id";
 
-        $res = $DB->fetchAll($query, $data);
+        $res = Database::getInstance()->fetchAll($query, $data);
         if(count($res) > 0)
             return $res;
         else
@@ -439,6 +439,9 @@ class User
                          profile_pic_url = :profilePic
                   WHERE  entity_id       = :entId";
 
+        if(empty($data["images"]))
+            $data["images"] = "";
+
         $data  = Array(":firstName"  => $data['first_name'],
             ":lastName"   => $data['last_name'],
             ":email"      => $data['email'],
@@ -472,8 +475,11 @@ class User
     {
         // Ensure we have a valid object, if any of the major determinate factors are null then
         // echo a 400 back to the user
-        if(empty($args) || empty($args['facebook_id']) || empty($args['push_token']) || empty($args["device_id"]))
+        if(empty($args) || empty($args['facebook_id']) || empty($args["device_id"]))
             return Array('error' => '400', 'message' => "Sorry, no data was passed to the server.  Please ensure the user object is sent via JSON in the HTTP body");
+
+        if(empty($args["push_token"]))
+            $args["push_token"] = "";
 
         // Check if the user already exists in the system, if they don't then sign them up to the system
         $userExists = self::get($args['facebook_id']);

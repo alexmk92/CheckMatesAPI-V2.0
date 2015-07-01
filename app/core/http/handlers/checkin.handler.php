@@ -925,7 +925,7 @@ class Checkin
             $res = json_decode(json_encode($res), true);
             $comments = self::getComments($args["checkinId"], $user["entityId"], $user);
             if (empty($res["comments"]))
-                $res["comments"] = $comments;
+                $res["comments"] = $comments["payload"];
             $like = self::getLikes($args["checkinId"]);
             $res["likes"] = $like;
 
@@ -1086,11 +1086,21 @@ class Checkin
 
     private static function getLikes($chkId)
     {
-        $query = "SELECT COUNT(*) AS count FROM checkin_likes WHERE Chk_Id = :checkinId";
+        $query = "SELECT entity.Entity_Id, entity.First_Name, entity.Last_Name, entity.Profile_Pic_Url, entity.Last_CheckIn_Place
+                  FROM checkin_likes
+                  LEFT JOIN entity
+                  ON entity.Entity_Id = checkin_likes.Entity_Id
+                  WHERE Chk_Id = :checkinId";
+
         $data  = Array(":checkinId" => $chkId);
 
-        $res = Database::getInstance()->fetch($query, $data);
-        return $res->count;
+        $res = Database::getInstance()->fetchAll($query, $data);
+        if(count($res) > 0)
+        {
+            $arr = json_decode(json_encode($res), true);
+            return $arr;
+        }
+        return "No likes for this checkin";
     }
 
 

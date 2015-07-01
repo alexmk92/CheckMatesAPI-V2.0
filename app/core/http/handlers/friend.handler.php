@@ -119,14 +119,23 @@ class Friend
                        AND y.Entity_Id2 IS NOT NULL
                        AND y.Category != 4
                        AND x.Category != 4
+                       AND y.Entity_Id2 NOT IN (
+                           SELECT Req_Receiver FROM friend_requests WHERE Req_Receiver = y.Entity_Id2
+                           AND Req_Sender = :user_id
+                       )
+                       AND x.Entity_Id1 NOT IN (
+                           SELECT Req_Receiver FROM friend_requests WHERE Req_Receiver = x.Entity_Id1
+                           AND Req_Sender = :user_id
+                       )
                      GROUP
                         BY y.Entity_Id2
                     HAVING COUNT(*) >= 1;
                 ";
         $data = Array(":user_id" => $userId);
-
         $res = Database::getInstance()->fetchAll($query, $data);
         if(count($res) > 0) {
+
+
 
             // Get the names of these people
             $query = "SELECT First_Name, Last_Name, Entity_Id, Profile_Pic_Url, Last_CheckIn_Dt
