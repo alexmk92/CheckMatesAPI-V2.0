@@ -180,8 +180,6 @@ class Checkin
                         checkins.place_people,
                         checkins.chk_id AS checkin_id,
                         checkins.img_url AS checkin_photo,
-                        COUNT(checkin_comments.Chk_Id) AS checkin_comments,
-                        COUNT(checkin_likes.Chk_Id) AS checkin_likes,
                         (6371 * acos( cos( radians(:currLat) ) * cos( radians(ent.Last_CheckIn_Lat) ) * cos( radians(ent.Last_CheckIn_Long) - radians(:currLong) ) + sin( radians(:currLat) ) * sin( radians(ent.Last_CheckIn_Lat) ) ) ) as distance,
                         (
                             SELECT Category
@@ -195,18 +193,16 @@ class Checkin
                   ON    ent.Entity_Id = checkins.Entity_Id
                   JOIN  setting
                   ON    setting.Entity_Id = ent.Entity_Id
-             LEFT JOIN  checkin_comments
-                  ON    checkins.chk_id = checkin_comments.chk_id
-             LEFT JOIN  checkin_likes
-                  ON    checkins.chk_id = checkin_likes.chk_id
                   WHERE ent.Entity_Id = setting.Entity_Id
                   AND   ent.Create_Dt != ent.Last_CheckIn_Dt
                   AND   ent.Last_CheckIn_Place IS NOT NULL
                   AND   TIMESTAMPDIFF(MINUTE, ent.Last_CheckIn_Dt, NOW()) < :expiry
+                  AND   TIMESTAMPDIFF(MINUTE, ent.Last_CheckIn_Dt, NOW()) > -1
                   AND   ".$spatialFilter."
                   GROUP BY ent.Entity_Id
                   ORDER BY distance ASC
                   ";
+
 
         // Get the results and build the response payload
         $res = Database::getInstance()->fetchAll($query, $data);
@@ -223,11 +219,17 @@ class Checkin
                     $user["FC"] = "3";
                 if($user["FC"] != 2)
                     $user["last_name"] = "";
+                if(empty($user["likes"]) || empty($user["comments"]))
+                {
+                    $comments = self::getComments($user["checkin_id"], $user["Entity_Id"], $user);
+                    $user["likes"] = self::getLikes($user["checkin_id"]);
+                    $user["comments"] = $comments["payload"];
+                }
 
                 array_push($users, $user);
             }
 
-            return Array("error" => "200", "message" => "Successfully retrieved " . count($res) . " users around your location!", "payload" => Array("users" => $users));
+            return Array("error" => "200", "message" => "Successfully retrieved " . count($res) . " checkins around your location!", "payload" => Array("users" => $users));
         }
     }
 
