@@ -194,10 +194,10 @@ class Checkin
                   JOIN  setting
                   ON    setting.Entity_Id = ent.Entity_Id
                   WHERE ent.Entity_Id = setting.Entity_Id
+                  AND   checkins.Chk_Dt = ent.Last_Checkin_Dt
                   AND   ent.Create_Dt != ent.Last_CheckIn_Dt
                   AND   ent.Last_CheckIn_Place IS NOT NULL
-                  AND   TIMESTAMPDIFF(MINUTE, ent.Last_CheckIn_Dt, NOW()) < :expiry
-                  AND   TIMESTAMPDIFF(MINUTE, ent.Last_CheckIn_Dt, NOW()) > -1
+                  AND   TIMESTAMPDIFF(MINUTE, checkins.Chk_Dt, NOW()) < :expiry
                   AND   ".$spatialFilter."
                   GROUP BY ent.Entity_Id
                   ORDER BY distance ASC

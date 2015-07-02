@@ -171,7 +171,7 @@ class User
             $spatialFilter .= " AND (" . $userFilter . ")";
 
         // Bind the values and start the query
-        $data = Array(":currLat" => $lat, ":currLong" => $long, ":entityId" => $user["entityId"]);
+        $data = Array(":currLat" => $lat, ":currLong" => $long, ":entityId" => $user["entityId"], ":radiusCap" => 999999);
         $query = "SELECT DISTINCT entity.Entity_Id,
                                   entity.First_Name AS first_name,
                                   entity.Last_Name AS last_name,
@@ -191,7 +191,8 @@ class User
                   WHERE
                       entity.Entity_Id = setting.Entity_Id AND
                       entity.Entity_Id != :entityId AND
-                      entity.Create_Dt != entity.Last_CheckIn_Dt
+                      entity.Create_Dt != entity.Last_CheckIn_Dt AND
+                      (6371 * acos( cos( radians(:currLat) ) * cos( radians(entity.Last_CheckIn_Lat) ) * cos( radians(entity.Last_CheckIn_Long) - radians(:currLong) ) + sin( radians(:currLat) ) * sin( radians(entity.Last_CheckIn_Lat) ) ) ) < :radiusCap
                   GROUP BY entity.Entity_Id
                   ORDER BY distance ASC
                   ";
@@ -201,7 +202,7 @@ class User
         $res = Database::getInstance()->fetchAll($query, $data);
 
         if(empty($res))
-            return Array("error" => "404", "message" => "Sorry, it doesn't look like there have been any checkins recently.  Update your privacy settings to see more users!");
+            return Array("error" => "404", "message" => "Sorry, it doesn't look like there are any users near by.  Update your privacy settings to see more users!");
         // Ensure all privacy is taken care of here...i.e. no facebook friends must be returned with no last name
         else
         {
