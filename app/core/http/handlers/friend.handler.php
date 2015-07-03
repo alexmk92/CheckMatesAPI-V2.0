@@ -169,28 +169,66 @@ class Friend
 
         if(count($res) > 0) {
             // Get the settings for the user
+            $query = "SELECT preferences.Pref_Lower_Age,
+                             preferences.Pref_Upper_Age,
+                             preferences.Pref_Sex
+                        FROM preferences
+                       WHERE Entity_Id = :user_id";
+
+            $data  = Array(":user_id" => $userId);
+            $settings = json_decode(json_encode(Database::getInstance()->fetch($query, $data)), true);
+
+            switch($settings["Pref_Sex"])
+            {
+                // MALE
+                case 1:
+                    $settings["Pref_Sex"] = " Sex = 1";
+                    break;
+                // FEMALE
+                case 2:
+                    $settings["Pref_Sex"] = " Sex = 2";
+                    break;
+                // BOTH
+                default:
+                    $settings["Pref_Sex"] = " Sex IN(1,2)";
+            }
 
             // Get the names of these people
             $query = "SELECT
-                             First_Name,
-                             Last_Name,
-                             Entity_Id,
-                             Profile_Pic_Url,
-                             Last_CheckIn_Dt,
-                             Category AS FC
+                             e.Entity_Id,
+                             e.First_Name,
+                             e.Last_Name,
+                             e.Entity_Id,
+                             e.Profile_Pic_Url,
+                             e.Last_CheckIn_Dt,
+                             e.Sex,
+                             TIMESTAMPDIFF(YEAR, e.DOB, CURDATE()) AS Age,
+                             f.Category AS FC
                       FROM
-                             entity
+                             entity e
+                      JOIN
+                             setting s
+                      ON
+                             e.Entity_Id = s.Entity_Id
+                       AND   s.list_visibility = 1
+                      LEFT JOIN
+                             preferences p
+                      ON
+                             e.Entity_Id = p.Entity_Id
+                       AND   p.Pref_Everyone = 1
                       LEFT
                       JOIN
-                             friends
+                             friends f
                       ON
-                             entity.Entity_Id
-                      IN    (friends.Entity_Id1, friends.Entity_Id2)
-                      AND    friends.Category NOT IN (1, 2, 4)
-                      WHERE Entity_Id IN (";
+                             e.Entity_Id
+                      IN    (f.Entity_Id1, f.Entity_Id2)
+                      AND    f.Category NOT IN (1, 2, 4)
+                      WHERE e.Entity_Id IN (";
 
             $data = Array();
             $data[":user_id"] = $userId;
+            $data[":lower"] = $settings["Pref_Lower_Age"];
+            $data[":upper"] = $settings["Pref_Upper_Age"];
             for($i = 0; $i < count($res); $i++)
             {
                 $query .= ":user_" . $i;
@@ -202,7 +240,11 @@ class Friend
                     $query .= ", ";
             }
 
-            $query .= " AND Entity_Id != :user_id GROUP BY Entity_Id";
+            $query .= " AND e.Entity_Id != :user_id
+                        AND TIMESTAMPDIFF(YEAR, e.DOB, CURDATE()) BETWEEN :lower AND :upper
+                        AND" . $settings["Pref_Sex"] . "
+                        GROUP BY e.Entity_Id
+                        LIMIT 50";
 
             $res = Database::getInstance()->fetchAll($query, $data);
             if(empty($res))
@@ -212,7 +254,7 @@ class Friend
             $res = json_decode(json_encode($res), true);
             for ($i = 0; $i < count($res); $i++) {
                 $mutual = self::getMutualFriends($userId, $res[$i]["Entity_Id"]);
-                $res[$i]["mutual_friends"] = count($mutual);
+                $res[$i]["mutual_friends"] = $mutual;
             }
             return Array("error" => "200", "message" => "We have suggested " . count($res) . " mutual friends for you.", "payload" => $res);
         }
@@ -277,10 +319,7 @@ class Friend
         $data = Array(":friendId" => $friendId, ":userId" => $userId);
 
         $res = Database::getInstance()->fetchAll($query, $data);
-        if(count($res) == 0)
-            return "No mutual friends.";
-        else
-            return $res;
+        return count($res);
     }
 
     /*

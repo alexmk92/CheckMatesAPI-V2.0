@@ -131,6 +131,7 @@
       <column name="Notif_New_Friend" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="MQ==" remarks="MS15ZXMsIDAtbm8="/>
       <column name="Notif_Friend_Request" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="MQ==" remarks="MS15ZXMsIDAtbm8="/>
       <column name="Notif_CheckIn_Activity" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="MQ==" remarks="MS15ZXMsIDAtbm8="/>
+      <column name="list_visibility" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" def="MQ==" remarks="MSA9IEFMTCwgMiA9IEZyaWVuZHMsIDMgPSBIaWRkZW4="/>
     </table>
     <table name="statusmessages" schema="" catalog="kinekt" type="TABLE">
       <column name="sid" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>

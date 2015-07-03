@@ -177,6 +177,7 @@ class Checkin
                         checkins.place_name,
                         checkins.place_lat,
                         checkins.place_long,
+                        checkins.Chk_Dt,
                         (
                               SELECT COUNT(DISTINCT entityId)
                                 FROM checkinArchive
@@ -1060,7 +1061,7 @@ class Checkin
     {
 
         // Get all of the comments
-        $query = "SELECT DISTINCT ent.Entity_Id, ent.Profile_Pic_Url, ent.First_Name, ent.Last_Name, ent.Last_CheckIn_Place, comments.Content
+        $query = "SELECT DISTINCT ent.Entity_Id, ent.Profile_Pic_Url, ent.First_Name, ent.Last_Name, ent.Last_CheckIn_Place, comments.Content, comments.Comment_Dt
                   FROM   checkin_comments comments
                   JOIN   entity ent
                   ON     comments.Entity_Id = ent.Entity_Id
