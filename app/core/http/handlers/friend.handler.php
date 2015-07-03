@@ -129,7 +129,7 @@ class Friend
                        )
                      GROUP
                         BY y.Entity_Id2
-                    HAVING COUNT(*) >= 1;
+                    HAVING COUNT(*) >= 1
                 ";
         $data = Array(":user_id" => $userId);
         $res = Database::getInstance()->fetchAll($query, $data);
@@ -156,16 +156,20 @@ class Friend
                 else
                     $query .= ", ";
             }
-            $query .= " AND entityId != :user_id GROUP BY entityId";
+            $query .= " AND entityId != :user_id GROUP BY entityId LIMIT 30";
         }
         else
             $query .= " entityId != :user_id GROUP BY entityId";
 
-
-
         $res2 = Database::getInstance()->fetchAll($query, $data);
+
         if(count($res2) > 0)
-            $res = array_merge($res, $res2);
+        {
+            foreach($res2 as $item)
+            {
+                array_push($res, $item);
+            }
+        }
 
         if(count($res) > 0) {
             // Get the settings for the user
@@ -243,8 +247,7 @@ class Friend
             $query .= " AND e.Entity_Id != :user_id
                         AND TIMESTAMPDIFF(YEAR, e.DOB, CURDATE()) BETWEEN :lower AND :upper
                         AND" . $settings["Pref_Sex"] . "
-                        GROUP BY e.Entity_Id
-                        LIMIT 50";
+                        GROUP BY e.Entity_Id";
 
             $res = Database::getInstance()->fetchAll($query, $data);
             if(empty($res))
@@ -256,6 +259,7 @@ class Friend
                 $mutual = self::getMutualFriends($userId, $res[$i]["Entity_Id"]);
                 $res[$i]["mutual_friends"] = $mutual;
             }
+
             return Array("error" => "200", "message" => "We have suggested " . count($res) . " mutual friends for you.", "payload" => $res);
         }
         else
@@ -350,7 +354,7 @@ class Friend
             $res = json_decode(json_encode($requests), true);
             for ($i = 0; $i < count($res); $i++) {
                 $mutual = self::getMutualFriends($userId, $res[$i]["entity_id"]);
-                $res[$i]["mutual_friends"] = count($mutual);
+                $res[$i]["mutual_friends"] = $mutual;
             }
             return Array("error" => "200", "message" => "Successfully returned friends for this user", "payload" => $res);
         }
