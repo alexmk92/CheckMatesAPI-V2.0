@@ -133,16 +133,64 @@ class Friend
                 ";
         $data = Array(":user_id" => $userId);
         $res = Database::getInstance()->fetchAll($query, $data);
+
+        // Build the mutual checkin query
+        $query = "SELECT DISTINCT entityId AS Entity_Id2
+                    FROM checkinArchive
+                   WHERE entityId = :user_id
+
+                   UNION ALL
+
+                  SELECT DISTINCT entityId AS Entity_Id2
+                    FROM checkinArchive
+                    WHERE ";
+
         if(count($res) > 0) {
+            $query .= "entityId NOT IN (";
+            for ($i = 0; $i < count($res); $i++) {
+                $query .= ":user_" . $i;
+                $data[":user_" . $i] = $res[$i]["Entity_Id2"];
+
+                if ($i == count($res) - 1)
+                    $query .= ")";
+                else
+                    $query .= ", ";
+            }
+            $query .= " AND entityId != :user_id GROUP BY entityId";
+        }
+        else
+            $query .= " entityId != :user_id GROUP BY entityId";
 
 
+
+        $res2 = Database::getInstance()->fetchAll($query, $data);
+        if(count($res2) > 0)
+            $res = array_merge($res, $res2);
+
+        if(count($res) > 0) {
+            // Get the settings for the user
 
             // Get the names of these people
-            $query = "SELECT First_Name, Last_Name, Entity_Id, Profile_Pic_Url, Last_CheckIn_Dt
-                      FROM entity
+            $query = "SELECT
+                             First_Name,
+                             Last_Name,
+                             Entity_Id,
+                             Profile_Pic_Url,
+                             Last_CheckIn_Dt,
+                             Category AS FC
+                      FROM
+                             entity
+                      LEFT
+                      JOIN
+                             friends
+                      ON
+                             entity.Entity_Id
+                      IN    (friends.Entity_Id1, friends.Entity_Id2)
+                      AND    friends.Category NOT IN (1, 2, 4)
                       WHERE Entity_Id IN (";
 
             $data = Array();
+            $data[":user_id"] = $userId;
             for($i = 0; $i < count($res); $i++)
             {
                 $query .= ":user_" . $i;
@@ -153,6 +201,8 @@ class Friend
                 else
                     $query .= ", ";
             }
+
+            $query .= " AND Entity_Id != :user_id GROUP BY Entity_Id";
 
             $res = Database::getInstance()->fetchAll($query, $data);
             if(empty($res))

@@ -157,7 +157,7 @@ class Checkin
         if(empty($data[":currLong"]))
             $data[":currLong"] = $args["curr_long"];
         if(empty($data[":expiry"]))
-            $data[":expiry"] = $userPreferences["expiry"] * 60;
+            $data[":expiry"] = $userPreferences["expiry"];
 
         // Build the final condition
         if(empty($spatialFilter))
@@ -177,7 +177,12 @@ class Checkin
                         checkins.place_name,
                         checkins.place_lat,
                         checkins.place_long,
-                        checkins.place_people,
+                        (
+                              SELECT COUNT(DISTINCT entityId)
+                                FROM checkinArchive
+                               WHERE placeLat = checkins.Place_Lat
+                                 AND placeLng = checkins.Place_Long
+                         ) AS place_people,
                         checkins.chk_id AS checkin_id,
                         checkins.img_url AS checkin_photo,
                         (6371 * acos( cos( radians(:currLat) ) * cos( radians(ent.Last_CheckIn_Lat) ) * cos( radians(ent.Last_CheckIn_Long) - radians(:currLong) ) + sin( radians(:currLat) ) * sin( radians(ent.Last_CheckIn_Lat) ) ) ) as distance,
@@ -197,7 +202,8 @@ class Checkin
                   AND   checkins.Chk_Dt = ent.Last_Checkin_Dt
                   AND   ent.Create_Dt != ent.Last_CheckIn_Dt
                   AND   ent.Last_CheckIn_Place IS NOT NULL
-                  AND   TIMESTAMPDIFF(MINUTE, checkins.Chk_Dt, NOW()) < :expiry
+                  AND   TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) < :expiry
+                  AND   TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) < 0
                   AND   ".$spatialFilter."
                   GROUP BY ent.Entity_Id
                   ORDER BY distance ASC
@@ -212,6 +218,11 @@ class Checkin
         else
         {
             $users = Array();
+
+            if($res[0]["distance"] > 0)
+                $res[0]["distance"] = number_format($res[0]["distance"], 2, '.', '');
+            else if($res[0]["distance"] > 1000)
+                $res[0]["distance"] = number_format($res[0]["distance"], 0, '.', '');
 
             foreach($res as $user)
             {
@@ -374,7 +385,24 @@ class Checkin
         if(empty($user))
             return Array("error" => "401", "message" => "You are not authorised to access this resource, please re-login to generate a new session token.");
 
-        $query = "SELECT checkins.*,
+        $query = "SELECT checkins.Chk_Id,
+                         checkins.Entity_Id,
+                         checkins.Place_Name,
+                         checkins.Place_Lat,
+                         checkins.Place_Long,
+                         checkins.Place_Country,
+                         checkins.Place_Category,
+                         checkins.Place_Pic_Url,
+                         checkins.Img_Url,
+                         checkins.Message,
+                         checkins.Tagged_Ids,
+                         checkins.Chk_Dt,
+                         (
+                              SELECT COUNT(DISTINCT entityId)
+                                FROM checkinArchive
+                               WHERE placeLat = checkins.Place_Lat
+                                 AND placeLng = checkins.Place_Long
+                         ) AS Place_People,
                          entity.First_Name,
                          entity.Last_Name,
                          entity.Last_CheckIn_Dt checkin_date,
@@ -911,7 +939,28 @@ class Checkin
 
     public static function get($args, $user)
     {
-        $query = "SELECT checkins.*, entity.First_Name, entity.Last_Name, entity.Profile_Pic_Url
+        $query = "SELECT
+                         entity.First_Name,
+                         entity.Last_Name,
+                         entity.Profile_Pic_Url,
+                         checkins.Chk_Id,
+                         checkins.Entity_Id,
+                         checkins.Place_Name,
+                         checkins.Place_Lat,
+                         checkins.Place_Long,
+                         checkins.Place_Country,
+                         checkins.Place_Category,
+                         checkins.Place_Pic_Url,
+                         checkins.Img_Url,
+                         checkins.Message,
+                         checkins.Tagged_Ids,
+                         checkins.Chk_Dt,
+                         (
+                              SELECT COUNT(DISTINCT entityId)
+                                FROM checkinArchive
+                               WHERE placeLat = checkins.Place_Lat
+                                 AND placeLng = checkins.Place_Long
+                         ) AS Place_People
                   FROM checkins
                   JOIN entity
                   ON checkins.Entity_Id = entity.Entity_Id
@@ -1128,8 +1177,8 @@ class Checkin
             return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
 
         // Prepare a query that's purpose will be to add a new comment to a check in
-        $query = "INSERT INTO checkin_comments(Entity_Id, Chk_Id, Content)
-                  VALUES (:userId, :checkInId, :message)
+        $query = "INSERT INTO checkin_comments(Entity_Id, Chk_Id, Content, Comment_Dt)
+                  VALUES (:userId, :checkInId, :message, NOW())
                  ";
 
         // Bind the parameters to the query
