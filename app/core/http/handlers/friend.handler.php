@@ -103,7 +103,7 @@ class Friend
     public static function getSuggestedFriends($userId)
     {
         // Find all mutual friends for this user
-       $query = "
+        $query = "
                     SELECT y.Entity_Id2
                       FROM friends x
                       LEFT
@@ -129,7 +129,7 @@ class Friend
                        )
                      GROUP
                         BY y.Entity_Id2
-                    HAVING COUNT(*) >= 1
+                    HAVING COUNT(*) >= 1;
                 ";
         $data = Array(":user_id" => $userId);
         $res = Database::getInstance()->fetchAll($query, $data);
@@ -156,20 +156,16 @@ class Friend
                 else
                     $query .= ", ";
             }
-            $query .= " AND entityId != :user_id GROUP BY entityId LIMIT 30";
+            $query .= " AND entityId != :user_id GROUP BY entityId";
         }
         else
             $query .= " entityId != :user_id GROUP BY entityId";
 
-        $res2 = Database::getInstance()->fetchAll($query, $data);
 
+
+        $res2 = Database::getInstance()->fetchAll($query, $data);
         if(count($res2) > 0)
-        {
-            foreach($res2 as $item)
-            {
-                array_push($res, $item);
-            }
-        }
+            $res = array_merge($res, $res2);
 
         if(count($res) > 0) {
             // Get the settings for the user
@@ -207,19 +203,21 @@ class Friend
                              e.Last_CheckIn_Dt,
                              e.Sex,
                              TIMESTAMPDIFF(YEAR, e.DOB, CURDATE()) AS Age,
-                             f.Category AS FC
+                             f.Category AS FC,
+                             s.list_visibility,
+                             p.Pref_Everyone
                       FROM
                              entity e
-                      JOIN
+                      LEFT JOIN
                              setting s
                       ON
-                             e.Entity_Id = s.Entity_Id
-                       AND   s.list_visibility = 1
+                             e.Entity_Id IN(s.Entity_Id)
+                       AND   (s.list_visibility = 1 OR s.list_visibility = null)
                       LEFT JOIN
                              preferences p
                       ON
-                             e.Entity_Id = p.Entity_Id
-                       AND   p.Pref_Everyone = 1
+                             e.Entity_Id IN(p.Entity_Id)
+                       AND   (p.Pref_Everyone = 1 OR p.Pref_Everyone = null)
                       LEFT
                       JOIN
                              friends f
@@ -247,7 +245,8 @@ class Friend
             $query .= " AND e.Entity_Id != :user_id
                         AND TIMESTAMPDIFF(YEAR, e.DOB, CURDATE()) BETWEEN :lower AND :upper
                         AND" . $settings["Pref_Sex"] . "
-                        GROUP BY e.Entity_Id";
+                        GROUP BY e.Entity_Id
+                        LIMIT 100";
 
             $res = Database::getInstance()->fetchAll($query, $data);
             if(empty($res))
@@ -259,7 +258,6 @@ class Friend
                 $mutual = self::getMutualFriends($userId, $res[$i]["Entity_Id"]);
                 $res[$i]["mutual_friends"] = $mutual;
             }
-
             return Array("error" => "200", "message" => "We have suggested " . count($res) . " mutual friends for you.", "payload" => $res);
         }
         else
@@ -278,9 +276,10 @@ class Friend
 
     private static function getMutualFriends($userId, $friendId)
     {
+        //echo "user id: " . $userId . ", and friend id: " . $friendId . "\n";
         // Check for an invalid match
         if(($userId <= 0 || $friendId <= 0) || $userId == $friendId)
-            return "No mutual friends";
+            return 0;
 
         // Perform the query
         $query = "
@@ -354,7 +353,7 @@ class Friend
             $res = json_decode(json_encode($requests), true);
             for ($i = 0; $i < count($res); $i++) {
                 $mutual = self::getMutualFriends($userId, $res[$i]["entity_id"]);
-                $res[$i]["mutual_friends"] = $mutual;
+                $res[$i]["mutual_friends"] = count($mutual);
             }
             return Array("error" => "200", "message" => "Successfully returned friends for this user", "payload" => $res);
         }
