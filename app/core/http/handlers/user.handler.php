@@ -424,35 +424,31 @@ class User
     |
     */
 
-    public static function updateProfile($userId, $data)
+    public static function updateProfile($userId, $payload)
     {
         // Check for users under 18
-        if (time() - strtotime($data['dob']) <= 18 * 31536000 || $data['dob'] == null)
+        if (time() - strtotime($payload['dob']) <= 18 * 31536000 || $payload['dob'] == null)
             return Array('error' => '400', 'message' => 'Bad request, you must be 18 years or older.');
+
+        // Construct an array of valid keys
+        $validKeys = Array("first_name", "last_name", "profile_pic_url", "entity_id", "fb_id", "email", "dob", "sex", "about", "create_dt", "last_checkin_lat", "last_checkin_long",
+        "last_checkin_place", "last_checkin_dt", "score", "score_flag", "image_urls");
 
         // We know the user is valid, therefore update it with the new
         // info set in the $data object.  It doesn't matter if we override information here
-        $query = "UPDATE entity
-                  SET    first_name      = :firstName,
-                         last_name       = :lastName,
-                         email           = :email,
-                         sex             = :sex,
-                         dob             = :dob,
-                         image_urls      = :images,
-                         profile_pic_url = :profilePic
-                  WHERE  entity_id       = :entId";
+        $data = Array();
+        $query = "UPDATE entity SET ";
+        foreach($payload as $k => $v)
+        {
+            if(in_array($k, $validKeys)) {
+                $query .= $k . " = :" . $k . ", \n";
+                $data[":" . $k] = $v;
+            }
+        }
+        $query = substr_replace($query, " ", strrpos($query, ","), strlen(","));
+        $query .= " WHERE entity_id = :entity_id";
 
-        if(empty($data["images"]))
-            $data["images"] = "";
-
-        $data  = Array(":firstName"  => $data['first_name'],
-            ":lastName"   => $data['last_name'],
-            ":email"      => $data['email'],
-            ":sex"        => $data['sex'],
-            ":dob"        => $data['dob'],
-            ":images"     => $data['images'],
-            ":entId"      => $userId,
-            ":profilePic" => $data['pic_url']);
+        $data[":entity_id"] = $userId;
 
         // Perform the update on the database
         $res = Database::getInstance()->update($query, $data);

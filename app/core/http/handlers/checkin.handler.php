@@ -1179,11 +1179,11 @@ class Checkin
 
         // Prepare a query that's purpose will be to add a new comment to a check in
         $query = "INSERT INTO checkin_comments(Entity_Id, Chk_Id, Content, Comment_Dt)
-                  VALUES (:userId, :checkInId, :message, NOW())
+                  VALUES (:userId, :checkInId, :message, :now)
                  ";
 
         // Bind the parameters to the query
-        $data = Array(":userId" => $user['entityId'], ":checkInId" => $checkInId, ":message" => $payload['message']);
+        $data = Array(":userId" => $user['entityId'], ":checkInId" => $checkInId, ":message" => $payload['message'], ":now" => gmdate('Y-m-d H:i:s', time()));
 
         // Perform the insert, then increment count if this wasn't a duplicate record
         if (Database::getInstance()->insert($query, $data)) {

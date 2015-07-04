@@ -117,24 +117,40 @@ OR
 The above describes a result set limited to 2 results to save bandwidth, this was requested using: `http://alexsims.me/checkmates/api/v2/User/at-location/-0.133541/51.5099/2`
 
 ##### PUT
-1) A user can be updated by sending a new JSON object with the new information to `/api/v2/User/{userId}`. Please note that the JSON object sent must contain all information on the given user.  This resource does not need to be called directly as changes set here are automatically performed when the user signs up or logs in, however in the event that a user updates there `about` information, this resource must have the following fields passed in a PUT method:
+1) A user can be updated by sending a new JSON object with the new information to `/api/v2/User/{userId}`. Please note that the JSON object sent must contain all information on the given user.  This resource does not need to be called directly as changes set here are automatically performed when the user signs up or logs in.
+However, in the event that you need to update a users about information, you can send a JSON object with any amount of the keys listed below, but you must always provided a `dob` key, otherwise a 400 error will be returned:
+
+```json
+$validKeys = Array("first_name", "
+                    last_name", 
+                    "profile_pic_url", 
+                    "entity_id", 
+                    "fb_id", 
+                    "email", 
+                    "dob", 
+                    "sex", 
+                    "about", 
+                    "create_dt", 
+                    "last_checkin_lat", 
+                    "last_checkin_long",
+                    "last_checkin_place", 
+                    "last_checkin_dt", 
+                    "score",
+                    "score_flag", 
+                    "image_urls");
+```
+
+Keys not provided in this format will result in those fields not being updated, this is due to the method constructing the UPDATE query based on the keys given in the json object (these keys directly map to the database field names).
+A 400 error will be returned if the dob calculates to being less than 18 years of age.
+
+An example request may look like:
 
 ```json    
 {
-    "device_id" : "some_id",
-    "device_type" : "1 for Apple, 2 for Android, specify an int here",
-    "push_token" : "some_token",
-    "facebook_id" : "xyz",
     "first_name" : "John",
     "last_name" : "Doe",
     "dob" : "Y-m-d",
-    "about" : "some details", 
-    "email" : "john.doe@gmail.com",
-    "friends" : "facebookID1, facebookID2, facebookID3",
-    "images" : "http://server.com/image1.png, http://server.com/image2.png",
-    "pic_url" : "http://server.com/profilePic.png",
-    "sex" : "1 for male, 2 for female.  Specify an int here", 
-    "
+    "about" : "some details",
 }
 ```
 
