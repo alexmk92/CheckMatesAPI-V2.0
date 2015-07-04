@@ -204,7 +204,7 @@ class User
         // /api/v2/User/update-profile/{userId}
         if(count($this->args) == 1 && $this->verb == 'update-profile')
         {
-            return \Handlers\User::updateProfile($this->args[0], $payload);
+            return \Handlers\User::updateProfile($this->args[0], $payload, $this->user);
         }
         // /api/v2/User/update-settings/{userId} - Update the settings for the user with one or more values provided.
         if(count($this->args) == 1 && $this->verb == 'update-settings')

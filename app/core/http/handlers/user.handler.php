@@ -424,11 +424,17 @@ class User
     |
     */
 
-    public static function updateProfile($userId, $payload)
+    public static function updateProfile($userId, $payload, $user = null)
     {
         // Check for users under 18
         if (time() - strtotime($payload['dob']) <= 18 * 31536000 || $payload['dob'] == null)
             return Array('error' => '400', 'message' => 'Bad request, you must be 18 years or older.');
+        if ($user != null && !empty($user["entityId"]) && ($userId != $user["entityId"]))
+            return Array('error' => '401', 'message' => 'You are not authorised to access this resource because you are not the user who is updating: tried to update user ' . $userId . ' with logged in user ' . $user["entityId"]);
+
+        // Update old values to keep app working...
+        if(!empty($payload["facebook_id"]))
+            $payload["fb_id"] = $payload["facebook_id"];
 
         // Construct an array of valid keys
         $validKeys = Array("first_name", "last_name", "profile_pic_url", "entity_id", "fb_id", "email", "dob", "sex", "about", "create_dt", "last_checkin_lat", "last_checkin_long",
@@ -446,13 +452,12 @@ class User
             }
         }
         $query = substr_replace($query, " ", strrpos($query, ","), strlen(","));
-        $query .= " WHERE entity_id = :entity_id";
+        $query .= " WHERE Entity_Id = :entity_id";
 
         $data[":entity_id"] = $userId;
 
         // Perform the update on the database
         $res = Database::getInstance()->update($query, $data);
-
         // Check if we only performed an update call which isn't part of
         if($res != 0)
             return Array('error' => '200', 'message' => 'The user with ID: '.$userId.' was updated successfully.');
