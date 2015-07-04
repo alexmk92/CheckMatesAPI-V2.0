@@ -117,7 +117,7 @@ OR
 The above describes a result set limited to 2 results to save bandwidth, this was requested using: `http://alexsims.me/checkmates/api/v2/User/at-location/-0.133541/51.5099/2`
 
 ##### PUT
-1) A user can be updated by sending a new JSON object with the new information to `/api/v2/User/{userId}`. Please note that the JSON object sent must contain all information on the given user.  This resource does not need to be called directly as changes set here are automatically performed when the user signs up or logs in.
+1) A user can be updated by sending a new JSON object with the new information to `/api/v2/User/update-profile/{userId}`. Please note that the JSON object sent must contain all information on the given user.  This resource does not need to be called directly as changes set here are automatically performed when the user signs up or logs in.
 However, in the event that you need to update a users about information, you can send a JSON object with any amount of the keys listed below, but you must always provided a `dob` key, otherwise a 400 error will be returned:
 
 ```json
