@@ -685,29 +685,31 @@ If the request was accepted successfully a `200` code will be returned, otherwis
 ##### DELETE
 1) A friend can be removed by sending a request to: `/api/v2/Friend/remove-friend/{friendId}`, accompanying this the JSON payload should contain the following data:
 
-```json
-{
-    "session_token" : "some_token",
-    "device_id" : "some_id",
-}
-```
-
-This payload is used to authenticate the user.  If an invalid token and device pair are  provied a `401` error will be returned.  A `200` is returned if the request was successful, otherwise a `409` is returned detailing that the relationship doesn't exist.
-
 2) A friend request can be rejected by sending a request to: `/api/v2/Friend/reject-request/{friendId}`, accompanying this the JSON payload should contain the following data:
 
+# PUSH PAYLOADS
+
+All push payloads come back from the server in the following format:
+
 ```json
 {
-    "session_token" : "some_token",
-    "device_id" : "some_id",
+    senderId    : The entity id of the sender
+    senderName  : The name of the sender
+    receiver    : The entity id of the receiver
+    message     : The contents of the message
+    type        : 1 = Checkin, 2 = Message, 3 = Tag, 4 = Request, 5 = New Friend
+    date        : The date that the notification was sent
+    messageId   : The id of the associated message or checkin (or NULL for other items) - this should be used to allow users to jump
+                  to the checkin that has just been commented on, or see the latest message sent to them in the chat log.
+    messageType : 1 = Checkin, 2 = Message, 3 = Tag, 4 = Request, 5 = New Friend (duplicate, existed in legacy code so I replicated it, usually NULL)
 }
 ```
 
-This payload is used to authenticate the user.  If an invalid token and device pair are  provied a `401` error will be returned.  A `200` is returned if the request was successful, otherwise a `400` is returned detailing that the friend request does not exist.
-
-
+If you have any questions regarding the above payload please ask, the only concerning keys are type and messageType, but for now just assume messageType is equal to type,
+and only ever check for type in your extraction code...
 
 Feel free to keep adding to this as you please guys :) 
+
 
 --Alex.
 

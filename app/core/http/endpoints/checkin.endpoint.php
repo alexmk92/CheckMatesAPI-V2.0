@@ -217,6 +217,7 @@ class Checkin
         // Check for an invalid payload - we check FILES and POST arrays here for multipart data.
         if (empty($payload) && (empty($_FILES) && empty($_POST)))
             return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid Checkin payload to the server.");
+
         // Account for a payload that has been sent as a multipart form-data
         if (empty($payload))
             $payload = Array("image" => $_FILES, "args" => $_POST);

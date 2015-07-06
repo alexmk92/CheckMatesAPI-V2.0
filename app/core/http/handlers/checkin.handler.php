@@ -1046,7 +1046,35 @@ class Checkin
         $res = Database::getInstance()->insert($query, $data);
         if($res != 0)
         {
-            return Array("error" => "200", "message" => "Successfully liked the checkin.");
+            $query = "SELECT Entity_Id FROM checkins WHERE Chk_Id = :checkin_id";
+            $data  = Array(":checkin_id" => (int)$checkinId);
+
+            $res   = Database::getInstance()->fetch($query, $data);
+            if(!empty($res))
+            {
+                $checkinOwner = $res->Entity_Id;
+                $query = "SELECT First_Name, Last_Name, Entity_Id FROM entity WHERE Entity_Id = :user_id";
+                $data = Array(":user_id" => $entId);
+
+                $res = Database::getInstance()->fetch($query, $data);
+                if (!empty($res)) {
+                    $pushPayload = Array(
+                        "senderId" => (int)$entId,
+                        "senderName" => $res->First_Name . " " . $res->Last_Name,
+                        "receiver" => (int)$checkinOwner,
+                        "message" => $res->First_Name . " " . $res->Last_Name . " liked your checkin.",
+                        "type" => 1,
+                        "date" => gmdate('Y-m-d H:i:s', time()),
+                        "messageId" => $checkinId,
+                        "messageType" => 1
+                    );
+
+                    $server = new \PushServer();
+                    return $server->sendNotification($pushPayload);
+                }
+            }
+
+            return Array("error" => "200", "message" => "Successfully liked the checkin, no push notification was sent.");
         }
 
         return Array("error" => "403", "message" => "Invalid resource, please try again.");
@@ -1196,7 +1224,32 @@ class Checkin
 
         // Perform the insert, then increment count if this wasn't a duplicate record
         if (Database::getInstance()->insert($query, $data)) {
+            $query = "SELECT Entity_Id FROM checkins WHERE Chk_Id = :checkin_id";
+            $data  = Array(":checkin_id" => (int)$checkInId);
 
+            $res   = Database::getInstance()->fetch($query, $data);
+            if(!empty($res)) {
+                $checkinOwner = $res->Entity_Id;
+                $query = "SELECT First_Name, Last_Name, Entity_Id FROM entity WHERE Entity_Id = :user_id";
+                $data = Array(":user_id" => $user["entityId"]);
+
+                $res = Database::getInstance()->fetch($query, $data);
+                if (!empty($res)) {
+                    $pushPayload = Array(
+                        "senderId" => (int)$user["entityId"],
+                        "senderName" => $res->First_Name . " " . $res->Last_Name,
+                        "receiver" => (int)$checkinOwner,
+                        "message" => $res->First_Name . " " . $res->Last_Name . " commented on your checkin!",
+                        "type" => 1,
+                        "date" => gmdate('Y-m-d H:i:s', time()),
+                        "messageId" => $checkInId,
+                        "messageType" => 1
+                    );
+
+                    $server = new \PushServer();
+                    return $server->sendNotification($pushPayload);
+                }
+            }
             return Array("error" => "200", "message" => "Comment has been added successfully.");
         }
         else

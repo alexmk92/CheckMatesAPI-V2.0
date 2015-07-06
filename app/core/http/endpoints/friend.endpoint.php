@@ -204,7 +204,7 @@ class Friend
         // /api/v2/Friend/reject-request/{friendId} - Deletes a request between a user and the potential friend.
         else if(count($this->args) == 1 && $this->verb == 'reject-request')
         {
-            return \Handlers\Friend::rejectFriendRequest($this->args[0], $payload, $this->user);
+            return \Handlers\Friend::rejectFriendRequest($this->args[0], $this->user);
         }
         // Unsupported handler
         else

@@ -798,7 +798,8 @@ class User
                   FROM notifications
                   JOIN entity
                     ON notifications.sender = entity.Entity_Id
-                  WHERE receiver = :entityId";
+                  WHERE receiver = :entityId
+                  ORDER BY notif_dt DESC";
         $data  = Array(":entityId" => $userId);
 
         $res   = Database::getInstance()->fetchAll($query, $data);
