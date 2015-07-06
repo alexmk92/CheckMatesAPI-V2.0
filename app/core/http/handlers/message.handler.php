@@ -18,6 +18,7 @@ use Models\Database;
 
 // Include the session handler object
 require_once "./app/core/http/handlers/session.handler.php";
+require_once "./app/core/http/api.push.server.php";
 
 class Message
 {
@@ -179,12 +180,36 @@ class Message
 
         // Bind the parameters to the query
         $data = Array(":sender" => $user['entityId'], ":receiver" => $friendId, ":message" => $payload['message'], ":todaysDate" => $now);
-
+        $res  = Database::getInstance()->insert($query, $data);
         // Perform the insert
-        if (Database::getInstance()->insert($query, $data)) {
+        if ($res > 0) {
 
-            // If insert succeeded.
-            return Array("error" => "200", "message" => "Message has been sent successfully.");
+            // Today's date and time.
+            $now = gmdate('Y-m-d H:i:s', time());
+
+            // Configure the push payload, we trim the name so that if it was Alexander John, it becomes Alexander.
+            $pushPayload = Array(
+                "senderId" => $user['entityId'],
+                "senderName" => $user['firstName'] . " " . $user['lastName'],
+                "receiver" => $friendId,
+                "message" => $user['firstName']. " " . $user['lastName'] . " sent you a message.",
+                "type" => 2,
+                "date" => $now,
+                "messageId" => $res,
+                "messageType" => 2
+            );
+
+            // Reference a new push server and send the notification.
+            $server = new \PushServer();
+            $res = $server->sendNotification($pushPayload);
+
+            if(!empty($res))
+                // Request and notification (push) sent.
+                return Array("error" => "200", "message" => "The message was sent successfully.");
+
+            else
+                // Only request sent.
+                return Array("error" => "207", "message" => "Partial success: The message was sent successfully, but without a notification");
         }
         else
             // If insert failed.
@@ -263,8 +288,6 @@ class Message
                                         <p><strong><span style="font-size: 14px;">&nbsp; ' . $payload['message'] . '</span></p>
                                 </body>
                             </html>';
-
-        echo $body;
 
         // Send the message to issues@mycheckmates.com
         $headers  = 'MIME-Version: 1.0' . "\r\n";

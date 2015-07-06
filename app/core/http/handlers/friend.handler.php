@@ -100,9 +100,9 @@ class Friend
     |
     */
 
-    public static function getSuggestedFriends($userId)
+    public static function getSuggestedFriends($userId, $user)
     {
-        // Find all mutual friends for this user
+        // Get all users with more than 1 mutual friend
         $query = "
                     SELECT y.Entity_Id2
                       FROM friends x
@@ -136,13 +136,10 @@ class Friend
 
         // Build the mutual checkin query
         $query = "SELECT DISTINCT entityId AS Entity_Id2
-                    FROM checkinArchive
-                   WHERE entityId = :user_id
-
-                   UNION ALL
-
-                  SELECT DISTINCT entityId AS Entity_Id2
-                    FROM checkinArchive
+                    FROM checkinArchive x
+                    LEFT JOIN
+                    checkinArchive y
+                    ON x.chkId = y.chkId
                     WHERE ";
 
         if(count($res) > 0) {
@@ -160,7 +157,6 @@ class Friend
         }
         else
             $query .= " entityId != :user_id GROUP BY entityId";
-
 
 
         $res2 = Database::getInstance()->fetchAll($query, $data);
@@ -192,7 +188,6 @@ class Friend
                 default:
                     $settings["Pref_Sex"] = " Sex IN(1,2)";
             }
-
             // Get the names of these people
             $query = "SELECT
                              e.Entity_Id,
@@ -244,9 +239,16 @@ class Friend
 
             $query .= " AND e.Entity_Id != :user_id
                         AND TIMESTAMPDIFF(YEAR, e.DOB, CURDATE()) BETWEEN :lower AND :upper
+                        AND e.Entity_Id NOT IN
+                        (
+                            SELECT Req_Receiver FROM friend_requests WHERE Req_Sender = :user_id
+
+                            UNION ALL
+
+                            SELECT Req_Receiver FROM friend_requests WHERE Req_Sender = e.Entity_Id AND Req_Receiver = :user_id
+                        )
                         AND" . $settings["Pref_Sex"] . "
-                        GROUP BY e.Entity_Id
-                        LIMIT 100";
+                        GROUP BY e.Entity_Id";
 
             $res = Database::getInstance()->fetchAll($query, $data);
             if(empty($res))
@@ -254,6 +256,7 @@ class Friend
 
             // Get the mutual friends of each users
             $res = json_decode(json_encode($res), true);
+            $res = array_splice($res, 0, 50);
             for ($i = 0; $i < count($res); $i++) {
                 $mutual = self::getMutualFriends($userId, $res[$i]["Entity_Id"]);
                 $res[$i]["mutual_friends"] = $mutual;
@@ -434,29 +437,27 @@ class Friend
 
                 // Reference a new push server and send the notification.
                 $server = new \PushServer();
-
                 $res = $server->sendNotification($pushPayload);
 
                 if(!empty($res))
                     // Request and notification (push) sent.
                     return Array("error" => "200", "message" => "The friend request to ".$friend->First_Name." ".$friend->Last_Name. " ".
-                        "has been sent successfully.", "params" => "");
+                        "has been sent successfully.");
 
                 else
                     // Only request sent.
-                    return Array("error" => "207", "message" => "Partial success: A friend request has been sent, but without a notification",
-                        "payload" => "");
+                    return Array("error" => "207", "message" => "Partial success: A friend request has been sent, but without a notification");
             }
             else
                 // Friend cannot be found.
                 return Array("error" => "404", "message" => "The identifier for the friend cannot be found. Please send".
-                    " a request to an established user. ", "payload" => "");
+                    " a request to an established user.");
 
         }
         else
             // Conflict with either friends or friend_requests table.
             return Array("error" => "409", "message" => "You are either already friends with this user, or a friend request has already"
-                ." been sent." , "params" => "");
+                ." been sent.");
 
     }
 
@@ -715,8 +716,10 @@ class Friend
         // So...more basic queries for that.
         $query = "UPDATE friends
                   SET Category = 4
-                  WHERE Entity_Id1 = :userId AND Entity_Id2 = :friendId
-                     OR Entity_Id2 = :userId AND Entity_Id1 = :friendId";
+                  WHERE (Entity_Id1 = :userId AND Entity_Id2 = :friendId
+                    AND Entity_Id2 = :userId AND Entity_Id1 = :friendId)
+                    OR (Entity_Id1 = :userId AND Entity_Id2 = :friendId
+                    OR  Entity_Id2 = :userId AND Entity_Id1 = :friendId)";
 
         // Bind the parameters to the query
         $data = Array(":userId" => $userId, ":friendId" => $friendId);

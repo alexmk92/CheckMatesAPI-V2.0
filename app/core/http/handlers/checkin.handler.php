@@ -35,7 +35,7 @@ class Checkin
     |
     */
 
-    public static function getCheckins($args, $user)
+    public static function getCheckins($args, $user, $limit = 50)
     {
         if(empty($user))
             return Array("error" => "401", "message" => "You are not authorised to access this resource, please re-login to generate a new session token.");
@@ -61,7 +61,7 @@ class Checkin
                   JOIN setting
                     ON setting.Entity_Id = entity.Entity_Id
                   WHERE entity.Entity_id = :entityId
-                    OR entity.Fb_Id = :entityId";
+                     OR entity.Fb_Id = :entityId";
 
         $data = Array(":entityId" => $user["entityId"]);
         $userPreferences = json_decode(json_encode(Database::getInstance()->fetch($query, $data)), true);
@@ -72,7 +72,7 @@ class Checkin
 
         // Determine the radius that the spatial query will be set too
         $spatialFilter = "";
-        $userFilter    = "0";
+        $userFilter    = "";
         $data          = Array();
 
         // Determine the radius to show - we reinitialise the data array here for the next query
@@ -128,14 +128,14 @@ class Checkin
         // Check if we need to get everyone
         if($userPreferences["everyone"] == 1)
         {
-            $userFilter = "0 OR setting.Pri_CheckIn = 2
+            $userFilter = " AND setting.Pri_CheckIn = 2
                             AND TIMESTAMPDIFF(YEAR, ent.DOB, NOW()) BETWEEN :lowerAge AND :upperAge";
 
             // Bind the new params to our data array
             if(empty($data[":lowerAge"]))
-                $data[":lowerAge"] = $userPreferences["lowerAge"];
+                $data[":lowerAge"] = (int)$userPreferences["lowerAge"];
             if(empty($data[":upperAge"]))
-                $data[":upperAge"] = $userPreferences["upperAge"];
+                $data[":upperAge"] = (int)$userPreferences["upperAge"];
         }
 
         // Check what sexes we need to retrieve
@@ -151,22 +151,22 @@ class Checkin
 
         // Perform the rest of the binding
         if(empty($data[":entityId"]))
-            $data[":entityId"] = $user["entityId"];
+            $data[":entityId"] = (int)$user["entityId"];
         if(empty($data[":currLat"]))
-            $data[":currLat"] = $args["curr_lat"];
+            $data[":currLat"] = (double)$args["curr_lat"];
         if(empty($data[":currLong"]))
-            $data[":currLong"] = $args["curr_long"];
+            $data[":currLong"] = (double)$args["curr_long"];
         if(empty($data[":expiry"]))
-            $data[":expiry"] = $userPreferences["expiry"];
+            $data[":expiry"] = (int)$userPreferences["expiry"];
 
         // Build the final condition
         if(empty($spatialFilter))
-            $spatialFilter = "(" . $userFilter . ")";
+            $spatialFilter = $userFilter;
         else
             $spatialFilter .= " AND (" . $userFilter . ")";
 
         // Get the users based on their preferences
-        $query = "SELECT DISTINCT
+        $query = "SELECT
                         ent.Entity_Id,
                         ent.Profile_Pic_Url,
                         ent.Last_CheckIn_Lat,
@@ -174,9 +174,9 @@ class Checkin
                         ent.First_Name AS first_name,
                         ent.Last_CheckIn_Dt AS last_checkin,
                         ent.Last_Name AS last_name,
-                        checkins.place_name,
-                        checkins.place_lat,
-                        checkins.place_long,
+                        checkins.Place_Name,
+                        checkins.Place_Lat,
+                        checkins.Place_Long,
                         checkins.Chk_Dt,
                         (
                               SELECT COUNT(DISTINCT entityId)
@@ -184,32 +184,33 @@ class Checkin
                                WHERE placeLat = checkins.Place_Lat
                                  AND placeLng = checkins.Place_Long
                          ) AS place_people,
-                        checkins.chk_id AS checkin_id,
-                        checkins.img_url AS checkin_photo,
+                        checkins.Chk_Id AS checkin_id,
+                        checkins.Img_Url AS checkin_photo,
                         (6371 * acos( cos( radians(:currLat) ) * cos( radians(ent.Last_CheckIn_Lat) ) * cos( radians(ent.Last_CheckIn_Long) - radians(:currLong) ) + sin( radians(:currLat) ) * sin( radians(ent.Last_CheckIn_Lat) ) ) ) as distance,
                         (
                             SELECT Category
                             FROM   friends
                             WHERE  (Entity_Id1 = ent.Entity_Id AND Entity_Id2 = :entityId)  OR
                                    (Entity_Id2 = ent.Entity_Id AND Entity_Id1 = :entityId)
+                            LIMIT 1
                         ) AS FC,
-                        checkins.Chk_Dt AS date
+                        checkins.Chk_Dt AS date,
+                        TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) AS ago
                   FROM  entity ent
                   JOIN  checkins
                   ON    ent.Entity_Id = checkins.Entity_Id
                   JOIN  setting
                   ON    setting.Entity_Id = ent.Entity_Id
                   WHERE ent.Entity_Id = setting.Entity_Id
-                  AND   checkins.Chk_Dt = ent.Last_Checkin_Dt
+                  AND   checkins.Chk_Dt = ent.Last_CheckIn_Dt
                   AND   ent.Create_Dt != ent.Last_CheckIn_Dt
                   AND   ent.Last_CheckIn_Place IS NOT NULL
-                  AND   TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) < :expiry
-                  AND   TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) < 0
-                  AND   ".$spatialFilter."
+                  AND   TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) <= :expiry
+                  AND   TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) >= 0
+                  ".$spatialFilter."
                   GROUP BY ent.Entity_Id
                   ORDER BY distance ASC
                   ";
-
 
         // Get the results and build the response payload
         $res = Database::getInstance()->fetchAll($query, $data);
@@ -218,6 +219,7 @@ class Checkin
         // Ensure all privacy is taken care of here...i.e. no facebook friends must be returned with no last name
         else
         {
+            $res = array_splice($res, 0, 50);
             $users = Array();
 
             if($res[0]["distance"] > 0)
@@ -257,7 +259,7 @@ class Checkin
     |
     */
 
-    public static function getActivities($userId)
+    public static function getActivities($userId, $limit = 50)
     {
         // Build the query
         $query = "SELECT
@@ -328,6 +330,7 @@ class Checkin
         {
             // Return tagged user ID's
             $arr = json_decode(json_encode($res), true);
+            $arr = array_splice($arr, 0, $limit);
             for($i = 0; $i < count($arr); $i++)
             {
                 $tagged    = str_replace(Array("[", "]"), "", $arr[$i]["Tagged_Ids"]);
@@ -381,7 +384,7 @@ class Checkin
     |
     */
 
-    public static function getUserCheckins($args, $user)
+    public static function getUserCheckins($args, $user, $limit = 50)
     {
         if(empty($user))
             return Array("error" => "401", "message" => "You are not authorised to access this resource, please re-login to generate a new session token.");
@@ -434,6 +437,7 @@ class Checkin
         {
             // Return tagged user ID's
             $arr = json_decode(json_encode($res), true);
+            $arr = array_splice($arr, 0, $limit);
 
             for($i = 0; $i < count($arr); $i++)
             {
@@ -500,7 +504,11 @@ class Checkin
         if(!empty($args["image"]["image"]))
             $image = $args["image"]["image"];
 
-        $args  = $args["args"];
+        // Args image can be empty, so only throw error if we get here
+        if(empty($args["args"]))
+            return Array("error" => "400", "message" => "An empty argument array was sent to the server.  Please send a multi-part/form-data form to make the request.");
+        else
+            $args = $args["args"];
 
         // Reference a new push server
         $server = new \PushServer();
@@ -703,12 +711,13 @@ class Checkin
                     // This expression will result to std::object or false - this is why we perform a boolean check
                     $recipient = Database::getInstance()->fetch($query, $data);
                     if ($recipient) {
+
                         // Configure the push payload, we trim the name so that if it was Alexander John, it becomes Alexander.
                         $pushPayload = Array(
                             "senderId" => $token["entityId"],
                             "senderName" => $token["firstName"] . " " . $token["lastName"],
                             "receiver" => (int)$taggedUser,
-                            "message" => substr($token["firstName"], 0, strrpos($token["firstName"], " ")) . " has tagged you in a checkin.",
+                            "message" => $token["firstName"] . " " . $token["lastName"] . " has tagged you in a checkin.",
                             "type" => 3,
                             "date" => $now,
                             "messageId" => NULL,
@@ -730,10 +739,11 @@ class Checkin
         }
 
         // Set up friend push variables
-        $filter      = Array("tagged" => $taggedUsers);
-        $friends     = Friend::getFriends($token["entityId"], $filter);
-        $friendCount = count($friends);
-        $success     = 0;
+        $filter       = Array("tagged" => $taggedUsers);
+        $friends      = Friend::getFriends($token["entityId"], $filter);
+        $friendCount  = count($friends);
+        $success      = 0;
+        $friendPushes = "No friend pushes were sent as you have no friends.";
 
         // Send a push notification to each of these friends
         if($friendCount > 0 && array_key_exists("payload", $friends)) {
@@ -746,13 +756,12 @@ class Checkin
                 // This expression will result to std::object or false - this is why we perform a boolean check
                 $recipient = Database::getInstance()->fetch($query, $data);
                 if ($recipient) {
-
                     // Configure the push payload, we trim the name so that if it was Alexander John, it becomes Alexander.
                     $pushPayload = Array(
                         "senderId" => $token["entityId"],
                         "senderName" => $token["firstName"] . " " . $token["lastName"],
                         "receiver" => $recipient->entity_id,
-                        "message" => substr($token["firstName"], 0, strrpos($token["firstName"], " ")) . " just checked in to " . $args["place_name"],
+                        "message" => $token["firstName"] . " " . $token["lastName"] . " just checked in to " . $args["place_name"],
                         "type" => 3,
                         "date" => $now,
                         "messageId" => NULL,
@@ -760,8 +769,8 @@ class Checkin
                     );
 
                     $res = $server->sendNotification($pushPayload);
-                    if ($res == 203)
-                        $friendCount++;
+                    if ($res["error"] == 203)
+                        $success++;
                 }
 
                 if ($success > 0)
@@ -784,7 +793,7 @@ class Checkin
                     $res["error"] = 203;
 
                 $res["message"] = "The Checkin was created successfully.";
-                $res["payload"] = Array("details" => $placeData, "tagged_pushes" => $taggedPushes, "friend_pushes" => $friendPushes, "people" => $people);
+                $res["payload"] = Array("details" => $placeData, "tagged_pushes" => $taggedPushes, "friend_pushes" => $friendPushes, "people" => $people["payload"]);
                 return $res;
             }
             else

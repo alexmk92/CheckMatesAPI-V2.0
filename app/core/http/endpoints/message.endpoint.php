@@ -149,13 +149,10 @@ class Message
         // Retrieve the payload and send with the friendId to the handler.
         $payload = json_decode(file_get_contents('php://input'), true);
 
-        // Check for an invalid payload
-        if ($payload == null)
-            return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid User payload to the server.");
-
         // /api/v2/Message/add-comment/{CheckinId} - Add new comment to a checkin
         if(count($this->args) == 1 && $this->verb == 'add-comment')
         {
+            return \Handlers\Message::addComment($this->args[0], $payload, $this->user);
             return \Handlers\Message::addComment($this->args[0], $payload, $this->user);
         }
         // /api/v2/Message/send-message/{friendId} - Send a message to a friend.
@@ -189,10 +186,6 @@ class Message
     {
         // Retrieve the payload and send with the friendId to the handler.
         $payload = json_decode(file_get_contents('php://input'), true);
-
-        // Check for an invalid payload
-        if ($payload == null)
-            return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid User payload to the server.");
 
         // /api/v2/Message/delete-message/{messageId} - delete a message between two users.
         if(count($this->args) == 1 && $this->verb == 'delete-message')

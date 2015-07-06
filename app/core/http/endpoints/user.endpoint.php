@@ -293,6 +293,11 @@ class User
         {
             return \Handlers\User::deleteAccount($payload, $this->args[0], $this->user);
         }
+        // /api/v2/User/sign-out/{userId} - Destroys the current session and logs the user out
+        if(count($this->args) == 1 && $this->verb == 'sign-out')
+        {
+            return \Handlers\User::signOut($this->args[0], $this->user);
+        }
         // /api/v2/User/remove-favourite/{likeId} - Remove a favourite place.
         if(count($this->args) == 1 && $this->verb == 'remove-favourite')
         {

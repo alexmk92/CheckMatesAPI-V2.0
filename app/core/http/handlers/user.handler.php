@@ -328,7 +328,7 @@ class User
     public static function get($userId, $user = null)
     {
         // Build the return payload
-        $data = Array(":entity_id" => $userId);
+        $data = Array(":entity_id" => $userId, ":user_id" => $user["entityId"]);
         $query = "SELECT DISTINCT entity.*, friends.Category, preferences.*, setting.*
                   FROM entity
                   LEFT JOIN preferences
@@ -336,7 +336,8 @@ class User
                   LEFT JOIN setting
                     ON entity.Entity_Id = setting.Entity_Id
                   LEFT JOIN friends
-                    ON entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2
+                    ON entity.Entity_Id IN (friends.Entity_Id1, friends.Entity_Id2)
+                    AND (friends.Entity_Id1 = :user_id OR friends.Entity_Id2 = :user_id)
                   WHERE entity.Entity_Id = :entity_id
                   OR entity.Fb_Id = :entity_id
                   GROUP BY entity.Entity_Id";
@@ -549,13 +550,13 @@ class User
             ':firstName'   => $args['first_name'],
             ':lastName'    => $args['last_name'],
             ':email'       => $args['email'],
-            ':profilePic'  => $args['pic_url'],
+            ':profilePic'  => $args['profile_pic_url'],
             ':sex'         => $args['sex'],
             ':dob'         => $args['dob'],
             ':about'       => $args['about'],
             ':createdAt'   => date('Y-m-d H:i:s'),
             ':lastCheckin' => date('Y-m-d H:i:s'),
-            ':images'      => $args['images'],
+            ':images'      => $args['image_urls'],
             ':score'       => 0
         );
 
@@ -595,6 +596,31 @@ class User
             return Array('error' => '200', 'message' => 'The user was created successfully.', 'payload' => Array('entity_id' => $id, 'entity_data' => $args, "preferences" => $preferences, "settings" => $settings, "session" => $token));
         else
             return Array('error' => '500', 'message' => 'There was an internal error when creating the user listed in the payload.  Please try again.', 'payload' => Array('entity_id' => $id, 'entity_data' => $args));
+    }
+
+    /*
+     |--------------------------------------------------------------------------
+     | Sign Out
+     |--------------------------------------------------------------------------
+     |
+     | Destroys the current session and signs the user out on this device.
+     |
+     */
+
+    public static function signOut($userId, $user)
+    {
+        if($userId != $user["entityId"])
+            return Array("error" => "401", "message" => "Failed to log out: User with id " . $user["entityId"] . " tried to sign user with id " . $userId . " out, try again with /api/v2/User/sign-out/" . $user["entityId"]);
+
+        // Delete the session from the sessions table
+        $query = "DELETE FROM user_sessions WHERE oid = :user_id AND device = :device_id";
+        $data  = Array(":user_id" => $userId, ":device_id" => $user["deviceId"]);
+
+        $res   = Database::getInstance()->delete($query, $data);
+        if($res != 1)
+            return Array("error" => "400", "message" => "Failed to log the user out from the system, please try again");
+
+        return Array("error" => "200", "message" => "logged the user with ID " . $userId . " out successfully.");
     }
 
     /*
@@ -646,6 +672,7 @@ class User
 
 
                     ) friend_list
+                    WHERE Entity_Id <> :userId AND Entity_Id <> :friendId
                     GROUP BY entity_id
                     HAVING COUNT(*) = 2
                     ORDER BY first_name ASC

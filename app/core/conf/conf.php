@@ -18,13 +18,13 @@
 define(DB_HOST, 'localhost');
 define(DB_NAME, 'kinekt');
 define(DB_USER, 'root');
-define(DB_PASS, '7O5VZJit9S');
+define(DB_PASS, 'werquin1');
 
 /*
  * Server configuration constants
  */
 
-define(SERVER_IP, '146.185.147.142/checkmates');
+define(SERVER_IP, '52.10.48.171/checkmates');
 
 /*
  * Notification server configuration

@@ -138,7 +138,7 @@ class PushServer
                 $payload["messageId"] = 0;
 
             // Create the payload and then compress it so it can be sent securely over the network
-            $pushPayload = Array(
+            $body['aps'] = Array(
                 "content-available" => 1,
                 "alert"             => $payload["message"],
                 "sound"             => "default",
@@ -149,14 +149,13 @@ class PushServer
                 "mt"                => $payload["messageType"],
                 "mid"               => $payload["messageId"]
             );
-            $pushPayload = json_encode($pushPayload);
+            $pushPayload = json_encode($body);
             $msg = chr(0) . pack('n', 32) . pack('H*', $deviceToken) . pack('n', strlen($pushPayload)) . $pushPayload;
 
             // Write the message to the server, this will then be routed to our receiver
             $result = fwrite($apns_fp, $msg, strlen($msg));
 
             // Dispose of any open sockets / resources
-
             fclose($apns_fp);
 
             // Return the result to the client
@@ -164,7 +163,6 @@ class PushServer
                 return Array("error" => "417", "message" => "Failed to send push.");
             else
                 return Array("error" => "203", "message" => "Push sent successfully");
-
         }
         else
         {
@@ -192,6 +190,41 @@ class PushServer
 
     private static function sendAndroidPush($payload, $pushToken)
     {
-        return Array("error" => "500", "message" => "Currently unsupported");
+        if(empty($payload["messageType"]))
+            $payload["messageType"] = 0;
+        if(empty($payload["messageId"]))
+            $payload["messageId"] = 0;
+
+        $data = Array(
+            "payload"    => $payload["message"],
+            "type"       => $payload["type"],
+            "sid"        => $payload["senderId"],
+            "sname"      => $payload["senderName"],
+            "dt"         => $payload["date"],
+            "mt"         => $payload["messageType"],
+            "mid"        => $payload["messageId"]
+        );
+        $body = Array("registration_ids" => $pushToken, "data" => $data);
+
+        $header = Array("Authorization: key=" . ANDROID_API_KEY,
+                        "Content-Type: application/json");
+
+        // Open the connection then set the URL to respoind to with POST data
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, ANDROID_PUSH_URL);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
+
+        // Close the curl pipeline and then examine result to write to client
+        $res = json_decode(curl_exec($ch), true);
+        curl_close($ch);
+
+        if($res["success"] >= 1)
+            return Array("error" => "203", "message" => "Successfully sent push notification.");
+        else
+            return Array("error" => "400", "message" => "Failed to send android push notification");
     }
 }

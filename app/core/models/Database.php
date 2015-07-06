@@ -111,9 +111,9 @@ class Database
     |
     */
 
-    public function fetchAll($query, $data = null)
+    public function fetchAll($query, $data = null, $emulatePrepares = false)
     {
-        if(strpos($query, 'LIMIT') !== FALSE)
+        if(strpos($query, 'LIMIT') !== FALSE && $emulatePrepares)
             $this->connection->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);
 
         set_error_handler(function() {});

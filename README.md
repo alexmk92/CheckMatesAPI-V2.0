@@ -300,8 +300,8 @@ A new user can be inserted by sending a JSON object in the body of the HTTP requ
     "about" : "some details", 
     "email" : "john.doe@gmail.com",
     "friends" : "facebookID1, facebookID2, facebookID3",
-    "images" : "http://server.com/image1.png, http://server.com/image2.png",
-    "pic_url" : "http://server.com/profilePic.png",
+    "image_urls" : "http://server.com/image1.png, http://server.com/image2.png",
+    "profile_pic_url" : "http://server.com/profilePic.png",
     "sex" : "1 for male, 2 for female.  Specify an int here", 
 }
 ```
@@ -373,6 +373,8 @@ This test request will respond with a 200 if it was successful, otherwise the fo
 
 ##### DELETE
 A user can be deleted by sending a single userId to the URI: `/api/v2/User/{userId}` - deleting a user through this interface will delete all of their posts, messages, checkins and all other information, this request must be authenticated by sending a `session_token` and `device_id` to the API. If the senderID does not match userID then the request will fail by returning a `401` code.
+
+A user can be logged out by sending a userID to the URI: `/api/v2/User/sign-out/{userId}` - This will destroy the current session on the current device only.
 
 ## Message Endpoint
 All message requests are documented here, as the application grows it would be great to implement group chat - this 
@@ -650,13 +652,8 @@ All endpoints for a Friend request are detailed here.
 3) Suggested friends can now be retrived at `/api/v2/Friend/suggested-friends/{userId}`
 
 ##### PUT
-1) A user can be blocked by sending a request to `/api/v2/block` a JSON object must also be sent which contains the ID of the logged in user 
+1) A user can be blocked by sending a request to `/api/v2/block/{userId}` a JSON object must also be sent which contains the ID of the logged in user 
 
-```json
-{
-    "entity_id" : "some_id"
-}
-```
 
 This resource will return `200` if the user was blocked successfully, otherwise a `409` message will be returned, menaing the relationship does not exist.  If no id is provided for the entity then a `422` message is returned, this means that auth info was not set in the HTTP header.
 
