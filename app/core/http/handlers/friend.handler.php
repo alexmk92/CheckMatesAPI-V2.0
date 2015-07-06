@@ -127,6 +127,7 @@ class Friend
                            SELECT Req_Receiver FROM friend_requests WHERE Req_Receiver = x.Entity_Id1
                            AND Req_Sender = :user_id
                        )
+                       AND y.Entity_Id2 NOT IN (SELECT Entity_Id1 FROM friends WHERE Entity_Id2 = :user_id UNION SELECT Entity_Id2 FROM friends WHERE Entity_Id1 = :user_id)
                      GROUP
                         BY y.Entity_Id2
                     HAVING COUNT(*) >= 1;
