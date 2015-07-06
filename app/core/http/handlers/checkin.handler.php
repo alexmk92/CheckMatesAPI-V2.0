@@ -559,7 +559,7 @@ class Checkin
         // Upload the checkin image if it is set - we catch error here before committing state to db.
         if(!empty($image))
         {
-            $res = self::uploadImage($image);
+            $res = self::uploadImage($image, $token["entityId"]);
             if($res["error"] == 400)
                 return $res;
             else
@@ -908,7 +908,7 @@ class Checkin
     |
     */
 
-    private static function uploadImage($image)
+    private static function uploadImage($image, $userId)
     {
         // Upload the checkin image if one was set
         if(!empty($image))
@@ -919,7 +919,7 @@ class Checkin
             $_FILES['file'] = $_FILES["image"];
             $temp = explode(".", $_FILES["file"]["name"]);
             $extension = end($temp);
-            $filename = (int)(((rand(21, 500) * rand(39, 9000)) / rand(3,9))) . time() * rand(2, 38) . "." . $extension;
+            $filename = (int)(((rand(21, 500) * rand(39, 9000)) / rand(3,9))) . time() * rand(2, 38) . $userId . "." . $extension;
 
             $imageURL = './public/img/checkins/c' . $filename;
             if(in_array($extension, $allowedExts))
