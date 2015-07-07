@@ -872,10 +872,10 @@ class Checkin
     public static function deleteCheckin($chkId, $userId)
     {
         // Perform the DELETE on the session
-        $query = "DELETE FROM Checkins WHERE Chk_Id = :checkinId AND Entity_Id = :entityId";
+        $query = "DELETE FROM checkins WHERE Chk_Id = :checkinId AND Entity_Id = :entityId";
         $data  = Array(":checkinId" => $chkId, ":entityId" => $userId);
 
-        $res   = Database::getInstance()->delete($query, $data);
+        $res = Database::getInstance()->delete($query, $data);
         if($res > 0)
         {
             // Delete from the tags table
@@ -966,6 +966,15 @@ class Checkin
                          checkins.Tagged_Ids,
                          checkins.Chk_Dt,
                          (
+                            SELECT COUNT(1) FROM checkin_comments WHERE Chk_Id = :checkinId
+                         ) AS comment_count,
+                         (
+                            SELECT COUNT(1) FROM checkin_likes WHERE Chk_Id = :checkinId
+                         ) AS like_count,
+                         (
+                            SELECT COUNT(1) FROM checkin_likes WHERE Entity_Id = :entityId AND Chk_Id = :checkinId
+                         ) AS liked,
+                         (
                               SELECT COUNT(DISTINCT entityId)
                                 FROM checkinArchive
                                WHERE placeLat = checkins.Place_Lat
@@ -976,7 +985,7 @@ class Checkin
                   ON checkins.Entity_Id = entity.Entity_Id
                   WHERE chk_id = :checkinId";
 
-        $data  = Array(":checkinId" => $args["checkinId"]);
+        $data  = Array(":checkinId" => $args["checkinId"], ":entityId" => $user["entityId"]);
 
         $res = Database::getInstance()->fetch($query, $data);
 

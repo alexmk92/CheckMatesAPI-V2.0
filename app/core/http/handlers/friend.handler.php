@@ -142,10 +142,9 @@ class Friend
                   JOIN checkinArchive cy
                     ON (cx.placeLat = cy.placeLat AND cx.placeLng = cy.placeLng) AND cy.entityId <> :user_id
                     WHERE cx.entityId = :user_id
-                    AND ";
-
+                    ";
         if(count($res) > 0) {
-            $query .= "cy.entityId NOT IN (";
+            $query .= " AND cy.entityId NOT IN (";
             for ($i = 0; $i < count($res); $i++) {
                 $query .= ":user_" . $i;
                 //$query .= $res[$i]["Entity_Id2"];

@@ -245,6 +245,6 @@ class Checkin
     {
         // Delete the checkin /api/v2/Checkin/delete-checkin/{checkinId}
         if($this->verb == "delete-checkin" && count($this->args) == 1)
-            return \Handlers\Checkin::deleteCheckin($this->args[0], $this->user["userId"]);
+            return \Handlers\Checkin::deleteCheckin($this->args[0], $this->user["entityId"]);
     }
 }
