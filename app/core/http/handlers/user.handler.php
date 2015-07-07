@@ -180,6 +180,7 @@ class User
                                   entity.Last_CheckIn_Dt AS last_checkin_date,
                                   entity.Last_CheckIn_Lat AS last_checkin_lat,
                                   entity.Last_CheckIn_Long AS last_checkin_long,
+                                  entity.Last_CheckIn_Place AS last_checkin_place,
                                   entity.Sex,
                                   TIMESTAMPDIFF(YEAR, entity.DOB, NOW()) AS Age,
                                   (6371 * acos( cos( radians(:currLat) ) * cos( radians(entity.Last_CheckIn_Lat) ) * cos( radians(entity.Last_CheckIn_Long) - radians(:currLong) ) + sin( radians(:currLat) ) * sin( radians(entity.Last_CheckIn_Lat) ) ) ) AS distance
