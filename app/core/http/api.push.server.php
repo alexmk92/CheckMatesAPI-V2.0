@@ -45,34 +45,32 @@ class PushServer
         Database::getInstance()->delete($query, $data);
 
         // Configure the base information for payload on the server before sending
-        if($payload["type"] == 3 || $payload["type"] == 5 || $payload["type"] = 6 || $payload["type"] == 7)
-        {
-            $query = "
-                        INSERT INTO notifications
-                        (
-                            notif_type, sender, receiver, message, notif_dt, ref
-                        )
-                        VALUES
-                        (
-                            :type,
-                            :sender,
-                            :receiver,
-                            :message,
-                            :chkDate,
-                            :ref
-                        )
-                     ";
+        $query = "
+                    INSERT INTO notifications
+                    (
+                        notif_type, sender, receiver, message, notif_dt, ref
+                    )
+                    VALUES
+                    (
+                        :type,
+                        :sender,
+                        :receiver,
+                        :message,
+                        :chkDate,
+                        :ref
+                    )
+                 ";
 
-            $data = Array(
-                ":type"     => $payload["type"],
-                ":sender"   => $payload["senderId"],
-                ":receiver" => $payload["receiver"],
-                ":message"  => $payload["message"],
-                ":chkDate"  => $payload["date"],
-                ":ref"      => $payload["messageId"]
-            );
-            Database::getInstance()->insert($query, $data);
-        }
+        $data = Array(
+            ":type"     => $payload["type"],
+            ":sender"   => $payload["senderId"],
+            ":receiver" => $payload["receiver"],
+            ":message"  => $payload["message"],
+            ":chkDate"  => $payload["date"],
+            ":ref"      => $payload["messageId"]
+        );
+        Database::getInstance()->insert($query, $data);
+
 
         // Find a list of all destination devices
         $query = "SELECT DISTINCT type, push_token FROM user_sessions WHERE oid = :entityId AND loggedIn = 1 AND LENGTH(push_token) > 63";

@@ -264,6 +264,7 @@ class Checkin
         // Build the query
         $query = "SELECT
                         E.Entity_Id,
+                        E.Fb_Id AS facebook_id,
                         E.Profile_Pic_Url,
                         E.Last_CheckIn_Lat,
                         E.Last_CheckIn_Long,
@@ -413,6 +414,7 @@ class Checkin
                                  AND placeLng = checkins.Place_Long
                          ) AS Place_People,
                          entity.First_Name,
+                         entity.Fb_Id AS facebook_id,
                          entity.Last_Name,
                          entity.Last_CheckIn_Dt checkin_date,
                          entity.DOB,
