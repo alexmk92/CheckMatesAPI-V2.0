@@ -49,7 +49,7 @@ class Message
         $query = "SELECT mid, sender, receiver, Profile_Pic_Url, First_Name, Last_Name, message, msg_dt
                   FROM   entity
                   JOIN   chatmessages
-                  ON     entity.Entity_Id = chatmessages.receiver
+                  ON     entity.Entity_Id = chatmessages.sender
                   WHERE  sender = :friendId
                   AND    receiver = :userId
 
@@ -58,7 +58,7 @@ class Message
                   SELECT mid, sender, receiver, Profile_Pic_Url, First_Name, Last_Name, message, msg_dt
                   FROM   entity
                   JOIN   chatmessages
-                  ON     entity.Entity_Id = chatmessages.receiver
+                  ON     entity.Entity_Id = chatmessages.sender
                   WHERE  sender = :userId
                   AND    receiver = :friendId
 
@@ -196,7 +196,8 @@ class Message
                 "type" => 2,
                 "date" => $now,
                 "messageId" => $res,
-                "messageType" => 2
+                "messageType" => 2,
+                "sentMessage" => $payload["message"]
             );
 
             // Reference a new push server and send the notification.

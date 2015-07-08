@@ -173,6 +173,7 @@ class User
         // Bind the values and start the query
         $data = Array(":currLat" => $lat, ":currLong" => $long, ":entityId" => $user["entityId"], ":radiusCap" => 999999);
         $query = "SELECT DISTINCT entity.Entity_Id,
+                                  entity.Fb_Id AS facebook_id,
                                   entity.First_Name AS first_name,
                                   entity.Last_Name AS last_name,
                                   entity.Profile_Pic_Url AS profile_pic,
@@ -182,6 +183,8 @@ class User
                                   entity.Last_CheckIn_Long AS last_checkin_long,
                                   entity.Last_CheckIn_Place AS last_checkin_place,
                                   entity.Sex,
+                                  entity.Score,
+                                  entity.Email,
                                   TIMESTAMPDIFF(YEAR, entity.DOB, NOW()) AS Age,
                                   (6371 * acos( cos( radians(:currLat) ) * cos( radians(entity.Last_CheckIn_Lat) ) * cos( radians(entity.Last_CheckIn_Long) - radians(:currLong) ) + sin( radians(:currLat) ) * sin( radians(entity.Last_CheckIn_Lat) ) ) ) AS distance
                   FROM entity
@@ -356,6 +359,7 @@ class User
                 "sex" => $res->Sex,
                 "DOB" => $res->DOB,
                 "about" => $res->About,
+                "score" => $res->Score,
                 "create_dt" => $res->Create_Dt,
                 "last_checkin_lat" => $res->Last_CheckIn_Lat,
                 "last_checkin_long" => $res->Last_CheckIn_Long,
@@ -646,14 +650,20 @@ class User
                            Last_Name AS last_name,
                            Profile_Pic_Url AS profile_pic,
                            Entity_Id AS entity_id,
-                           DOB AS dob
+                           Fb_Id AS facebook_id,
+                           DOB AS dob,
+                           Score AS score,
+                           Email AS email
                     FROM
                     (
                         SELECT entity.First_Name,
+                               entity.Fb_Id,
                                entity.Last_Name,
                                entity.Profile_Pic_Url,
                                entity.Entity_Id,
-                               entity.DOB
+                               entity.DOB,
+                               entity.Score,
+                               entity.Email
                         FROM entity
                         JOIN friends
                           ON (entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2)

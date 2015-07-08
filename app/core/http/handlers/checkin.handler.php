@@ -279,10 +279,15 @@ class Checkin
                         C.message,
                         C.Chk_Dt AS date,
                         C.Tagged_Ids,
-                        COUNT(DISTINCT CC.Comment_Id) AS num_comments,
-                        COUNT(DISTINCT CL.Like_Id) AS num_likes,
                         (
-                          SELECT COUNT(1) FROM checkin_likes WHERE entity_id = :userId AND chk_id = C.chk_id
+                            SELECT COUNT(*) FROM checkin_comments cc WHERE cc.Chk_Id = C.Chk_Id
+                        ) AS num_comments,
+                        (
+                            SELECT COUNT(*) FROM checkin_likes cl WHERE cl.Chk_Id = C.Chk_Id
+                         ) AS num_likes,
+                        (
+                          SELECT COUNT(DISTINCT cl.Chk_Id) FROM checkin_likes cl
+                          WHERE cl.Entity_Id = :userId AND cl.Chk_Id = C.Chk_Id
                         ) liked
                   FROM
                         checkins C
@@ -415,13 +420,14 @@ class Checkin
                          entity.Sex,
                          entity.Score,
                          (
-                            SELECT COUNT(*) FROM checkin_comments WHERE chk_id = checkins.chk_id
+                            SELECT COUNT(*) FROM checkin_comments WHERE checkin_comments.Chk_Id = checkins.Chk_Id
                          ) AS comment_count,
                          (
-                            SELECT COUNT(*) FROM checkin_likes WHERE chk_id = checkins.chk_id
+                            SELECT COUNT(*) FROM checkin_likes WHERE checkin_likes.Chk_Id = checkins.Chk_Id
                          ) AS like_count,
                          (
-                            SELECT COUNT(1) FROM checkin_likes WHERE entity_id = :entityId AND chk_id = checkins.chk_id
+                            SELECT COUNT(DISTINCT cl.Chk_Id) FROM checkin_likes cl
+                            WHERE Entity_Id = :entityId AND cl.Chk_Id = checkins.Chk_Id
                          ) liked
                   FROM checkins
                   JOIN entity
@@ -718,7 +724,7 @@ class Checkin
                             "senderName" => $token["firstName"] . " " . $token["lastName"],
                             "receiver" => (int)$taggedUser,
                             "message" => $token["firstName"] . " " . $token["lastName"] . " has tagged you in a checkin.",
-                            "type" => 3,
+                            "type" => 4,
                             "date" => $now,
                             "messageId" => NULL,
                             "messageType" => NULL
@@ -762,7 +768,7 @@ class Checkin
                         "senderName" => $token["firstName"] . " " . $token["lastName"],
                         "receiver" => $recipient->entity_id,
                         "message" => $token["firstName"] . " " . $token["lastName"] . " just checked in to " . $args["place_name"],
-                        "type" => 3,
+                        "type" => 1,
                         "date" => $now,
                         "messageId" => NULL,
                         "messageType" => NULL
@@ -1062,24 +1068,26 @@ class Checkin
             if(!empty($res))
             {
                 $checkinOwner = $res->Entity_Id;
-                $query = "SELECT First_Name, Last_Name, Entity_Id FROM entity WHERE Entity_Id = :user_id";
-                $data = Array(":user_id" => $entId);
+                if($checkinOwner != $entId) {
+                    $query = "SELECT First_Name, Last_Name, Entity_Id FROM entity WHERE Entity_Id = :user_id";
+                    $data = Array(":user_id" => $entId);
 
-                $res = Database::getInstance()->fetch($query, $data);
-                if (!empty($res)) {
-                    $pushPayload = Array(
-                        "senderId" => (int)$entId,
-                        "senderName" => $res->First_Name . " " . $res->Last_Name,
-                        "receiver" => (int)$checkinOwner,
-                        "message" => $res->First_Name . " " . $res->Last_Name . " liked your checkin.",
-                        "type" => 1,
-                        "date" => gmdate('Y-m-d H:i:s', time()),
-                        "messageId" => $checkinId,
-                        "messageType" => 1
-                    );
+                    $res = Database::getInstance()->fetch($query, $data);
+                    if (!empty($res)) {
+                        $pushPayload = Array(
+                            "senderId" => (int)$entId,
+                            "senderName" => $res->First_Name . " " . $res->Last_Name,
+                            "receiver" => (int)$checkinOwner,
+                            "message" => $res->First_Name . " " . $res->Last_Name . " liked your checkin.",
+                            "type" => 4,
+                            "date" => gmdate('Y-m-d H:i:s', time()),
+                            "messageId" => $checkinId,
+                            "messageType" => 4
+                        );
 
-                    $server = new \PushServer();
-                    return $server->sendNotification($pushPayload);
+                        $server = new \PushServer();
+                        return $server->sendNotification($pushPayload);
+                    }
                 }
             }
 
@@ -1239,24 +1247,26 @@ class Checkin
             $res   = Database::getInstance()->fetch($query, $data);
             if(!empty($res)) {
                 $checkinOwner = $res->Entity_Id;
-                $query = "SELECT First_Name, Last_Name, Entity_Id FROM entity WHERE Entity_Id = :user_id";
-                $data = Array(":user_id" => $user["entityId"]);
+                if($checkinOwner != $user["entityId"]) {
+                    $query = "SELECT First_Name, Last_Name, Entity_Id FROM entity WHERE Entity_Id = :user_id";
+                    $data = Array(":user_id" => $user["entityId"]);
 
-                $res = Database::getInstance()->fetch($query, $data);
-                if (!empty($res)) {
-                    $pushPayload = Array(
-                        "senderId" => (int)$user["entityId"],
-                        "senderName" => $res->First_Name . " " . $res->Last_Name,
-                        "receiver" => (int)$checkinOwner,
-                        "message" => $res->First_Name . " " . $res->Last_Name . " commented on your checkin!",
-                        "type" => 1,
-                        "date" => gmdate('Y-m-d H:i:s', time()),
-                        "messageId" => $checkInId,
-                        "messageType" => 1
-                    );
+                    $res = Database::getInstance()->fetch($query, $data);
+                    if (!empty($res)) {
+                        $pushPayload = Array(
+                            "senderId" => (int)$user["entityId"],
+                            "senderName" => $res->First_Name . " " . $res->Last_Name,
+                            "receiver" => (int)$checkinOwner,
+                            "message" => $res->First_Name . " " . $res->Last_Name . " commented on your checkin!",
+                            "type" => 4,
+                            "date" => gmdate('Y-m-d H:i:s', time()),
+                            "messageId" => $checkInId,
+                            "messageType" => 4
+                        );
 
-                    $server = new \PushServer();
-                    return $server->sendNotification($pushPayload);
+                        $server = new \PushServer();
+                        return $server->sendNotification($pushPayload);
+                    }
                 }
             }
             return Array("error" => "200", "message" => "Comment has been added successfully.");

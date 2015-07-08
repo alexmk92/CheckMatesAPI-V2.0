@@ -136,6 +136,8 @@ class PushServer
                 $payload["messageType"] = 0;
             if(empty($payload["messageId"]))
                 $payload["messageId"] = 0;
+            if(empty($payload["sentMessage"]))
+                $payload["sentMessage"] = "";
 
             // Create the payload and then compress it so it can be sent securely over the network
             $body['aps'] = Array(
@@ -147,7 +149,8 @@ class PushServer
                 "sname"             => $payload["senderName"],
                 "dt"                => $payload["date"],
                 "mt"                => $payload["messageType"],
-                "mid"               => $payload["messageId"]
+                "mid"               => $payload["messageId"],
+                "message"           => $payload["sentMessage"]
             );
             $pushPayload = json_encode($body);
             $msg = chr(0) . pack('n', 32) . pack('H*', $deviceToken) . pack('n', strlen($pushPayload)) . $pushPayload;
@@ -168,7 +171,6 @@ class PushServer
         {
             // Dispose of any open sockets / resources
             fclose($apns_fp);
-
             return Array("error" => "417", "message" => "Sorry, we couldn't connect to Apple when sending the push...Check certificates.");
         }
     }

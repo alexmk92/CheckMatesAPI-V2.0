@@ -697,13 +697,19 @@ All push payloads come back from the server in the following format:
     senderName  : The name of the sender
     receiver    : The entity id of the receiver
     message     : The contents of the message
-    type        : 1 = Checkin, 2 = Message, 3 = Tag, 4 = Request, 5 = New Friend
+    type        : See below
     date        : The date that the notification was sent
     messageId   : The id of the associated message or checkin (or NULL for other items) - this should be used to allow users to jump
                   to the checkin that has just been commented on, or see the latest message sent to them in the chat log.
-    messageType : 1 = Checkin, 2 = Message, 3 = Tag, 4 = Request, 5 = New Friend (duplicate, existed in legacy code so I replicated it, usually NULL)
 }
 ```
+
+The following values will be set for notification types, this will justify which panel you should assign the notification to:
+
+1 (checkin panel)      = creating a new checkin
+2 (message panel)      = receiving a new message
+3 (friend panel)       = receiving a new friend request
+4 (notification panel) = like on your checkin, comment on your checkin, tagged in a checkin, someone accepted or declined your friend request (maybe remove declined)
 
 If you have any questions regarding the above payload please ask, the only concerning keys are type and messageType, but for now just assume messageType is equal to type,
 and only ever check for type in your extraction code...

@@ -190,6 +190,11 @@ class Friend
                     $settings["Pref_Sex"] = " Sex IN(1,2)";
             }
             // Get the names of these people
+            $data = Array();
+            $data[":user_id"] = $userId;
+            $data[":lower"] = $settings["Pref_Lower_Age"];
+            $data[":upper"] = $settings["Pref_Upper_Age"];
+
             $query = "SELECT
                              e.Entity_Id,
                              e.First_Name,
@@ -220,13 +225,9 @@ class Friend
                       ON
                              e.Entity_Id
                       IN    (f.Entity_Id1, f.Entity_Id2)
-                      AND    f.Category NOT IN (1, 2, 4)
+                      AND    f.Category NOT IN (1, 2, 3, 4, null)
                       WHERE e.Entity_Id IN (";
 
-            $data = Array();
-            $data[":user_id"] = $userId;
-            $data[":lower"] = $settings["Pref_Lower_Age"];
-            $data[":upper"] = $settings["Pref_Upper_Age"];
             for($i = 0; $i < count($res); $i++)
             {
                 $query .= ":user_" . $i;
@@ -247,6 +248,14 @@ class Friend
                             UNION ALL
 
                             SELECT Req_Receiver FROM friend_requests WHERE Req_Sender = e.Entity_Id AND Req_Receiver = :user_id
+                        )
+                        AND e.Entity_Id NOT IN
+                        (
+                            SELECT Entity_Id1 FROM friends WHERE Entity_Id2 = :user_id
+
+                            UNION ALL
+
+                            SELECT Entity_Id2 FROM friends WHERE Entity_Id1 = :user_id
                         )
                         AND" . $settings["Pref_Sex"] . "
                         GROUP BY e.Entity_Id";
@@ -517,7 +526,7 @@ class Friend
                         "senderName" => $user["firstName"]. " " . $user["lastName"],
                         "receiver" => (int)$friendId,
                         "message" => $user["firstName"]. " " . $user["lastName"] . " has accepted your friend request.",
-                        "type" => 5,
+                        "type" => 4,
                         "date" => gmdate('Y-m-d H:i:s', time()),
                         "messageId" => NULL,
                         "messageType" => NULL
@@ -688,7 +697,7 @@ class Friend
                 "senderName" => $user["firstName"]. " " . $user["lastName"],
                 "receiver" => (int)$friendId,
                 "message" => $user["firstName"]. " " . $user["lastName"] . " rejected your friend request.",
-                "type" => 5,
+                "type" => 4,
                 "date" => gmdate('Y-m-d H:i:s', time()),
                 "messageId" => NULL,
                 "messageType" => NULL

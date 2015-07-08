@@ -153,7 +153,6 @@ class Message
         if(count($this->args) == 1 && $this->verb == 'add-comment')
         {
             return \Handlers\Message::addComment($this->args[0], $payload, $this->user);
-            return \Handlers\Message::addComment($this->args[0], $payload, $this->user);
         }
         // /api/v2/Message/send-message/{friendId} - Send a message to a friend.
         else if(count($this->args) == 1 && $this->verb == 'send-message')
