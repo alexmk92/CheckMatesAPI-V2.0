@@ -208,6 +208,9 @@ class Checkin
                   AND   TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) <= :expiry
                   AND   TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) >= 0
                   ".$spatialFilter."
+                  OR    ent.Entity_Id = :entityId
+                  AND   TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) <= :expiry
+                  AND   TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) >= 0
                   GROUP BY ent.Entity_Id
                   ORDER BY distance ASC
                   ";
