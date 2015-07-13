@@ -285,11 +285,7 @@ class Checkin
                         ) AS num_comments,
                         (
                             SELECT COUNT(*) FROM checkin_likes cl WHERE cl.Chk_Id = C.Chk_Id
-                         ) AS num_likes,
-                        (
-                          SELECT COUNT(DISTINCT cl.Chk_Id) FROM checkin_likes cl
-                          WHERE cl.Entity_Id = :userId AND cl.Chk_Id = C.Chk_Id
-                        ) liked
+                         ) AS num_likes
                   FROM
                         checkins C
                   JOIN
@@ -371,6 +367,8 @@ class Checkin
                     $arr[$i]["Tagged_Users"] = json_decode(json_encode($res), true);
                 }
 
+                // Set the liked flag
+                $arr[$i]["liked"] = self::hasLikedCheckin($userId, $arr[$i]["Chk_Id"]);
             }
 
             return Array("error" => "200", "message" => "Successfully retrieved " . count($arr) . " checkins.", "payload" => $arr);
@@ -378,6 +376,27 @@ class Checkin
         }
         else
             return Array("error" => "404", "message" => "There were not activities to be returned for this user. Make a checkin!");
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Has Liked Checkin
+    |--------------------------------------------------------------------------
+    |
+    | Determines whether or not a user has liked the checkin.
+    |
+    */
+
+    private static function hasLikedCheckin($userId, $checkinId)
+    {
+        $query = "SELECT COUNT(DISTINCT Like_Id) AS liked FROM checkin_likes WHERE Entity_Id = :entity_id AND Chk_Id = :checkin_id";
+        $data  = Array(":entity_id" => $userId, ":checkin_id" => $checkinId);
+
+        $res   = Database::getInstance()->fetchAll($query, $data);
+        if(!empty($res[0]["liked"]))
+            return (string)$res[0]["liked"];
+
+        return "0";
     }
 
     /*
@@ -426,11 +445,7 @@ class Checkin
                          ) AS comment_count,
                          (
                             SELECT COUNT(*) FROM checkin_likes WHERE checkin_likes.Chk_Id = checkins.Chk_Id
-                         ) AS like_count,
-                         (
-                            SELECT COUNT(DISTINCT cl.Chk_Id) FROM checkin_likes cl
-                            WHERE Entity_Id = :entityId AND cl.Chk_Id = checkins.Chk_Id
-                         ) liked
+                         ) AS like_count
                   FROM checkins
                   JOIN entity
                     ON checkins.Entity_Id = entity.Entity_Id
@@ -481,6 +496,7 @@ class Checkin
                     $arr[$i]["Tagged_Users"] = json_decode(json_encode($res), true);
                 }
 
+                $arr[$i]["liked"] = self::hasLikedCheckin($user["entityId"], $arr[$i]["Chk_Id"]);
             }
 
             return Array("error" => "200", "message" => "Successfully retrieved " . count($arr) . " checkins for this user.", "payload" => $arr);
@@ -980,9 +996,6 @@ class Checkin
                             SELECT COUNT(1) FROM checkin_likes WHERE Chk_Id = :checkinId
                          ) AS like_count,
                          (
-                            SELECT COUNT(1) FROM checkin_likes WHERE Entity_Id = :entityId AND Chk_Id = :checkinId
-                         ) AS liked,
-                         (
                               SELECT COUNT(DISTINCT entityId)
                                 FROM checkinArchive
                                WHERE placeLat = checkins.Place_Lat
@@ -1039,6 +1052,8 @@ class Checkin
                 if (count($res) > 0) {
                     $arr["Tagged_Users"] = json_decode(json_encode($res), true);
                 }
+
+                $arr["liked"] = self::hasLikedCheckin($user["entityId"], $args["checkinId"]);
         }
 
             return Array("error" => "200", "message" => "Successfully retrieved the Checkin.", "payload" => $arr);

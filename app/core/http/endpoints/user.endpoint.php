@@ -146,21 +146,6 @@ class User
         {
             return \Handlers\User::getSettings($this->args[0]);
         }
-        // /api/v2/User/list/{userId}
-        else if(count($this->args) == 1 && $this->verb == 'list')
-        {
-            return \Handlers\User::getLists($this->args[0]);
-        }
-        // /api/v2/User/score/{userId}
-        else if(count($this->args) == 1 && $this->verb == 'score')
-        {
-            return \Handlers\User::getScores($this->args[0]);
-        }
-        // /api/v2/User/profile/{userId}
-        else if(count($this->args) == 1 && $this->verb == 'profile')
-        {
-            return \Handlers\User::getProfile($this->args[0]);
-        }
         // /api/v2/User/notifications/{userId}
         else if(count($this->args) == 1 && $this->verb == 'notifications')
         {
@@ -216,16 +201,6 @@ class User
         {
             return \Handlers\User::updateScore($payload, $this->args[0], $this->user);
         }
-
-        //*************************************************************************************//
-        //                        TODO: SECTION FOR UNIMPLEMENTED
-        //*************************************************************************************//
-
-        // /api/v2/User/update-favourite/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(UPDATEFAVOURITE)
-        if(count($this->args) == 1 && $this->verb == 'update-favourite')
-        {
-            return \Handlers\User::updateFavourite($this->args[0]);
-        }
         // /api/v2/User/update-preference/{userId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(UPDATEPREFERENCES)
         if(count($this->args) == 1 && $this->verb == 'update-preferences')
         {
@@ -257,7 +232,7 @@ class User
         if ($payload == null)
             return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid User payload to the server.");
 
-        // /api/v2/User/ Performs a loginlogin function, if the user does not exist they will be registered.
+        // /api/v2/User/login Performs a login function, if the user does not exist they will be registered.
         if(count($this->args) == 0 && $this->verb == "login")
             return \Handlers\User::login($payload);
 
@@ -288,8 +263,8 @@ class User
         // Get the payload and decode it to a PHP array, set true to ensure assoc behaviour.
         $payload = json_decode(file_get_contents('php://input'), true);
 
-        // /api/v2/User/remove-user/{userId} - Delete the users account.
-        if(count($this->args) == 1 && $this->verb == 'remove-user')
+        // /api/v2/User/delete-account/{userId} - Delete the users account.
+        if(count($this->args) == 1 && $this->verb == 'delete-account')
         {
             return \Handlers\User::deleteAccount($payload, $this->args[0], $this->user);
         }

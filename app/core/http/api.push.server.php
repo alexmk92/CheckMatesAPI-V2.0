@@ -31,12 +31,6 @@ class PushServer
 
     public static function sendNotification($payload)
     {
-
-        // List of Android and iOS Devices for this user, push notifications will be sent to each
-        // device that the user owns.
-        $androidDevices = Array();
-        $iOSDevices     = Array();
-
         // Determine what device the payload should be sent to, this is because Android and Apple
         // hand push notifications differently, we shall also delete all out-dated queries here.
         $query = "DELETE FROM notifications WHERE TIMESTAMPDIFF(DAY, notif_dt, :now) > 3";
@@ -71,11 +65,37 @@ class PushServer
         );
         Database::getInstance()->insert($query, $data);
 
-
-        // Find a list of all destination devices
-        $query = "SELECT DISTINCT type, push_token FROM user_sessions WHERE oid = :entityId AND loggedIn = 1 AND LENGTH(push_token) > 63";
+        // Shared array for both queries
         $data  = Array(":entityId" => $payload["receiver"]);
 
+        // Ensure that the user wants to receive this notification - if not dont waste time in sending a batch of notifs
+        $query = "SELECT s.Notif_CheckIn_Activity AS checkin_activity,
+                         s.Notif_Friend_Request AS friend_request,
+                         s.Notif_Msg AS message,
+                         s.Notif_New_Friend AS new_friend,
+                         s.Notif_Tag AS tag
+                  FROM setting s
+                  WHERE s.Entity_Id = :entityId";
+        $settings = Database::getInstance()->fetchAll($query, $data);
+
+        // Checkin Activity
+        if(((int)$payload["type"] == 1 && (int)$settings[0]["checkin_activity"] == 0))
+            return Array("error" => "200", "message" => "This user does not wish to receive checkin notifications.");
+        // Message received
+        if(((int)$payload["type"] == 2 && (int)$settings[0]["message"] == 0))
+            return Array("error" => "200", "message" => "This user does not wish to receive message notifications.");
+        // Friend Accepted/Rejected or new request
+        if(((int)$payload["type"] == 3 && (int)$settings[0]["new_friend"] == 0) ||
+           ((int)$payload["type"] == 3 && (int)$settings[0]["friend_request"] == 0))
+            return Array("error" => "200", "message" => "This user does not wish to receive friend notifications.");
+        // Comment, Like, Tag
+        if(((int)$payload["type"] == 4 && (int)$settings[0]["checkin_activity"] == 0) ||
+           ((int)$payload["type"] == 4 && (int)$settings[0]["tag"] == 0))
+            return Array("error" => "200", "message" => "This user does not wish to receive tag or activity notifications.");
+
+        // If we get here then we know we need to send the notification
+        // Find a list of all destination devices
+        $query = "SELECT DISTINCT type, push_token FROM user_sessions WHERE oid = :entityId AND loggedIn = 1 AND LENGTH(push_token) > 63";
         $devices = Database::getInstance()->fetchAll($query, $data);
         if(count($devices) > 0)
         {
@@ -98,10 +118,7 @@ class PushServer
             return $return;
         }
         else
-        {
             return Array("error" => "400", "message" => "Sorry, the push notification was not sent. This is caused by an invalid push token, or if the user is offline");
-        }
-
     }
 
     /*
@@ -148,7 +165,8 @@ class PushServer
                 "dt"                => $payload["date"],
                 "mt"                => $payload["messageType"],
                 "mid"               => $payload["messageId"],
-                "message"           => $payload["sentMessage"]
+                "message"           => $payload["sentMessage"],
+                "badge"             => "1"
             );
             $pushPayload = json_encode($body);
             $msg = chr(0) . pack('n', 32) . pack('H*', $deviceToken) . pack('n', strlen($pushPayload)) . $pushPayload;

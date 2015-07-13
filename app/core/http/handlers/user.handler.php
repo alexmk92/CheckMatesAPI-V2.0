@@ -285,7 +285,7 @@ class User
         if(count($res) > 0)
             return $res;
         else
-            return "This user has no favorite places";
+            return Array("error" => "404", "message" => "This user has no favorite places");
     }
 
     /*
@@ -432,9 +432,6 @@ class User
 
     public static function updateProfile($userId, $payload, $user = null)
     {
-        // Check for users under 18
-        if (time() - strtotime($payload['dob']) <= 18 * 31536000 || $payload['dob'] == null)
-            return Array('error' => '400', 'message' => 'Bad request, you must be 18 years or older.');
         if ($user != null && !empty($user["entityId"]) && ($userId != $user["entityId"]))
             return Array('error' => '401', 'message' => 'You are not authorised to access this resource because you are not the user who is updating: tried to update user ' . $userId . ' with logged in user ' . $user["entityId"]);
 
@@ -445,6 +442,12 @@ class User
         // Construct an array of valid keys
         $validKeys = Array("first_name", "last_name", "profile_pic_url", "entity_id", "fb_id", "email", "dob", "sex", "about", "create_dt", "last_checkin_lat", "last_checkin_long",
         "last_checkin_place", "last_checkin_dt", "score", "score_flag", "image_urls");
+
+        // Strip the image_urls and profile_pic_url from the payload if this is a login event
+        if($user == null && (array_key_exists("profile_pic_url", $payload) || array_key_exists("image_urls", $payload)))
+        {
+            // IMPLEMENT THIS I
+        }
 
         // We know the user is valid, therefore update it with the new
         // info set in the $data object.  It doesn't matter if we override information here
@@ -466,7 +469,7 @@ class User
         $res = Database::getInstance()->update($query, $data);
         // Check if we only performed an update call which isn't part of
         if($res != 0)
-            return Array('error' => '200', 'message' => 'The user with ID: '.$userId.' was updated successfully.');
+            return Array('error' => '203', 'message' => 'The user with ID: '.$userId.' was updated successfully.');
         else
             return Array('error' => '200', 'message' => 'The user with ID: '.$userId.' is already up to date and does not need modifying.');
     }
@@ -500,6 +503,10 @@ class User
 
             // Ensure we have a valid session
             $token = Session::setSession($userExists["payload"]["entity_id"], $args);
+
+            // Check for users under 18
+            if (time() - strtotime($args['dob']) <= 18 * 31536000 || $args['dob'] == null)
+                return Array('error' => '400', 'message' => 'Bad request, you must be 18 years or older.');
 
             // Update the users details, this includes updating the ABOUT info and profile pictures,
             // We do this here as profile info may have changed on Facebook since the last login.
@@ -544,7 +551,7 @@ class User
     {
         // Check for users under 18
         if (time() - strtotime($args['dob']) <= 18 * 31536000 || $args['dob'] == null)
-            return Array('error' => '400', 'message' => 'Bad request, you must be 18 years or older.');
+            return Array('error' => '401', 'message' => 'Bad request, you must be 18 years or older.');
 
         // We know our user is old enough, insert the new user.
         $query = "INSERT IGNORE INTO entity(fb_id, first_name, last_name, email, profile_pic_url, sex, dob, about, create_dt, last_checkin_dt, image_urls, score)
@@ -650,24 +657,26 @@ class User
                            Last_Name AS last_name,
                            Profile_Pic_Url AS profile_pic,
                            Entity_Id AS entity_id,
-                           Fb_Id AS facebook_id,
                            DOB AS dob,
+                           Fb_Id AS facebook_id,
                            Score AS score,
                            Email AS email
                     FROM
                     (
                         SELECT entity.First_Name,
-                               entity.Fb_Id,
                                entity.Last_Name,
                                entity.Profile_Pic_Url,
                                entity.Entity_Id,
                                entity.DOB,
+                               entity.Fb_Id,
                                entity.Score,
                                entity.Email
                         FROM entity
                         JOIN friends
                           ON (entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2)
                         WHERE (friends.Entity_Id1 = :userId OR friends.Entity_Id2 = :userId)
+                        AND Entity_Id <> :userId
+                        AND Entity_Id <> :friendId
 
                         UNION ALL
 
@@ -675,17 +684,20 @@ class User
                                entity.Last_Name,
                                entity.Profile_Pic_Url,
                                entity.Entity_Id,
-                               entity.DOB
+                               entity.DOB,
+                               entity.Fb_Id,
+                               entity.Score,
+                               entity.Email
                         FROM entity
                         JOIN friends
                           ON (entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2)
                         WHERE (friends.Entity_Id1 = :friendId OR friends.Entity_Id2 = :friendId)
-
+                        AND Entity_Id <> :userId
+                        AND Entity_Id <> :friendId
 
                     ) friend_list
-                    WHERE Entity_Id <> :userId AND Entity_Id <> :friendId
                     GROUP BY entity_id
-                    HAVING COUNT(*) = 2
+                    HAVING COUNT(*) > 2
                     ORDER BY first_name ASC
                  ";
 
@@ -696,36 +708,6 @@ class User
             return "No mutual friends.";
         else
             return $res;
-    }
-
-    /*
-     |--------------------------------------------------------------------------
-     | GET SCORES
-     |--------------------------------------------------------------------------
-     |
-     | TODO: ADD DESCRIPTION
-     |
-     */
-
-    public static function getScore($args)
-    {
-
-
-        return Array("error" => "501", "message" => "Not currently implemented.");
-    }
-
-    /*
-     |--------------------------------------------------------------------------
-     | GET PROFILE
-     |--------------------------------------------------------------------------
-     |
-     | TODO: ADD DESCRIPTION
-     |
-     */
-
-    public static function getProfile($args)
-    {
-        return Array("error" => "501", "message" => "Not currently implemented.");
     }
 
     /*
@@ -774,7 +756,7 @@ class User
     public static function getSettings($userId)
     {
         $query = "SELECT DISTINCT Pri_CheckIn, Pri_Visability, Notif_Tag,Notif_Msg,
-                                  Notif_New_Friend,Notif_Friend_Request, Notif_CheckIn_Activity
+                                  Notif_New_Friend,Notif_Friend_Request, Notif_CheckIn_Activity, list_visibility
                   FROM  setting
                   WHERE Entity_Id = :userId";
 
@@ -818,20 +800,6 @@ class User
             return Array("error" => "404", "message" => "No new notifications.");
         else
             return Array("error" => "200", "message" => "You have " . count($res) . " new notifications!", "payload" => $res);
-    }
-
-    /*
-     |--------------------------------------------------------------------------
-     | (PUT) UPDATE FAVOURITE
-     |--------------------------------------------------------------------------
-     |
-     | TODO: ADD DESCRIPTION
-     |
-     */
-
-    public static function updateFavourite($args)
-    {
-        return Array("error" => "501", "message" => "Not currently implemented.");
     }
 
     /*
@@ -949,7 +917,7 @@ class User
     public static function updateSettings($payload, $userId, $user)
     {
         if($userId != $user['entityId'])
-            return Array("error" => "400", "message" => "Bad request. Somehow the entity_id of the validated session does not match the identifier".
+            return Array("error" => "401", "message" => "Bad request. Somehow the entity_id of the validated session does not match the identifier".
                 " of the sent user provided by the parameter.", "payload" => "");
 
         // Check to see what JSON body values we have.
@@ -1011,7 +979,7 @@ class User
         else
             // If the values of the settings are the same as before the query was performed.
             // Let me know if you want this check done above - Adam.
-            return Array("error" => "409", "message" => "Please select new values for the chosen settings.");
+            return Array("error" => "203", "message" => "Please select new values for the chosen settings as the values in the system match the ones you just provided.");
     }
 
     /*
@@ -1071,7 +1039,7 @@ class User
     public static function addFavourite($payload, $userId, $user)
     {
         if($userId != $user['entityId'])
-            return Array("error" => "400", "message" => "Bad request. Somehow the entity_id of the validated session does not match the identifier".
+            return Array("error" => "401", "message" => "Bad request. Somehow the entity_id of the validated session does not match the identifier".
                 " of the sent user provided by the parameter.", "payload" => "");
 
         // Checks to see whether the user combination already exists in the database.
@@ -1113,20 +1081,21 @@ class User
     public static function deleteAccount($payload, $userId, $user)
     {
         if($userId != $user['entityId'])
-            return Array("error" => "400", "message" => "Bad request. Somehow the entity_id of the validated session does not match the identifier".
-                " of the sent user provided by the parameter.", "payload" => "");
+            return Array("error" => "401", "message" => "Bad request. You attempted to delete an account which was not yours. Try again.", "payload" => "");
 
         // Bind the parameters to the query - do this at the top level because it will be used a lot below.
         $data = Array(":userId" => $user['entityId']);
 
         // How many rows have been affected.
         $deletedCount = 0;
+        $toDelete     = 0;
 
         // User sessions
         $query = "DELETE FROM user_sessions
                   WHERE oid = :userId
                   ";
 
+        $toDelete++;
         if (Database::getInstance()->delete($query, $data))
             $deletedCount++;
 
@@ -1135,6 +1104,7 @@ class User
                   WHERE Entity_Id = :userId
                   ";
 
+        $toDelete++;
         if (Database::getInstance()->delete($query, $data))
             $deletedCount++;
 
@@ -1144,6 +1114,7 @@ class User
                   OR    Entity_Id2 = :userId
                   ";
 
+        $toDelete++;
         if (Database::getInstance()->delete($query, $data))
             $deletedCount++;
 
@@ -1153,6 +1124,7 @@ class User
                   OR    receiver = :userId
                   ";
 
+        $toDelete++;
         if (Database::getInstance()->delete($query, $data))
             $deletedCount++;
 
@@ -1161,6 +1133,7 @@ class User
                   WHERE Entity_Id = :userId
                   ";
 
+        $toDelete++;
         if (Database::getInstance()->delete($query, $data))
             $deletedCount++;
 
@@ -1169,6 +1142,7 @@ class User
                   WHERE Entity_Id = :userId
                   ";
 
+        $toDelete++;
         if (Database::getInstance()->delete($query, $data))
             $deletedCount++;
 
@@ -1177,6 +1151,7 @@ class User
                   WHERE Entity_Id = :userId
                   ";
 
+        $toDelete++;
         if (Database::getInstance()->delete($query, $data))
             $deletedCount++;
 
@@ -1186,6 +1161,7 @@ class User
                   OR    Req_Sender   = :userId
                   ";
 
+        $toDelete++;
         if (Database::getInstance()->delete($query, $data))
             $deletedCount++;
 
@@ -1194,6 +1170,7 @@ class User
                   WHERE Entity_Id = :userId
                   ";
 
+        $toDelete++;
         if (Database::getInstance()->delete($query, $data))
             $deletedCount++;
 
@@ -1203,6 +1180,7 @@ class User
                   OR    receiver = :userId
                   ";
 
+        $toDelete++;
         if (Database::getInstance()->delete($query, $data))
             $deletedCount++;
 
@@ -1211,6 +1189,7 @@ class User
                   WHERE Entity_Id = :userId
                   ";
 
+        $toDelete++;
         if (Database::getInstance()->delete($query, $data))
             $deletedCount++;
 
@@ -1219,13 +1198,23 @@ class User
                   WHERE Entity_Id = :userId
                  ";
 
+        $toDelete++;
+        if (Database::getInstance()->delete($query, $data))
+            $deletedCount++;
+
+        // Settings
+        $query = "DELETE FROM checkinArchive
+                  WHERE entityId = :userId
+                 ";
+
+        $toDelete++;
         if (Database::getInstance()->delete($query, $data))
             $deletedCount++;
 
         if($deletedCount > 0)
-            return Array("error" => "200", "message" => "The user account has been deleted. ". $deletedCount .": rows were affected.");
+            return Array("error" => "200", "message" => "The user account has been deleted. ". $deletedCount ."/".$toDelete.": rows were affected.");
         else
-            return Array("error" => "200", "message" => "The operation was successful, but no rows were affected.");
+            return Array("error" => "400", "message" => "The operation was successful, but no rows were affected.");
     }
 
     /*

@@ -300,18 +300,26 @@ class Friend
                            Last_Name AS last_name,
                            Profile_Pic_Url AS profile_pic,
                            Entity_Id AS entity_id,
-                           DOB AS dob
+                           DOB AS dob,
+                           Fb_Id AS facebook_id,
+                           Score AS score,
+                           Email AS email
                     FROM
                     (
                         SELECT entity.First_Name,
                                entity.Last_Name,
                                entity.Profile_Pic_Url,
                                entity.Entity_Id,
-                               entity.DOB
+                               entity.DOB,
+                               entity.Fb_Id,
+                               entity.Score,
+                               entity.Email
                         FROM entity
                         JOIN friends
                           ON (entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2)
                         WHERE (friends.Entity_Id1 = :userId OR friends.Entity_Id2 = :userId)
+                        AND Entity_Id <> :userId
+                        AND Entity_Id <> :friendId
 
                         UNION ALL
 
@@ -319,16 +327,20 @@ class Friend
                                entity.Last_Name,
                                entity.Profile_Pic_Url,
                                entity.Entity_Id,
-                               entity.DOB
+                               entity.DOB,
+                               entity.Fb_Id,
+                               entity.Score,
+                               entity.Email
                         FROM entity
                         JOIN friends
                           ON (entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2)
                         WHERE (friends.Entity_Id1 = :friendId OR friends.Entity_Id2 = :friendId)
-
+                        AND Entity_Id <> :userId
+                        AND Entity_Id <> :friendId
 
                     ) friend_list
                     GROUP BY entity_id
-                    HAVING COUNT(*) = 2
+                    HAVING COUNT(*) > 2
                     ORDER BY first_name ASC
                  ";
 

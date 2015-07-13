@@ -3,4 +3,9 @@ RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule api/v2/(.*)$ index.php?request=$1 [QSA,NC,L]
+
+#--- Rewrite PHP files clean URL for documentation
+RewriteCond %{SCRIPT_FILENAME} !-d
+RewriteRule checkmates/documentation/^([A-Za-z0-9-]+)$ ?page=$1 [NC,L]
+RewriteRule checkmates/documentation/^([A-Za-z0-9-]+)/([A-Za-z0-9-]+)$ ?page=$1&id=$2 [NC,L]
 </IfModule>

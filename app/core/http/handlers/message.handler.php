@@ -73,7 +73,7 @@ class Message
         if(!empty($messages))
         {
             // Send back the results.
-            return Array("error" => "200", "message" => "Successfully retrieved messages.", "payload" => $messages);
+            return Array("error" => "200", "message" => "Successfully retrieved messages.", "payload" => json_decode(json_encode($messages), JSON_UNESCAPED_UNICODE));
         }
         else
             // No results.
@@ -178,11 +178,18 @@ class Message
         // Today's date and time.
         $now = gmdate('Y-m-d H:i:s', time());
 
+        // Convert the message in the payload to UTF-8
+        $message = $payload["message"];
+
+
         // Bind the parameters to the query
-        $data = Array(":sender" => $user['entityId'], ":receiver" => $friendId, ":message" => $payload['message'], ":todaysDate" => $now);
+        $data = Array(":sender" => $user['entityId'], ":receiver" => $friendId, ":message" => $message, ":todaysDate" => $now);
         $res  = Database::getInstance()->insert($query, $data);
         // Perform the insert
         if ($res > 0) {
+
+            // Build a response object
+            $details = Array("message_id" => $res, "message" => $message, "sent" => $now);
 
             // Today's date and time.
             $now = gmdate('Y-m-d H:i:s', time());
@@ -206,11 +213,11 @@ class Message
 
             if(!empty($res))
                 // Request and notification (push) sent.
-                return Array("error" => "200", "message" => "The message was sent successfully.");
+                return Array("error" => "200", "message" => "The message was sent successfully.", "payload" => $details);
 
             else
                 // Only request sent.
-                return Array("error" => "207", "message" => "Partial success: The message was sent successfully, but without a notification");
+                return Array("error" => "207", "message" => "Partial success: The message was sent successfully, but without a notification", "payload" => $details);
         }
         else
             // If insert failed.

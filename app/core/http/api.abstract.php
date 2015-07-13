@@ -72,7 +72,8 @@ abstract class API
         */
         header("Access-Control-Allow-Origin: *");
         header("Access-Control-Allow-Methods: *");
-        header("Content-Type: application/json");
+        header("Content-Type: application/json; charset=utf8mb4");
+        ini_set("default-charset", "utf8mb4");
 
        /*
         * Set the key specified in the request sent from the client

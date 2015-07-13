@@ -48,7 +48,7 @@ class Database
     {
         // Create the connection
         $conn = include "./app/core/conf/database.php";
-        $this->connection = new \PDO('mysql:host='.$conn['db_host'].'; dbname='.$conn['db_name'].';charset=utf8', $conn['db_user'], $conn['db_pass']);
+        $this->connection = new \PDO('mysql:host='.$conn['db_host'].'; dbname='.$conn['db_name'].';charset=utf8mb4', $conn['db_user'], $conn['db_pass'], array(\PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'utf8mb4'"));
 
         // Ensure that prepares are not being emulated as this leads to numeric values being quoted
         $this->connection->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE , $conn['fetch']);
