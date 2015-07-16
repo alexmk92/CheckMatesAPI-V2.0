@@ -84,7 +84,8 @@ class Session
 
         // Build the query and to retrieve the session object
         $query = "SELECT DISTINCT us.oid, us.expiry_gmt, us.device, us.type, us.sid,
-                         ent.First_Name, ent.Last_Name, ent.Fb_Id, ent.Profile_Pic_Url
+                         ent.First_Name, ent.Last_Name, ent.Fb_Id, ent.Profile_Pic_Url,
+                         ent.dob
                   FROM user_sessions us
                   JOIN entity ent
                   ON us.oid = ent.Entity_Id
@@ -108,7 +109,8 @@ class Session
                                                 "firstName"  => $res[0]["First_Name"],
                                                 "lastName"   => $res[0]["Last_Name"],
                                                 "fbId"       => $res[0]["Fb_Id"],
-                                                "profilePic" => $res[0]["Profile_Pic_Url"]
+                                                "profilePic" => $res[0]["Profile_Pic_Url"],
+                                                "dob"        => $res[0]["dob"]
                                          )
                              );
             }

@@ -211,7 +211,7 @@ abstract class API
     private function _setResponse($data, $statusCode = 200)
     {
         // Set default payload and message values
-        $payload = json_encode("No data available for this resource.");
+        $payload = json_encode(Array());
         $message = json_encode($data);
 
         // This isn't an exception, set the message and payload appropriately

@@ -60,7 +60,8 @@ class User
                           Pref_Everyone                   AS everyone,
                           Pref_Sex                        AS sex,
                           Pref_Lower_age                  AS lowerAge,
-                          Pref_Upper_Age                  AS upperAge
+                          Pref_Upper_Age                  AS upperAge,
+                          dob
 
                   FROM entity
                   JOIN preferences
@@ -79,80 +80,94 @@ class User
 
         // Determine the radius that the spatial query will be set too
         $spatialFilter = "";
+        $users         = "";
         $userFilter    = "0";
         $data          = Array();
-
-        // Determine the radius to show - we reinitialise the data array here for the next query
-        switch($userPreferences["visability"])
-        {
-            case 1:
-                $spatialFilter = "(3958 * acos( cos( radians ( :currLat ) ) * cos ( radians( ent.Last_Checkin_Lat ) ) * cos ( radians( ent.Last_Checkin_Long ) - radians( :currLong ) + sin( radians( :currLat ) * sin ( radians( ent.Last_Checkin_Lat ) ) ) < = 150";
-                $data          = Array(":currLat" => $lat, ":currLong" => $long);
-                break;
-            case 2:
-                $spatialFilter = "ent.Last_Checkin_Country = :lastCountry";
-                $data          = Array(":lastCountry" => $userPreferences["last_country"]);
-                break;
-            default:
-                $data          = Array();
-                break;
-        }
 
         // Determine what age users to show - if we max on the app show oldest users
         // max it to some erroneous value for people with ridiculous Facebook birthdays
         if($userPreferences["upperAge"] == 50)
             $userPreferences["upperAge"] = 130;
 
-        // Check if we need to get Facebook users, Kinekt users or both
-        if(($userPreferences["facebook"] == 1 || $userPreferences["kinekt"] == 1) && $userPreferences["everyone"] != 1)
+        // Get the age so we can alter the query
+        $age = floor((time() - strtotime($userPreferences["dob"])) / 31556926);
+        if($age < 18 && $age >= 16)
         {
-            if(empty($data[":category"]))
+            $userPreferences["upperAge"] = 18;
+            $userPreferences["lowerAge"] = 16;
+        }
+
+        // Get a string of our friends that we can use to include or exclude them from the query
+        $userData = Array();
+        if(empty($userData[":category"]))
+        {
+            if(($userPreferences["facebook"] == 1 && $userPreferences["kinekt"] == 1) ||
+                ($userPreferences["facebook"] == 0 && $userPreferences["kinekt"] == 0)
+            )
+                $userData[":category"] = "1 OR Category = 2";
+            else
             {
-                if($userPreferences["facebook"] == 1 && $userPreferences["kinekt"] == 1)
-                    $data[":category"] = "1 OR Category = 2";
-                else
-                {
-                    if($userPreferences["facebook"] == 1)
-                        $data[":category"] = "1";
-                    if($userPreferences["kinekt"] == 1)
-                        $data[":category"] = "2";
-                }
+                if($userPreferences["facebook"] == 1)
+                    $userData[":category"] = "1";
+                if($userPreferences["kinekt"] == 1)
+                    $userData[":category"] = "2";
+            }
+        }
+        if(empty($userData[":entityId"]))
+            $userData[":entityId"] = $user["entityId"];
+
+        $userQuery = "SELECT DISTINCT Entity_Id1 AS id FROM friends WHERE Entity_Id2 = :entityId AND Category = :category GROUP BY Entity_Id1";
+        $res = Database::getInstance()->fetchAll($userQuery, $userData);
+        if(count($res) > 0)
+        {
+            foreach($res as $friend)
+            {
+                $users .= $friend["id"] .= ", ";
             }
 
-            $userFilter .= " OR ent.Entity_Id IN (
-                                                      SELECT DISTINCT entity_id
-                                                      FROM entity
-                                                      JOIN friends
-                                                      ON entity.entity_id = friends.entity_id2 OR entity.entity_id = friends.entity_id1
-                                                      WHERE entity_id IN
-                                                      (
-                                                            SELECT entity_id1 FROM friends WHERE entity_id2 = :entityId AND Category = :category
-                                                            UNION ALL
-                                                            SELECT entity_id2 FROM friends WHERE entity_id1 = :entityId AND Category = :category
-                                                      )
-                                                  )";
+            $users = rtrim($users, ", ");
         }
         // Check if we need to get everyone
         if($userPreferences["everyone"] == 1)
         {
-            $userFilter = "0 OR setting.Pri_CheckIn = 2
-                            AND TIMESTAMPDIFF(YEAR, ent.DOB, NOW()) BETWEEN :lowerAge AND :upperAge";
+            $userFilter = " AND setting.list_visibility = 1
+                            AND TIMESTAMPDIFF(YEAR, entity.DOB, NOW()) BETWEEN :lowerAge AND :upperAge";
+
+            if($users == "")
+                $users = 0;
+
+            if($userPreferences["facebook"] == 0 || $userPreferences["kinekt"] == 0)
+                $userFilter .= " AND entity.Entity_Id NOT IN ( " . $users . " )";
 
             // Bind the new params to our data array
             if(empty($data[":lowerAge"]))
-                $data[":lowerAge"] = $userPreferences["lowerAge"];
+                $data[":lowerAge"] = (int)$userPreferences["lowerAge"];
             if(empty($data[":upperAge"]))
-                $data[":upperAge"] = $userPreferences["upperAge"];
+                $data[":upperAge"] = (int)$userPreferences["upperAge"];
+        }
+        // Only return the users checkin and friends
+        else
+        {
+            if($userPreferences["kinekt"] == 0 && $userPreferences["facebook"] == 0 && $userPreferences["everyone"] == 0)
+            {
+                $userFilter = " AND entity.Entity_Id IN ( " . $user["entityId"] . " )";
+            }
+            else
+            {
+                $users .= $user["entityId"];
+                $userFilter = " AND entity.Entity_Id IN ( " . $users . " )";
+            }
+
         }
 
         // Check what sexes we need to retrieve
         switch($userPreferences["sex"])
         {
             case 1:
-                $userFilter .= " AND ent.Sex = 1";
+                $userFilter .= " AND entity.Sex = 1";
                 break;
             case 2:
-                $userFilter .= " AND ent.Sex = 2";
+                $userFilter .= " AND entity.Sex = 2";
                 break;
         }
 
@@ -163,15 +178,10 @@ class User
             $data[":currLat"] = $lat;
         if(empty($data[":currLong"]))
             $data[":currLong"] = $long;
+        if(empty($data[":radiusCap"]))
+            $data[":radiusCap"] = 999999;
 
-        // Build the final condition
-        if(empty($spatialFilter))
-            $spatialFilter = "(" . $userFilter . ")";
-        else
-            $spatialFilter .= " AND (" . $userFilter . ")";
-
-        // Bind the values and start the query
-        $data = Array(":currLat" => $lat, ":currLong" => $long, ":entityId" => $user["entityId"], ":radiusCap" => 999999);
+        // Bind the values and start the query - for over 18s
         $query = "SELECT DISTINCT entity.Entity_Id,
                                   entity.Fb_Id AS facebook_id,
                                   entity.First_Name AS first_name,
@@ -185,6 +195,10 @@ class User
                                   entity.Sex,
                                   entity.Score,
                                   entity.Email,
+                                  (
+                                      SELECT Category FROM friends WHERE Entity_Id1 = :entityId AND Entity_Id2 = entity.Entity_Id
+                                      OR Entity_Id2 = :entityId AND Entity_Id1 = :entityId
+                                  ) AS FC,
                                   TIMESTAMPDIFF(YEAR, entity.DOB, NOW()) AS Age,
                                   (6371 * acos( cos( radians(:currLat) ) * cos( radians(entity.Last_CheckIn_Lat) ) * cos( radians(entity.Last_CheckIn_Long) - radians(:currLong) ) + sin( radians(:currLat) ) * sin( radians(entity.Last_CheckIn_Lat) ) ) ) AS distance
                   FROM entity
@@ -197,6 +211,7 @@ class User
                       entity.Entity_Id != :entityId AND
                       entity.Create_Dt != entity.Last_CheckIn_Dt AND
                       (6371 * acos( cos( radians(:currLat) ) * cos( radians(entity.Last_CheckIn_Lat) ) * cos( radians(entity.Last_CheckIn_Long) - radians(:currLong) ) + sin( radians(:currLat) ) * sin( radians(entity.Last_CheckIn_Lat) ) ) ) < :radiusCap
+                  ".$userFilter."
                   GROUP BY entity.Entity_Id
                   ORDER BY distance ASC
                   ";
@@ -469,9 +484,9 @@ class User
         $res = Database::getInstance()->update($query, $data);
         // Check if we only performed an update call which isn't part of
         if($res != 0)
-            return Array('error' => '203', 'message' => 'The user with ID: '.$userId.' was updated successfully.');
+            return Array('error' => '200', 'message' => 'The user with ID: '.$userId.' was updated successfully.');
         else
-            return Array('error' => '200', 'message' => 'The user with ID: '.$userId.' is already up to date and does not need modifying.');
+            return Array('error' => '203', 'message' => 'The user with ID: '.$userId.' is already up to date and does not need modifying.');
     }
 
     /*
@@ -505,8 +520,10 @@ class User
             $token = Session::setSession($userExists["payload"]["entity_id"], $args);
 
             // Check for users under 18
-            if (time() - strtotime($args['dob']) <= 18 * 31536000 || $args['dob'] == null)
-                return Array('error' => '400', 'message' => 'Bad request, you must be 18 years or older.');
+            if (time() - strtotime($args['dob']) <= 15 * 31536000 || $args['dob'] == null)
+                return Array('error' => '400', 'message' => 'Bad request, you must be 16 years or older.');
+
+            // Don't
 
             // Update the users details, this includes updating the ABOUT info and profile pictures,
             // We do this here as profile info may have changed on Facebook since the last login.
@@ -518,7 +535,13 @@ class User
             // Check if there are any mutual friends to add - we do that here instead of on sign up as every time
             // we log in to the app more of our friends may have signed up to the app through FB
             if($args["friends"] != "")
-                $response = Friend::addFriends($args['friends'], '1', $userExists["payload"]["entity_id"]);
+                $response = Friend::addFriends($args['friends'], 1, $userExists["payload"]["entity_id"]);
+
+            // Set values so that they are not null
+            if(empty($userExists["payload"]["last_checkin_place"]))
+                $userExists["payload"]["last_checkin_place"] = "";
+            if(empty($userExists["payload"]["last_checkin_country"]))
+                $userExists["payload"]["last_checkin_country"] = "";
 
             // Override the payload as we are logging in, we don't want a list of all friends.
             $response["message"] = "You were logged in successfully, friends may have been updated: " . $response["message"];
@@ -550,8 +573,8 @@ class User
     public static function signup($args)
     {
         // Check for users under 18
-        if (time() - strtotime($args['dob']) <= 18 * 31536000 || $args['dob'] == null)
-            return Array('error' => '401', 'message' => 'Bad request, you must be 18 years or older.');
+        if (time() - strtotime($args['dob']) <= 15 * 31536000 || $args['dob'] == null)
+            return Array('error' => '401', 'message' => 'Bad request, you must be 16 years or older.');
 
         // We know our user is old enough, insert the new user.
         $query = "INSERT IGNORE INTO entity(fb_id, first_name, last_name, email, profile_pic_url, sex, dob, about, create_dt, last_checkin_dt, image_urls, score)
@@ -597,11 +620,11 @@ class User
         $query = "INSERT INTO setting(Entity_Id, Pri_CheckIn, Pri_Visability, Notif_Tag, Notif_Msg, Notif_New_Friend, Notif_Friend_Request, Notif_CheckIn_Activity)
                   VALUES (:entityId, :a, :b, :c, :d, :e, :f, :g)";
 
-        $data  = Array(":entityId" => $id, ":a" => 1, ":b" => 3, ":c" => 1, ":d" => 1, ":e" => 1, ":f" => 1, ":g" => 1);
+        $data  = Array(":entityId" => $id, ":a" => 2, ":b" => 2, ":c" => 1, ":d" => 1, ":e" => 1, ":f" => 1, ":g" => 1);
         Database::getInstance()->insert($query, $data);
 
         // Get the preferences
-        $settings = Array("privacy_checkin" => 1, "privacy_visibility" => 3, "notification_tag" => 1, "notification_msg" => 1, "notification_new_friend" => 1, "notification_friend_request" => 1, "notification_checkin_activity" => 1);
+        $settings = Array("privacy_checkin" => 2, "privacy_visibility" => 2, "notification_tag" => 1, "notification_msg" => 1, "notification_new_friend" => 1, "notification_friend_request" => 1, "notification_checkin_activity" => 1);
         $preferences = Array("facebook" => 1, "kinekt" => 1, "everyone" => 1, "sex" => 3, "lower_age" => 18, "upper_age" => 100, "checkin_expiry" => 8);
 
         if($id > 0)

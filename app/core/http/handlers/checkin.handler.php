@@ -53,7 +53,8 @@ class Checkin
                           Pref_Everyone                   AS everyone,
                           Pref_Sex                        AS sex,
                           Pref_Lower_age                  AS lowerAge,
-                          Pref_Upper_Age                  AS upperAge
+                          Pref_Upper_Age                  AS upperAge,
+                          dob
 
                   FROM entity
                   JOIN preferences
@@ -71,71 +72,85 @@ class Checkin
             return Array("error" => "404", "message" => "No preferences were found for this user so the operation could not complete, please ensure you sent a valid entity id");
 
         // Determine the radius that the spatial query will be set too
-        $spatialFilter = "";
         $userFilter    = "";
+        $users         = "";
         $data          = Array();
-
-        // Determine the radius to show - we reinitialise the data array here for the next query
-        switch($userPreferences["visability"])
-        {
-            case 1:
-                $spatialFilter = "(3958 * acos( cos( radians ( :currLat ) ) * cos ( radians( ent.Last_Checkin_Lat ) ) * cos ( radians( ent.Last_Checkin_Long ) - radians( :currLong ) + sin( radians( :currLat ) * sin ( radians( ent.Last_Checkin_Lat ) ) ) < = 150";
-                $data          = Array(":currLat" => $args["curr_lat"], ":currLong" => $args["curr_long"]);
-                break;
-            case 2:
-                $spatialFilter = "ent.Last_Checkin_Country = :lastCountry";
-                $data          = Array(":lastCountry" => $userPreferences["last_country"]);
-                break;
-            default:
-                $data          = Array();
-                break;
-        }
 
         // Determine what age users to show - if we max on the app show oldest users
         // max it to some erroneous value for people with ridiculous Facebook birthdays
         if($userPreferences["upperAge"] == 50)
             $userPreferences["upperAge"] = 130;
 
-        // Check if we need to get Facebook users, Kinekt users or both
-        if(($userPreferences["facebook"] == 1 || $userPreferences["kinekt"] == 1) && $userPreferences["everyone"] != 1)
+        // Get the age so we can alter the query
+        $age = floor((time() - strtotime($userPreferences["dob"])) / 31556926);
+        if($age < 18 && $age >= 16)
         {
-            if(empty($data[":category"]))
+            $userPreferences["upperAge"] = 18;
+            $userPreferences["lowerAge"] = 16;
+        }
+
+        // Get a string of our friends that we can use to include or exclude them from the query
+        $userData = Array();
+        if(empty($userData[":category"]))
+        {
+            if(($userPreferences["facebook"] == 1 && $userPreferences["kinekt"] == 1) ||
+               ($userPreferences["facebook"] == 0 && $userPreferences["kinekt"] == 0)
+            )
+                $userData[":category"] = "1 OR Category = 2";
+            else
             {
-                if($userPreferences["facebook"] == 1 && $userPreferences["kinekt"] == 1)
-                    $data[":category"] = "1 OR Category = 2";
-                else
-                {
-                    if($userPreferences["facebook"] == 1)
-                        $data[":category"] = "1";
-                    if($userPreferences["kinekt"] == 1)
-                        $data[":category"] = "2";
-                }
+                if($userPreferences["facebook"] == 1)
+                    $userData[":category"] = "1";
+                if($userPreferences["kinekt"] == 1)
+                    $userData[":category"] = "2";
+            }
+        }
+        if(empty($userData[":entityId"]))
+            $userData[":entityId"] = $user["entityId"];
+
+        $userQuery = "SELECT DISTINCT Entity_Id1 AS id FROM friends WHERE Entity_Id2 = :entityId AND Category = :category GROUP BY Entity_Id1";
+        $res = Database::getInstance()->fetchAll($userQuery, $userData);
+        if(count($res) > 0)
+        {
+            foreach($res as $friend)
+            {
+                $users .= $friend["id"] .= ", ";
             }
 
-            $userFilter .= " OR ent.Entity_Id IN (
-                                                      SELECT DISTINCT entity_id
-                                                      FROM entity
-                                                      JOIN friends
-                                                      ON entity.entity_id = friends.entity_id2 OR entity.entity_id = friends.entity_id1
-                                                      WHERE entity_id IN
-                                                      (
-                                                            SELECT entity_id1 FROM friends WHERE entity_id2 = :entityId AND Category = :category
-                                                            UNION ALL
-                                                            SELECT entity_id2 FROM friends WHERE entity_id1 = :entityId AND Category = :category
-                                                      )
-                                                  )";
+            $users = rtrim($users, ", ");
         }
+
         // Check if we need to get everyone
         if($userPreferences["everyone"] == 1)
         {
             $userFilter = " AND setting.Pri_CheckIn = 2
                             AND TIMESTAMPDIFF(YEAR, ent.DOB, NOW()) BETWEEN :lowerAge AND :upperAge";
 
+            if($users == "")
+                $users = 0;
+
+            if($userPreferences["facebook"] == 0 || $userPreferences["kinekt"] == 0)
+                $userFilter .= " AND ent.Entity_Id NOT IN ( " . $users . " )";
+
             // Bind the new params to our data array
             if(empty($data[":lowerAge"]))
                 $data[":lowerAge"] = (int)$userPreferences["lowerAge"];
             if(empty($data[":upperAge"]))
                 $data[":upperAge"] = (int)$userPreferences["upperAge"];
+        }
+        // Only return the users checkin and friends
+        else
+        {
+            if($userPreferences["kinekt"] == 0 && $userPreferences["facebook"] == 0 && $userPreferences["everyone"] == 0)
+            {
+                $userFilter = " AND ent.Entity_Id IN ( " . $user["entityId"] . " )";
+            }
+            else
+            {
+                $users .= $user["entityId"];
+                $userFilter = " AND ent.Entity_Id IN ( " . $users . " )";
+            }
+
         }
 
         // Check what sexes we need to retrieve
@@ -158,12 +173,6 @@ class Checkin
             $data[":currLong"] = (double)$args["curr_long"];
         if(empty($data[":expiry"]))
             $data[":expiry"] = (int)$userPreferences["expiry"];
-
-        // Build the final condition
-        if(empty($spatialFilter))
-            $spatialFilter = $userFilter;
-        else
-            $spatialFilter .= " AND (" . $userFilter . ")";
 
         // Get the users based on their preferences
         $query = "SELECT
@@ -195,6 +204,7 @@ class Checkin
                             LIMIT 1
                         ) AS FC,
                         checkins.Chk_Dt AS date,
+                        MAX(checkins.Chk_Dt) AS highestDate,
                         TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) AS ago
                   FROM  entity ent
                   JOIN  checkins
@@ -207,7 +217,7 @@ class Checkin
                   AND   ent.Last_CheckIn_Place IS NOT NULL
                   AND   TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) <= :expiry
                   AND   TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) >= 0
-                  ".$spatialFilter."
+                  ".$userFilter."
                   OR    ent.Entity_Id = :entityId
                   AND   TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) <= :expiry
                   AND   TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) >= 0
@@ -218,7 +228,7 @@ class Checkin
         // Get the results and build the response payload
         $res = Database::getInstance()->fetchAll($query, $data);
         if(empty($res))
-            return Array("error" => "404", "message" => "Sorry, it doesn't look like there have been any checkins recently.  Update your privacy settings to see more users!");
+            return Array("error" => "203", "message" => "Sorry, it doesn't look like there have been any checkins recently.  Update your privacy settings to see more users!");
         // Ensure all privacy is taken care of here...i.e. no facebook friends must be returned with no last name
         else
         {
@@ -264,7 +274,24 @@ class Checkin
 
     public static function getActivities($userId, $limit = 50)
     {
+        if($userId <= 0)
+            return Array("error" => "401", "message" => "You are not authorised to access this resource.");
+
+        // Get the friends of this user
+        $query = "SELECT Entity_Id1 AS id FROM friends WHERE Entity_Id2 = :userId";
+        $data  = Array(":userId" => $userId);
+        $friends = "";
+
+        $res   = Database::getInstance()->fetchAll($query, $data);
+        if(count($res) > 0)
+        {
+            foreach($res as $friend)
+                $friends .= $friend["id"] .= ", ";
+            $friends = rtrim($friends, ', ');
+        }
+
         // Build the query
+        $data  = Array();
         $query = "SELECT
                         E.Entity_Id,
                         E.Fb_Id AS facebook_id,
@@ -288,32 +315,13 @@ class Checkin
                         ) AS num_comments,
                         (
                             SELECT COUNT(*) FROM checkin_likes cl WHERE cl.Chk_Id = C.Chk_Id
-                         ) AS num_likes
+                        ) AS num_likes
                   FROM
                         checkins C
-                  JOIN
-                  (
-                        SELECT entity_id1
-                          FROM friends
-                         WHERE entity_id2 = :userId
-
-                         UNION
-
-                        SELECT entity_id2
-                          FROM friends
-                         WHERE entity_id1 = :userId
-
-                         UNION
-
-                        SELECT :userId
-                          FROM DUAL
-                  ) m
-                  ON
-                        C.Entity_Id = m.Entity_Id1
-                  JOIN
+                  LEFT JOIN
                         entity E
-                  ON
-                        C.Entity_Id = E.Entity_Id
+                    ON
+                        E.Entity_Id = C.Entity_Id
                   LEFT JOIN
                         checkin_comments CC
                     ON
@@ -322,13 +330,22 @@ class Checkin
                         checkin_likes CL
                     ON
                         C.Chk_Id = CL.Chk_Id
+                  LEFT JOIN
+                        setting s
+                    ON
+                        s.Entity_Id = E.Entity_Id
+                  WHERE
+                        s.Pri_Visability = 2
+                    OR
+                        E.Entity_Id IN (
+                            ".$friends."
+                        )
                   GROUP BY
                         C.Chk_Id
                   ORDER BY
                         C.Chk_Dt DESC
                   ";
 
-        $data = Array(":userId" => $userId);
 
         $res = Database::getInstance()->fetchAll($query, $data);
         if(count($res) > 0)
@@ -378,7 +395,7 @@ class Checkin
 
         }
         else
-            return Array("error" => "404", "message" => "There were not activities to be returned for this user. Make a checkin!");
+            return Array("error" => "203", "message" => "There were not activities to be returned for this user. Make a checkin!");
     }
 
     /*
@@ -458,7 +475,7 @@ class Checkin
         $res = Database::getInstance()->fetchAll($query, $data);
 
         if(count($res) == 0 || empty($res))
-            return Array("error" => "404", "message" => "This user does not have any checkins");
+            return Array("error" => "203", "message" => "This user does not have any checkins");
         else
         {
             // Return tagged user ID's
@@ -1014,7 +1031,7 @@ class Checkin
         $res = Database::getInstance()->fetch($query, $data);
 
         if(count($res) == 0 || empty($res))
-            return Array("error" => "404", "message" => "This checkin does not exist");
+            return Array("error" => "203", "message" => "This checkin does not exist");
         else {
             $res = json_decode(json_encode($res), true);
             $comments = self::getComments($args["checkinId"], $user["entityId"], $user);
@@ -1106,7 +1123,9 @@ class Checkin
                         );
 
                         $server = new \PushServer();
-                        return $server->sendNotification($pushPayload);
+                        $res = $server->sendNotification($pushPayload);
+                        if($res["error"] == 203)
+                            return Array("error" => "200", "message" => "Successfully liked the checkin, a push notification was sent.");
                     }
                 }
             }
@@ -1114,7 +1133,7 @@ class Checkin
             return Array("error" => "200", "message" => "Successfully liked the checkin, no push notification was sent.");
         }
 
-        return Array("error" => "403", "message" => "Invalid resource, please try again.");
+        return Array("error" => "203", "message" => "Invalid resource, please try again.");
     }
 
     /*

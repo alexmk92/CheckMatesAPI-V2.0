@@ -24,7 +24,7 @@ define(DB_PASS, 'werquin1');
  * Server configuration constants
  */
 
-define(SERVER_IP, '52.11.19.198/checkmates');
+define(SERVER_IP, '52.10.85.207/checkmates');
 
 /*
  * Notification server configuration

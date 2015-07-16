@@ -112,13 +112,8 @@ class Message
     {
         $userId = $this->user["entityId"];
 
-        // /api/v2/Message/comments/{CheckinId} - Get all the comments for a checkIn.
-        if(count($this->args) == 1 && $this->verb == 'comments')
-        {
-            return \Handlers\Message::getComments($this->args[0], $userId, $this->user);
-        }
         // /api/v2/Message/messages/{friendId} - Get all of the messages between a friend and the user that made the request.
-        else if(count($this->args) == 1 && $this->verb == 'messages')
+        if(count($this->args) == 1 && $this->verb == 'messages')
         {
             return \Handlers\Message::getChatMessages($this->args[0], $userId);
         }
@@ -149,13 +144,8 @@ class Message
         // Retrieve the payload and send with the friendId to the handler.
         $payload = json_decode(file_get_contents('php://input'), true);
 
-        // /api/v2/Message/add-comment/{CheckinId} - Add new comment to a checkin
-        if(count($this->args) == 1 && $this->verb == 'add-comment')
-        {
-            return \Handlers\Message::addComment($this->args[0], $payload, $this->user);
-        }
         // /api/v2/Message/send-message/{friendId} - Send a message to a friend.
-        else if(count($this->args) == 1 && $this->verb == 'send-message')
+        if(count($this->args) == 1 && $this->verb == 'send-message')
         {
             return \Handlers\Message::sendMessage($this->args[0], $payload, $this->user);
         }
@@ -189,7 +179,7 @@ class Message
         // /api/v2/Message/delete-message/{messageId} - delete a message between two users.
         if(count($this->args) == 1 && $this->verb == 'delete-message')
         {
-            return \Handlers\Message::deleteMessage($this->args[0]);
+            return \Handlers\Message::deleteMessage($this->args[0], $this->user);
         }
         // /api/v2/Message/delete-conversation/{friendId} - delete a message between two users.
         else if(count($this->args) == 1 && $this->verb == 'delete-conversation')

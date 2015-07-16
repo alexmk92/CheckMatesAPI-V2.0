@@ -54,14 +54,10 @@ class Friend
         $query = "SELECT DISTINCT Entity_Id, Fb_Id, First_Name, Last_Name, Profile_Pic_Url, Last_CheckIn_Place, Category
                   FROM entity
                   JOIN friends
-                  ON entity.Entity_Id = friends.Entity_Id2 OR entity.Entity_Id = friends.Entity_Id1
-                  WHERE Entity_Id IN
-                  (
-                    SELECT Entity_Id1 FROM friends WHERE Entity_Id2 = :entity_id AND Category != 4
-                    UNION ALL
-                    SELECT Entity_Id2 FROM friends WHERE Entity_Id1 = :entity_id AND Category != 4
-                  )
+                  ON entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2
+                  WHERE Entity_Id1 = :entity_id AND Category != 4
                   AND Entity_Id NOT IN( :tagged )
+                  AND Entity_Id <> :entity_id
                   GROUP BY Entity_Id
                   ";
 
@@ -83,7 +79,7 @@ class Friend
 
         // Account for an invalid request
         if($count == 0)
-            return Array('error' => '404', 'message' => 'This user has no friends.');
+            return Array('error' => '203', 'message' => 'This user has no friends.');
 
         // Format the response object.
         return Array('error' => '200', 'message' => "Found {$count} friends for this user.", 'payload' => $payload);
@@ -102,6 +98,10 @@ class Friend
 
     public static function getSuggestedFriends($userId, $user)
     {
+        // Ensure we are getting suggested friends for us
+        if(empty($user) || $userId != $user["entityId"])
+            return Array("error" => "401", "message" => "You cannot get the friend requests of this user as the user ID you provided does not match your user ID.");
+
         // Get all users with more than 1 mutual friend
         $query = "
                     SELECT y.Entity_Id2
@@ -195,6 +195,14 @@ class Friend
             $data[":lower"] = $settings["Pref_Lower_Age"];
             $data[":upper"] = $settings["Pref_Upper_Age"];
 
+            // Get the age so we can alter the query
+            $age = floor((time() - strtotime($user["dob"])) / 31556926);
+            if($age < 18 && $age >= 16)
+            {
+                $data["upper"] = 18;
+                $data["lower"] = 16;
+            }
+
             $query = "SELECT
                              e.Entity_Id,
                              e.First_Name,
@@ -225,7 +233,7 @@ class Friend
                       ON
                              e.Entity_Id
                       IN    (f.Entity_Id1, f.Entity_Id2)
-                      AND    f.Category NOT IN (1, 2, 3, 4, null)
+                      AND    f.Category NOT IN (1, 2, 3, 4)
                       WHERE e.Entity_Id IN (";
 
             for($i = 0; $i < count($res); $i++)
@@ -266,7 +274,7 @@ class Friend
 
             // Get the mutual friends of each users
             $res = json_decode(json_encode($res), true);
-            $res = array_splice($res, 0, 50);
+            $res = array_splice($res, 0, 100);
             for ($i = 0; $i < count($res); $i++) {
                 $mutual = self::getMutualFriends($userId, $res[$i]["Entity_Id"]);
                 $res[$i]["mutual_friends"] = $mutual;
@@ -364,8 +372,11 @@ class Friend
     |
     */
 
-    public static function getFriendRequests($userId)
+    public static function getFriendRequests($userId, $user = null)
     {
+        if(empty($user) || $userId != $user["entityId"])
+            return Array("error" => "401", "message" => "You cannot get the friend requests of this user as the user ID you provided does not match your user ID.");
+
         $DB = Database::getInstance();
 
         $data = Array(":entity_id" => $userId);
@@ -383,7 +394,7 @@ class Friend
             return Array("error" => "200", "message" => "Successfully returned friends for this user", "payload" => $res);
         }
         else
-            return Array("error" => "200", "message" => "No new friend requests.");
+            return Array("error" => "203", "message" => "No new friend requests.");
     }
 
     /*
@@ -407,7 +418,7 @@ class Friend
     {
         // Check to see if the user has been retrieved and the token successfully authenticated.
         if(empty($user))
-            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
+            return Array("error" => "401", "message" => "Your session has expired, please log in again.", "payload" => "");
 
         // Prepare a query that's purpose will be to insert a new friend request into the friend_requests table.
         $query = "INSERT INTO friend_requests(Req_Sender, Req_Receiver)
@@ -557,7 +568,7 @@ class Friend
 
         } else
             // Deleting the friend-request has failed.
-            return Array("error" => "400", "message" => "The friend request does not exist.", "payload" => "");
+            return Array("error" => "203", "message" => "The friend request does not exist.", "payload" => "");
     }
 
     /*
@@ -579,6 +590,7 @@ class Friend
     {
         // Create an array of unique friends
         $friends = array_filter(array_unique(explode(",", $friends)));
+        $category = 1;
 
         // Set variables for response - iCount = insertCount, aCount = noAccountCount and fCount = friendsCount
         $iCount = 0;
@@ -592,7 +604,7 @@ class Friend
         // Loop through the friends array and insert each unique user
         foreach ($friends as $friend)
         {
-            $query = "SELECT entity_id FROM entity WHERE fb_id = :fb_id";
+            $query = "SELECT entity_id FROM entity WHERE Fb_Id = :fb_id";
             $data  = Array(":fb_id" => $friend);
 
             $entId = json_decode(json_encode(Database::getInstance()->fetch($query, $data)), true);
@@ -607,14 +619,35 @@ class Friend
                           WHERE NOT EXISTS
                           (
                               SELECT fid FROM friends
-                              WHERE (Entity_Id1 = :entityA AND Entity_Id2 = :entityB)
-                              OR    (Entity_Id1 = :entityB AND Entity_Id2 = :entityA)
+                              WHERE Entity_Id1 = :entityA
+                              AND Entity_Id2 = :entityB
                           )
                           LIMIT 1
                           ";
 
                 // Bind the parameters to the query
                 $data = Array(":entityA" => $userId, ":entityB" => $friend, ":category" => $category);
+
+                // Perform the insert, then increment count if this wasn't a duplicate record
+                if (Database::getInstance()->insert($query, $data) != 0)
+                    $iCount++;
+
+                // Checks to see whether the user combination already exists in the database, uses
+                // DUAL for the initial select to ensure we fetch from cache if the friends table is empty.
+                $query = "INSERT INTO friends(Entity_Id1, Entity_Id2, Category)
+                          SELECT :entityA, :entityB, :category
+                          FROM DUAL
+                          WHERE NOT EXISTS
+                          (
+                              SELECT fid FROM friends
+                              WHERE Entity_Id1 = :entityA
+                              AND Entity_Id2 = :entityB
+                          )
+                          LIMIT 1
+                          ";
+
+                // Bind the parameters to the query
+                $data = Array(":entityA" => $friend, ":entityB" => $userId, ":category" => $category);
 
                 // Perform the insert, then increment count if this wasn't a duplicate record
                 if (Database::getInstance()->insert($query, $data) != 0)
@@ -627,6 +660,7 @@ class Friend
         }
 
         // Everything was successful, print out the response
+        $iCount = $iCount / 2;
         $diff = ($fCount - $iCount) - $aCount;
         $msg  = ($iCount == 0) ? "Oops, no users were added:" : "Success, the users were added:";
         return Array('error' => '200', 'message' => "{$msg} out of {$fCount} friends, {$iCount} were inserted, {$diff} were duplicates and {$aCount} of your friends does not have a Kinekt account.");
@@ -653,7 +687,7 @@ class Friend
     {
         // Check to see if the user has been retrieved and the token successfully authenticated.
         if(empty($user))
-            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
+            return Array("error" => "401", "message" => "Your session has expired, please re-login");
 
         // Prepare a query that's purpose will be to delete all records between a user and a current friend.
         $query = "DELETE FROM friends WHERE Entity_Id1 = :userId AND Entity_Id2 = :friendId OR Entity_Id1 = :friendId AND Entity_Id2 = :userId";
@@ -666,9 +700,7 @@ class Friend
         if (Database::getInstance()->delete($query, $data))
             return Array("error" => "200", "message" => "Friend has been removed successfully from all categories.", "params" => "");
         else
-            return Array("error" => "409", "message" => "Conflict: The user and friend id specified have no relationship with "
-                ."one another."
-            , "params" => "");
+            return Array("error" => "203", "message" => "There is no existing relationship from user A to user B, specify a different friend_id");
 
     }
 
@@ -720,7 +752,7 @@ class Friend
             return Array("error" => "200", "message" => "Friend request has been removed.", "params" => "");
         }
         else
-            return Array("error" => "404", "message" => "Friend request does not exist, so it cannot be removed."
+            return Array("error" => "203", "message" => "Friend request does not exist, so it cannot be removed."
             , "params" => "");
     }
 
@@ -742,7 +774,7 @@ class Friend
      |
      */
 
-    public static function blockUser($userId, $friendId)
+    public static function blockUser($friendId, $userId)
     {
         // Prepare a query that's purpose will be to update the friends table to change the
         // category of a relationship between two users to 4.
@@ -760,10 +792,9 @@ class Friend
         $data = Array(":userId" => $userId, ":friendId" => $friendId);
 
         if (Database::getInstance()->update($query, $data))
-            return Array("error" => "200", "message" => "This user has been blocked successfully.", "params" => "");
+            return Array("error" => "200", "message" => "This user has been blocked successfully.");
         else
-            return Array("error" => "409", "message" => "Conflict: The relationship between the two users does not exist."
-            , "params" => "");
+            return Array("error" => "409", "message" => "Conflict: The relationship between the two users does not exist.");
     }
 
 }

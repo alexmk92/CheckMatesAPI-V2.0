@@ -112,7 +112,7 @@ class Friend
             return \Handlers\Friend::getFriends($this->args[0]);
         // /api/v2/Friend/friend-requests/{userId} - Returns the requests for the user
         else if(count($this->args) == 1 && $this->verb == "friend-requests")
-            return \Handlers\Friend::getFriendRequests($this->args[0]);
+            return \Handlers\Friend::getFriendRequests($this->args[0], $this->user);
         // /api/v2/Friend/suggested-friends/{userId}
         else if(count($this->args) == 1 && $this->verb == "suggested-friends")
             return \Handlers\Friend::getSuggestedFriends($this->args[0], $this->user);
@@ -167,14 +167,7 @@ class Friend
         // /api/v2/Friend/block/{friendId} - Blocks communication between two users. Initiated by the entityId.
         if(count($this->args) == 1 && $this->verb == 'block')
         {
-            $userId = $this->user["entityId"];
-
-            if(empty($userId))
-                return array("error" => "422", "message" => "Unprocessable entity: The underpinning logic of the
-                            operation cannot be performed. Please make sure the required parameters are included in
-                            the headers for a PUT HTTP request. ", "payload" => "");
-
-            return \Handlers\Friend::blockUser($userId, $this->args[0]);
+            return \Handlers\Friend::blockUser($this->args[0], $this->user["entityId"]);
         }
         // Unsupported handler
         else

@@ -114,9 +114,7 @@ class Checkin
             {
                 $args = Array(
                     "curr_long" => $this->args[0],
-                    "curr_lat" => $this->args[1],
-                    "session_token" => $headers["session_token"],
-                    "device_id" => $headers["device_id"]
+                    "curr_lat" => $this->args[1]
                 );
             }
             return \Handlers\Checkin::getCheckins($args, $this->user);
@@ -153,26 +151,6 @@ class Checkin
                 );
             }
             return \Handlers\Checkin::get($args, $this->user);
-        }
-        // /api/v2/Checkin/users-at/{CheckinId} - Returns the list of users at the checkin
-        else if(count($this->args) == 1 && $this->verb == 'users-at')
-        {
-            return \Handlers\Checkin::getUsersAtCheckin($this->args[0]);
-        }
-
-        //*************************************************************************************//
-        //                        TODO: SECTION FOR UNIMPLEMENTED
-        //*************************************************************************************//
-
-        // /api/v2/Checkin/user-maps/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(GETUSERMAPS)
-        else if(count($this->args) == 1 && $this->verb == 'users-maps')
-        {
-            return \Handlers\Checkin::getUserMaps($this->args[0]);
-        }
-        // /api/v2/Checkin/profile-maps/{CheckinId} - TODO: REVISE ARGUMENTS + ADD DESCRIPTION(GETPROFILEMAPS)
-        else if(count($this->args) == 1 && $this->verb == 'profile-maps')
-        {
-            return \Handlers\Checkin::getProfileMaps($this->args[0]);
         }
 
         // throw an exception if no handler found

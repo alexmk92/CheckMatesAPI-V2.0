@@ -77,7 +77,7 @@ class Message
         }
         else
             // No results.
-            return Array("error" => "200", "message" => "Query has executed successfully, with no results found.");
+            return Array("error" => "203", "message" => "Query has executed successfully, with no results found.", "payload" => Array("messages" => "[]"));
     }
 
     /*
@@ -144,8 +144,8 @@ class Message
         if(count($conversations) > 0)
             return Array("error" => "200", "message" => "Successfully retrieved all conversations.", "payload" => $conversations);
         else
-            return Array("error" => "200", "message" => "Query has returned with no conversations found. Either the "
-            ."two users are not friends, or no messages have been sent.", "payload" => $conversations);
+            return Array("error" => "203", "message" => "Query has returned with no conversations found. Either the "
+            ."two users are not friends, or no messages have been sent.", "payload" => Array("conversations" => "[]"));
     }
 
     /*
@@ -167,8 +167,8 @@ class Message
     public static function sendMessage($friendId, $payload, $user)
     {
         // Check to see if the user has been retrieved and the token successfully authenticated.
-        if(empty($user))
-            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
+        if(empty($user) || empty($payload["message"]))
+            return Array("error" => "400", "message" => "Bad request, the JSON object sent to the server was invalid or it did not contain the appropriate keys", "payload" => "");
 
         // Prepare a query that's purpose will be to add a new comment to a check in
         $query = "INSERT INTO chatmessages(sender, receiver, message, msg_dt)
@@ -221,7 +221,7 @@ class Message
         }
         else
             // If insert failed.
-            return Array("error" => "400", "message" => "Message sending has failed.");
+            return Array("error" => "500", "message" => "Message sending has failed.");
     }
 
     /*
@@ -246,7 +246,7 @@ class Message
     {
         // Check to see if the user has been retrieved and the token successfully authenticated.
         if(empty($user))
-            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
+            return Array("error" => "401", "message" => "Your session_token and/or device_id combination was not found in the DB. Login again", "payload" => "");
 
         // Collect the information about the reporter and the reported.
         $query = "
@@ -308,7 +308,7 @@ class Message
             return Array("error" => "200", "message" => "You have successfully reported this user.");
         else
             // If email has not sent successfully.
-            return Array("error" => "400", "message" => "Error sending email.");
+            return Array("error" => "500", "message" => "Error sending email.");
 
     }
 
@@ -325,20 +325,23 @@ class Message
      |
      */
 
-    public static function deleteMessage($messageId)
+    public static function deleteMessage($messageId, $user)
     {
+        if(empty($user))
+            return Array("error" => "401", "You are not authorised to delete this message as you did not send it.");
+
         // Prepare a query that's purpose will be to delete one message.
-        $query = "DELETE FROM chatmessages WHERE mid = :messageId ";
+        $query = "DELETE FROM chatmessages WHERE mid = :messageId AND sender = :senderId";
 
         // Bind the parameters to the query
-        $data = Array(":messageId" => $messageId);
+        $data = Array(":messageId" => $messageId, $user["entityId"]);
 
         // Delete a message using the mid.
         // If the query runs successfully, return a success 200 message.
         if (Database::getInstance()->delete($query, $data))
             return Array("error" => "200", "message" => "The message has been removed from the conversation.");
         else
-            return Array("error" => "400", "message" => "Message cannot be removed: invalid identifier.");
+            return Array("error" => "401", "message" => "You are not authorised to delete this message as you did not send it.");
 
     }
 
@@ -362,7 +365,7 @@ class Message
     {
         // Check to see if the user has been retrieved and the token successfully authenticated.
         if(empty($user))
-            return Array("error" => "400", "message" => "Bad request, please supply JSON encoded session data.", "payload" => "");
+            return Array("error" => "401", "message" => "You are not authorised to delete this conversation as you did not create it.");
 
         // Prepare a query that's purpose will be to delete all conversation records between two people.
         $query = " DELETE FROM chatmessages
@@ -378,7 +381,8 @@ class Message
         if (Database::getInstance()->delete($query, $data))
             return Array("error" => "200", "message" => "The conversation has been deleted successfully.");
         else
-            return Array("error" => "400", "message" => "The friend does not exist or there are no messages to delete.");
+            return Array("error" => "401", "message" => "You are not authorised to delete this conversation as you did not create it.");
+
 
     }
 }
