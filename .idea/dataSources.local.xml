@@ -8,11 +8,12 @@
       <default-schemas>kinekt.*</default-schemas>
       <ssh-properties>
         <enabled>true</enabled>
-        <proxy-host>146.185.147.142</proxy-host>
+        <proxy-host>52.10.85.207</proxy-host>
         <proxy-port>22</proxy-port>
         <secret-storage>master_key</secret-storage>
-        <user>root</user>
-        <use-password>true</use-password>
+        <user>ubuntu</user>
+        <use-password>false</use-password>
+        <private-key-path>$PROJECT_DIR$/../Keys/CheckMatesKeyPair.pem</private-key-path>
       </ssh-properties>
     </data-source>
   </component>

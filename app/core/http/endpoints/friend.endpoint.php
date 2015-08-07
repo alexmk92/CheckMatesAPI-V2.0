@@ -90,7 +90,7 @@ class Friend
                 break;
             case "DELETE" : return $this->_DELETE();
                 break;
-            default       : throw new \Exception("Unsupported header type for resource: Checkin");
+            default       : throw new \Exception("Unsupported header type for resource: Check-In");
                 break;
         }
     }
@@ -116,6 +116,9 @@ class Friend
         // /api/v2/Friend/suggested-friends/{userId}
         else if(count($this->args) == 1 && $this->verb == "suggested-friends")
             return \Handlers\Friend::getSuggestedFriends($this->args[0], $this->user);
+        // /api/v2/Friend/blocked-users/{userId}
+        else if(count($this->args) == 1 && $this->verb == "blocked-users")
+            return \Handlers\Friend::getBlockedUsers($this->args[0], $this->user);
 
         // Unsupported handler
         else
@@ -166,9 +169,9 @@ class Friend
     {
         // /api/v2/Friend/block/{friendId} - Blocks communication between two users. Initiated by the entityId.
         if(count($this->args) == 1 && $this->verb == 'block')
-        {
             return \Handlers\Friend::blockUser($this->args[0], $this->user["entityId"]);
-        }
+        else if(count($this->args) == 1 && $this->verb == 'unblock')
+            return \Handlers\Friend::unblockUser($this->args[0], $this->user["entityId"]);
         // Unsupported handler
         else
             throw new \Exception("No handler found for the GET resource of this URI, please check the documentation.");

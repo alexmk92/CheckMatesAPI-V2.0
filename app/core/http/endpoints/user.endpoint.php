@@ -119,6 +119,11 @@ class User
         {
             return \Handlers\User::getAll();
         }
+        // /api/v2/User/getEmails - Returns all user emails
+        if(count($this->args) == 0 && $this->verb == "email-report")
+        {
+            return \Handlers\User::getUserEmails();
+        }
         // /api/v2/User/{userId} - Returns the user
         else if(count($this->args) == 1 && $this->verb == "")
         {

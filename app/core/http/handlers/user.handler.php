@@ -197,7 +197,7 @@ class User
                                   entity.Email,
                                   (
                                       SELECT Category FROM friends WHERE Entity_Id1 = :entityId AND Entity_Id2 = entity.Entity_Id
-                                      OR Entity_Id2 = :entityId AND Entity_Id1 = :entityId
+                                      OR Entity_Id2 = :entityId AND Entity_Id1 = :entityId LIMIT 1
                                   ) AS FC,
                                   TIMESTAMPDIFF(YEAR, entity.DOB, NOW()) AS Age,
                                   (6371 * acos( cos( radians(:currLat) ) * cos( radians(entity.Last_CheckIn_Lat) ) * cos( radians(entity.Last_CheckIn_Long) - radians(:currLong) ) + sin( radians(:currLat) ) * sin( radians(entity.Last_CheckIn_Lat) ) ) ) AS distance
@@ -270,7 +270,7 @@ class User
         );
 
         if(Database::getInstance()->update($query, $data) > 0)
-            return Array('error' => '203', 'message' => 'The resource was updated successfully, your new latitude is '.$args["lat"].' and your longitude is '.$args["long"]);
+            return Array('error' => '200', 'message' => 'The resource was updated successfully, your new latitude is '.$args["lat"].' and your longitude is '.$args["long"]);
 
         return Array("error" => "500", "message" => "An internal error occurred when processing your request. Please try again.");
     }
@@ -317,7 +317,7 @@ class User
 
     public static function getAll()
     {
-        $query = "SELECT * FROM entity";
+        $query = "SELECT First_Name, Last_Name, Email, Create_Dt, TIMESTAMPDIFF(YEAR, DOB, CURRENT_DATE) AS age FROM entity GROUP BY Entity_Id ORDER BY Create_Dt DESC";
 
         $res = Database::getInstance()->fetchAll($query);
         $count = sizeof($res);
@@ -327,7 +327,7 @@ class User
             return Array("error" => "404", "message" => "There are no users in the system");
 
         // Users were found, send the data
-        return Array("error" => "200", "message" => "Successfully retrieved all {$count} users.", "payload" => $res);
+        return Array("error" => "200", "message" => "We currently have {$count} users.", "payload" => $res);
     }
 
     /*
@@ -523,8 +523,6 @@ class User
             if (time() - strtotime($args['dob']) <= 15 * 31536000 || $args['dob'] == null)
                 return Array('error' => '400', 'message' => 'Bad request, you must be 16 years or older.');
 
-            // Don't
-
             // Update the users details, this includes updating the ABOUT info and profile pictures,
             // We do this here as profile info may have changed on Facebook since the last login.
             $response = self::updateProfile($userExists["payload"]["entity_id"], $args);
@@ -551,6 +549,26 @@ class User
         }
         else
             return self::signup($args);
+    }
+
+    // Get all user emails
+    public static function getUserEmails()
+    {
+        $query = "SELECT email FROM entity GROUP BY Entity_Id";
+        $data  = Array();
+
+        $res   = Database::getInstance()->fetchAll($query, $data);
+        if(count($res))
+        {
+            $emailString = "";
+            foreach($res as $email)
+            {
+                $emailString .= $email["email"] . ", ";
+            }
+            $emailString = rtrim($emailString, ", ");
+
+            return $emailString;
+        }
     }
 
     /*
@@ -623,12 +641,11 @@ class User
         $data  = Array(":entityId" => $id, ":a" => 2, ":b" => 2, ":c" => 1, ":d" => 1, ":e" => 1, ":f" => 1, ":g" => 1);
         Database::getInstance()->insert($query, $data);
 
-        // Get the preferences
-        $settings = Array("privacy_checkin" => 2, "privacy_visibility" => 2, "notification_tag" => 1, "notification_msg" => 1, "notification_new_friend" => 1, "notification_friend_request" => 1, "notification_checkin_activity" => 1);
-        $preferences = Array("facebook" => 1, "kinekt" => 1, "everyone" => 1, "sex" => 3, "lower_age" => 18, "upper_age" => 100, "checkin_expiry" => 8);
-
         if($id > 0)
-            return Array('error' => '200', 'message' => 'The user was created successfully.', 'payload' => Array('entity_id' => $id, 'entity_data' => $args, "preferences" => $preferences, "settings" => $settings, "session" => $token));
+        {
+            $user = self::get($id);
+            return Array('error' => '200', 'message' => 'The user was created successfully.', 'payload' => Array("entity" => $user, "session" => $token));
+        }
         else
             return Array('error' => '500', 'message' => 'There was an internal error when creating the user listed in the payload.  Please try again.', 'payload' => Array('entity_id' => $id, 'entity_data' => $args));
     }
@@ -684,44 +701,19 @@ class User
                            Fb_Id AS facebook_id,
                            Score AS score,
                            Email AS email
-                    FROM
-                    (
-                        SELECT entity.First_Name,
-                               entity.Last_Name,
-                               entity.Profile_Pic_Url,
-                               entity.Entity_Id,
-                               entity.DOB,
-                               entity.Fb_Id,
-                               entity.Score,
-                               entity.Email
-                        FROM entity
-                        JOIN friends
-                          ON (entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2)
-                        WHERE (friends.Entity_Id1 = :userId OR friends.Entity_Id2 = :userId)
-                        AND Entity_Id <> :userId
-                        AND Entity_Id <> :friendId
-
-                        UNION ALL
-
-                        SELECT entity.First_Name,
-                               entity.Last_Name,
-                               entity.Profile_Pic_Url,
-                               entity.Entity_Id,
-                               entity.DOB,
-                               entity.Fb_Id,
-                               entity.Score,
-                               entity.Email
-                        FROM entity
-                        JOIN friends
-                          ON (entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2)
-                        WHERE (friends.Entity_Id1 = :friendId OR friends.Entity_Id2 = :friendId)
-                        AND Entity_Id <> :userId
-                        AND Entity_Id <> :friendId
-
-                    ) friend_list
-                    GROUP BY entity_id
-                    HAVING COUNT(*) > 2
-                    ORDER BY first_name ASC
+                    FROM entity
+                    WHERE EXISTS(
+                        SELECT *
+                        FROM friends
+                        WHERE friends.Entity_Id1 = :friendId AND friends.Category <> 4
+                          AND friends.Entity_Id2 = entity.Entity_Id
+                      )
+                      AND EXISTS(
+                        SELECT *
+                        FROM friends
+                        WHERE friends.Entity_Id1 = :userId AND friends.Category <> 4
+                          AND friends.Entity_Id2 = entity.Entity_Id
+                      )
                  ";
 
         $data = Array(":friendId" => $friendId, ":userId" => $userId);
@@ -810,7 +802,7 @@ class User
 
     public static function getNotifications($userId)
     {
-        $query = "SELECT notifications.*, entity.First_Name, entity.Last_Name, entity.Profile_Pic_Url
+        $query = "SELECT notifications.*, entity.First_Name, entity.Last_Name, entity.Profile_Pic_Url, entity.Sex
                   FROM notifications
                   JOIN entity
                     ON notifications.sender = entity.Entity_Id

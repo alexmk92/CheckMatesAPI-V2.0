@@ -51,7 +51,7 @@ class Friend
 
         // NOTE* I would like to tailor this to return the specific fields we need,
         // for now im not sure if this will suffice -  shout if more is needed
-        $query = "SELECT DISTINCT Entity_Id, Fb_Id, First_Name, Last_Name, Profile_Pic_Url, Last_CheckIn_Place, Category
+        $query = "SELECT DISTINCT Entity_Id, Fb_Id, First_Name, Last_Name, Profile_Pic_Url, Last_CheckIn_Place, Category, Sex
                   FROM entity
                   JOIN friends
                   ON entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2
@@ -99,84 +99,22 @@ class Friend
     public static function getSuggestedFriends($userId, $user)
     {
         // Ensure we are getting suggested friends for us
-        if(empty($user) || $userId != $user["entityId"])
+        if (empty($user) || $userId != $user["entityId"])
             return Array("error" => "401", "message" => "You cannot get the friend requests of this user as the user ID you provided does not match your user ID.");
 
-        // Get all users with more than 1 mutual friend
-        $query = "
-                    SELECT y.Entity_Id2
-                      FROM friends x
-                      LEFT
-                      JOIN friends y
-                        ON y.Entity_Id1 = x.Entity_Id2
-                       AND y.Entity_Id2 <> x.Entity_Id1
-                      LEFT
-                      JOIN friends z
-                        ON z.Entity_Id2 = y.Entity_Id2
-                       AND z.Entity_Id1 = x.Entity_Id1
-                     WHERE x.Entity_Id1 = :user_id
-                       AND z.Entity_Id1 IS NULL
-                       AND y.Entity_Id2 IS NOT NULL
-                       AND y.Category != 4
-                       AND x.Category != 4
-                       AND y.Entity_Id2 NOT IN (
-                           SELECT Req_Receiver FROM friend_requests WHERE Req_Receiver = y.Entity_Id2
-                           AND Req_Sender = :user_id
-                       )
-                       AND x.Entity_Id1 NOT IN (
-                           SELECT Req_Receiver FROM friend_requests WHERE Req_Receiver = x.Entity_Id1
-                           AND Req_Sender = :user_id
-                       )
-                       AND y.Entity_Id2 NOT IN (SELECT Entity_Id1 FROM friends WHERE Entity_Id2 = :user_id UNION SELECT Entity_Id2 FROM friends WHERE Entity_Id1 = :user_id)
-                     GROUP
-                        BY y.Entity_Id2
-                    HAVING COUNT(*) >= 1;
-                ";
-        $data = Array(":user_id" => $userId);
-        $res = Database::getInstance()->fetchAll($query, $data);
-
-        // Build the mutual checkin query
-        $query = "SELECT cy.entityId AS Entity_Id2
-                  FROM checkinArchive cx
-                  LEFT
-                  JOIN checkinArchive cy
-                    ON (cx.placeLat = cy.placeLat AND cx.placeLng = cy.placeLng) AND cy.entityId <> :user_id
-                    WHERE cx.entityId = :user_id
-                    ";
-        if(count($res) > 0) {
-            $query .= " AND cy.entityId NOT IN (";
-            for ($i = 0; $i < count($res); $i++) {
-                $query .= ":user_" . $i;
-                //$query .= $res[$i]["Entity_Id2"];
-                $data[":user_" . $i] = $res[$i]["Entity_Id2"];
-
-                if ($i == count($res) - 1)
-                    $query .= ")";
-                else
-                    $query .= ", ";
-            }
-            $query .= " GROUP BY cy.entityId";
-        }
-        else
-            $query .= " GROUP BY cy.entityId";
-
-        $res2 = Database::getInstance()->fetchAll($query, $data);
-        if(count($res2) > 0)
-            $res = array_merge($res, $res2);
-
-        if(count($res) > 0) {
             // Get the settings for the user
             $query = "SELECT preferences.Pref_Lower_Age,
                              preferences.Pref_Upper_Age,
-                             preferences.Pref_Sex
+                             preferences.Pref_Sex,
+                             entity.Last_CheckIn_Lat AS lat,
+                             entity.Last_CheckIn_Long AS lng
                         FROM preferences
-                       WHERE Entity_Id = :user_id";
-
-            $data  = Array(":user_id" => $userId);
+                        JOIN entity ON preferences.Entity_Id = entity.Entity_Id
+                       WHERE preferences.Entity_Id = :user_id";
+            $data = Array(":user_id" => $userId);
             $settings = json_decode(json_encode(Database::getInstance()->fetch($query, $data)), true);
 
-            switch($settings["Pref_Sex"])
-            {
+            switch ($settings["Pref_Sex"]) {
                 // MALE
                 case 1:
                     $settings["Pref_Sex"] = " Sex = 1";
@@ -197,10 +135,45 @@ class Friend
 
             // Get the age so we can alter the query
             $age = floor((time() - strtotime($user["dob"])) / 31556926);
-            if($age < 18 && $age >= 16)
-            {
+            if ($age < 18 && $age >= 16) {
                 $data["upper"] = 18;
                 $data["lower"] = 16;
+            }
+
+            $friendFilter  = "0";
+            $requestFilter = "0";
+
+            // Run a query to get friends
+            $filterData = Array(":entityId" => $userId);
+            $query = "SELECT Entity_Id1 FROM friends WHERE Entity_Id2 = :entityId";
+            $friends = Database::getInstance()->fetchAll($query, $filterData);
+
+            if(!empty($friends)){
+                $friendFilter = "";
+                foreach($friends as $friend)
+                {
+                    $friendFilter .= $friend["Entity_Id1"] . ", ";
+                }
+                $friendFilter = rtrim($friendFilter, ", ");
+            }
+
+            // Run a query to get friend requests
+            $query = "SELECT Req_Receiver AS entityId FROM friend_requests WHERE Req_Sender = :entityId
+
+                      UNION ALL
+
+                      SELECT Req_Sender AS entityId
+                      FROM friend_requests
+                      WHERE Req_Receiver = :entityId";
+            $requests = Database::getInstance()->fetchAll($query, $filterData);
+
+            if(!empty($requests)){
+                $requestFilter = "";
+                foreach($requests as $friend)
+                {
+                    $requestFilter .= $friend["entityId"] . ", ";
+                }
+                $requestFilter = rtrim($requestFilter, ", ");
             }
 
             $query = "SELECT
@@ -212,77 +185,43 @@ class Friend
                              e.Last_CheckIn_Dt,
                              e.Sex,
                              TIMESTAMPDIFF(YEAR, e.DOB, CURDATE()) AS Age,
-                             f.Category AS FC,
-                             s.list_visibility,
-                             p.Pref_Everyone
+                             (
+                                NULL
+                             ) AS FC
                       FROM
                              entity e
-                      LEFT JOIN
-                             setting s
-                      ON
-                             e.Entity_Id IN(s.Entity_Id)
-                       AND   (s.list_visibility = 1 OR s.list_visibility = null)
-                      LEFT JOIN
-                             preferences p
-                      ON
-                             e.Entity_Id IN(p.Entity_Id)
-                       AND   (p.Pref_Everyone = 1 OR p.Pref_Everyone = null)
-                      LEFT
-                      JOIN
-                             friends f
-                      ON
-                             e.Entity_Id
-                      IN    (f.Entity_Id1, f.Entity_Id2)
-                      AND    f.Category NOT IN (1, 2, 3, 4)
-                      WHERE e.Entity_Id IN (";
-
-            for($i = 0; $i < count($res); $i++)
-            {
-                $query .= ":user_" . $i;
-                $data[":user_".$i] = $res[$i]["Entity_Id2"];
-
-                if($i == count($res)-1)
-                    $query .= ")";
-                else
-                    $query .= ", ";
-            }
-
-            $query .= " AND e.Entity_Id != :user_id
+                      INNER JOIN preferences p
+                      ON p.Entity_Id = e.Entity_Id AND p.Pref_Everyone = 1
+                      INNER JOIN setting s
+                      ON s.Entity_Id = e.Entity_Id AND s.list_visibility = 1
+                      WHERE e.Entity_Id <> :user_id
                         AND TIMESTAMPDIFF(YEAR, e.DOB, CURDATE()) BETWEEN :lower AND :upper
                         AND e.Entity_Id NOT IN
                         (
-                            SELECT Req_Receiver FROM friend_requests WHERE Req_Sender = :user_id
-
-                            UNION ALL
-
-                            SELECT Req_Receiver FROM friend_requests WHERE Req_Sender = e.Entity_Id AND Req_Receiver = :user_id
+                            ".$requestFilter."
                         )
                         AND e.Entity_Id NOT IN
                         (
-                            SELECT Entity_Id1 FROM friends WHERE Entity_Id2 = :user_id
-
-                            UNION ALL
-
-                            SELECT Entity_Id2 FROM friends WHERE Entity_Id1 = :user_id
+                            ".$friendFilter."
                         )
                         AND" . $settings["Pref_Sex"] . "
-                        GROUP BY e.Entity_Id";
+                        GROUP BY e.Entity_Id
+                        LIMIT 200
+                        ";
 
             $res = Database::getInstance()->fetchAll($query, $data);
-            if(empty($res))
-                return Array("error" => "404", "message" => "None of your friends use the app, therefore we can't suggest mutual friends!");
+            if (empty($res))
+                return Array("error" => "203", "message" => "None of your friends use the app, therefore we can't suggest mutual friends!");
 
             // Get the mutual friends of each users
             $res = json_decode(json_encode($res), true);
-            $res = array_splice($res, 0, 100);
+            $res = array_splice($res, 0, 200);
             for ($i = 0; $i < count($res); $i++) {
                 $mutual = self::getMutualFriends($userId, $res[$i]["Entity_Id"]);
                 $res[$i]["mutual_friends"] = $mutual;
             }
+
             return Array("error" => "200", "message" => "We have suggested " . count($res) . " mutual friends for you.", "payload" => $res);
-        }
-        else
-            return Array("error" => "404", "message" => "None of your friends use the app, therefore we can't suggest mutual friends!");
     }
 
     /*
@@ -304,58 +243,29 @@ class Friend
 
         // Perform the query
         $query = "
-                    SELECT First_Name AS first_name,
-                           Last_Name AS last_name,
-                           Profile_Pic_Url AS profile_pic,
-                           Entity_Id AS entity_id,
-                           DOB AS dob,
-                           Fb_Id AS facebook_id,
-                           Score AS score,
-                           Email AS email
-                    FROM
-                    (
-                        SELECT entity.First_Name,
-                               entity.Last_Name,
-                               entity.Profile_Pic_Url,
-                               entity.Entity_Id,
-                               entity.DOB,
-                               entity.Fb_Id,
-                               entity.Score,
-                               entity.Email
-                        FROM entity
-                        JOIN friends
-                          ON (entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2)
-                        WHERE (friends.Entity_Id1 = :userId OR friends.Entity_Id2 = :userId)
-                        AND Entity_Id <> :userId
-                        AND Entity_Id <> :friendId
-
-                        UNION ALL
-
-                        SELECT entity.First_Name,
-                               entity.Last_Name,
-                               entity.Profile_Pic_Url,
-                               entity.Entity_Id,
-                               entity.DOB,
-                               entity.Fb_Id,
-                               entity.Score,
-                               entity.Email
-                        FROM entity
-                        JOIN friends
-                          ON (entity.Entity_Id = friends.Entity_Id1 OR entity.Entity_Id = friends.Entity_Id2)
-                        WHERE (friends.Entity_Id1 = :friendId OR friends.Entity_Id2 = :friendId)
-                        AND Entity_Id <> :userId
-                        AND Entity_Id <> :friendId
-
-                    ) friend_list
-                    GROUP BY entity_id
-                    HAVING COUNT(*) > 2
-                    ORDER BY first_name ASC
+                SELECT COUNT(*) AS mutual_count
+                FROM entity
+                WHERE EXISTS(
+                    SELECT *
+                    FROM friends
+                    WHERE friends.Entity_Id1 = :friendId AND friends.Category <> 4
+                      AND friends.Entity_Id2 = entity.Entity_Id
+                  )
+                  AND EXISTS(
+                    SELECT *
+                    FROM friends
+                    WHERE friends.Entity_Id1 = :userId AND friends.Category <> 4
+                      AND friends.Entity_Id2 = entity.Entity_Id
+                  )
                  ";
 
         $data = Array(":friendId" => $friendId, ":userId" => $userId);
 
-        $res = Database::getInstance()->fetchAll($query, $data);
-        return count($res);
+        $res = Database::getInstance()->fetch($query, $data);
+        if(empty($res))
+            return 0;
+
+        return (int)$res->mutual_count;
     }
 
     /*
@@ -459,9 +369,9 @@ class Friend
                 // Configure the push payload, we trim the name so that if it was Alexander John, it becomes Alexander.
                 $pushPayload = Array(
                     "senderId" => $user['entityId'],
-                    "senderName" => $user['firstName'] . " " . $user['lastName'],
+                    "senderName" => $user['firstName'],
                     "receiver" => $friendId,
-                    "message" => $user['firstName']. " " . $user['lastName'] . " wants to add you as a friend.",
+                    "message" => $user['firstName']. " wants to add you as a friend.",
                     "type" => 3,
                     "date" => $now,
                     "messageId" => NULL,
@@ -530,14 +440,14 @@ class Friend
         if(Database::getInstance()->delete($query, $data)) {
 
             // Prepare the query for adding a row into the friends table - Insert the reciprecal to, this will improve performance
-            $query = "INSERT INTO friends(Entity_Id1, Entity_Id2, Category)
-                      VALUES              (:userId, :friendId, 2) ";
+            $query = "INSERT INTO friends(Entity_Id1, Entity_Id2, Category, oldCategory)
+                      VALUES              (:userId, :friendId, 2, 2) ";
             // Bind the parameters to the query
             $data = Array(":userId" => $user['entityId'], ":friendId" => $friendId);
 
             if(Database::getInstance()->insert($query, $data)) {
-                $query = "INSERT INTO friends(Entity_Id1, Entity_Id2, Category)
-                      VALUES              (:friendId, :userId, 2) ";
+                $query = "INSERT INTO friends(Entity_Id1, Entity_Id2, Category, oldCategory)
+                      VALUES              (:friendId, :userId, 2, 2) ";
                 // Bind the parameters to the query
                 $data = Array(":userId" => $user['entityId'], ":friendId" => $friendId);
                 $res  = Database::getInstance()->insert($query, $data);
@@ -546,9 +456,9 @@ class Friend
 
                     $pushPayload = Array(
                         "senderId" => (int)$user["entityId"],
-                        "senderName" => $user["firstName"]. " " . $user["lastName"],
+                        "senderName" => $user["firstName"],
                         "receiver" => (int)$friendId,
-                        "message" => $user["firstName"]. " " . $user["lastName"] . " has accepted your friend request.",
+                        "message" => $user["firstName"]. " has accepted your friend request.",
                         "type" => 4,
                         "date" => gmdate('Y-m-d H:i:s', time()),
                         "messageId" => NULL,
@@ -613,8 +523,8 @@ class Friend
 
                 // Checks to see whether the user combination already exists in the database, uses
                 // DUAL for the initial select to ensure we fetch from cache if the friends table is empty.
-                $query = "INSERT INTO friends(Entity_Id1, Entity_Id2, Category)
-                          SELECT :entityA, :entityB, :category
+                $query = "INSERT INTO friends(Entity_Id1, Entity_Id2, Category, oldCategory)
+                          SELECT :entityA, :entityB, :category, :category
                           FROM DUAL
                           WHERE NOT EXISTS
                           (
@@ -634,8 +544,8 @@ class Friend
 
                 // Checks to see whether the user combination already exists in the database, uses
                 // DUAL for the initial select to ensure we fetch from cache if the friends table is empty.
-                $query = "INSERT INTO friends(Entity_Id1, Entity_Id2, Category)
-                          SELECT :entityA, :entityB, :category
+                $query = "INSERT INTO friends(Entity_Id1, Entity_Id2, Category, oldCategory)
+                          SELECT :entityA, :entityB, :category, :category
                           FROM DUAL
                           WHERE NOT EXISTS
                           (
@@ -736,24 +646,46 @@ class Friend
         // If the query runs successfully, return a success 200 message.
         if (Database::getInstance()->delete($query, $data))
         {
-            $pushPayload = Array(
-                "senderId" => (int)$user["entityId"],
-                "senderName" => $user["firstName"]. " " . $user["lastName"],
-                "receiver" => (int)$friendId,
-                "message" => $user["firstName"]. " " . $user["lastName"] . " rejected your friend request.",
-                "type" => 4,
-                "date" => gmdate('Y-m-d H:i:s', time()),
-                "messageId" => NULL,
-                "messageType" => NULL
-            );
-
-            $server = new \PushServer();
-            $server->sendNotification($pushPayload);
             return Array("error" => "200", "message" => "Friend request has been removed.", "params" => "");
         }
         else
             return Array("error" => "203", "message" => "Friend request does not exist, so it cannot be removed."
             , "params" => "");
+    }
+
+    /*
+     |--------------------------------------------------------------------------
+     | (GET) GET BLOCKED USERS
+     |--------------------------------------------------------------------------
+     |
+     | Returns a list of users who have been blocked by the logged in user
+     |
+     | @param userId   - The entityId of the logged in user
+     | @param user     - Authorises whether the logged in user is the requester
+     |
+     */
+
+    public static function getBlockedUsers($userId, $user)
+    {
+        // Validate the requester is the session holder
+        if($user["entityId"] != $userId)
+            return Array("error" => "401", "You are not authorised to retrieve this users blocked list, retrieve your own.");
+
+        // Get the block list
+        $query = "SELECT entity.*, friends.Category
+                  FROM entity
+                  JOIN friends
+                  ON entity.Entity_Id IN (friends.Entity_Id1, friends.Entity_Id2)
+                  WHERE Category = 4 AND blockSender = :userId
+                  AND Entity_Id <> :userId
+                  GROUP BY Entity_Id";
+        $data  = Array(":userId" => $userId);
+
+        $res   = Database::getInstance()->fetchAll($query, $data);
+        if(count($res) > 0)
+            return Array("error" => "200", "message" => "Successfully retrieved " . count($res) . " blocked users.", "payload" => $res);
+
+        return Array("error" => "203", "message" => "You have not blocked any users.");
     }
 
 
@@ -782,11 +714,12 @@ class Friend
         // For example: user blocks friend, but the query must not do it the other way around too.
         // So...more basic queries for that.
         $query = "UPDATE friends
-                  SET Category = 4
+                  SET Category = 4,
+                      blockSender = :userId
                   WHERE (Entity_Id1 = :userId AND Entity_Id2 = :friendId
                     AND Entity_Id2 = :userId AND Entity_Id1 = :friendId)
-                    OR (Entity_Id1 = :userId AND Entity_Id2 = :friendId
-                    OR  Entity_Id2 = :userId AND Entity_Id1 = :friendId)";
+                    OR (Entity_Id1 = :friendId AND Entity_Id2 = :userId
+                    OR  Entity_Id2 = :friendId AND Entity_Id1 = :userId)";
 
         // Bind the parameters to the query
         $data = Array(":userId" => $userId, ":friendId" => $friendId);
@@ -794,7 +727,62 @@ class Friend
         if (Database::getInstance()->update($query, $data))
             return Array("error" => "200", "message" => "This user has been blocked successfully.");
         else
-            return Array("error" => "409", "message" => "Conflict: The relationship between the two users does not exist.");
+        {
+            // Prepare the query for adding a row into the friends table - Insert the reciprecal to, this will improve performance
+            $query = "INSERT INTO friends(Entity_Id1, Entity_Id2, Category, oldCategory, blockSender)
+                      VALUES              (:userId, :friendId, 4, 4, :userId) ";
+            $data  = Array(":userId" => $userId, ":friendId" => $friendId);
+            Database::getInstance()->insert($query, $data);
+            $query = "INSERT INTO friends(Entity_Id1, Entity_Id2, Category, oldCategory, blockSender)
+                      VALUES              (:friendId, :userId, 4, 4, :userId) ";
+            $data  = Array(":userId" => $userId, ":friendId" => $friendId);
+            Database::getInstance()->insert($query, $data);
+            return Array("error" => "200", "message" => "This user has been blocked successfully.");
+        }
+        return Array("error" => "409", "message" => "Conflict: The relationship between the two users does not exist.");
     }
 
+    /*
+     |--------------------------------------------------------------------------
+     | (PUT) UNBLOCK USER
+     |--------------------------------------------------------------------------
+     |
+     | Change the category of a friendship between two people in order to block
+     | the lines of communication. Simply updates all rows that pertain to the two
+     | user identifiers.
+     |
+     | @param userId   - The entityId. Sent as a header instead of as a part of a payload
+     |                   that is authenticated because the PUT verb was used.
+     |
+     | @param friendId - The identifier of the 'friend'.
+     |
+     |
+     */
+
+    public static function unblockUser($friendId, $userId)
+    {
+        // Unblocks the user
+        $query = "UPDATE friends
+                  SET Category = oldCategory,
+                      blockSender = 0
+                  WHERE (Entity_Id1 = :userId AND Entity_Id2 = :friendId
+                     AND Entity_Id2 = :userId AND Entity_Id1 = :friendId)
+                    OR (Entity_Id1 = :friendId AND Entity_Id2 = :userId
+                    OR  Entity_Id2 = :friendId AND Entity_Id1 = :userId)";
+
+        // Bind the parameters to the query
+        $data = Array(":userId" => $userId, ":friendId" => $friendId);
+
+        if (Database::getInstance()->update($query, $data))
+        {
+            // Delete previously blocked users
+            $query = "DELETE FROM friends WHERE oldCategory = 4
+                      AND Entity_Id1 = :userId AND Entity_Id2 = :friendId
+                       OR Entity_Id1 = :friendId AND Entity_Id2 = :userId";
+            Database::getInstance()->delete($query, $data);
+            return Array("error" => "200", "message" => "This user has been unblocked successfully.");
+        }
+        else
+            return Array("error" => "409", "message" => "Conflict: The relationship between the two users does not exist.");
+    }
 }

@@ -89,7 +89,7 @@ class Checkin
                 break;
             case "DELETE" : return $this->_DELETE();
                 break;
-            default       : throw new \Exception("Unsupported header type for resource: Checkin");
+            default       : throw new \Exception("Unsupported header type for resource: Check-In");
                 break;
         }
     }
@@ -194,7 +194,7 @@ class Checkin
 
         // Check for an invalid payload - we check FILES and POST arrays here for multipart data.
         if (empty($payload) && (empty($_FILES) && empty($_POST)))
-            return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid Checkin payload to the server.");
+            return Array("error" => "400", "message" => "Bad request, please ensure you have sent a valid Check-In payload to the server.");
 
         // Account for a payload that has been sent as a multipart form-data
         if (empty($payload))

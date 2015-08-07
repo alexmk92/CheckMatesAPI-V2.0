@@ -45,22 +45,60 @@ class Message
 
     public static function getChatMessages($friendId, $userId)
     {
+
+        // Get unsubscribed messages for this thread
+        $query = "SELECT mid, unsubscribed, COUNT(mid)
+                  FROM chatmessages
+                  WHERE sender = :userId OR receiver = :userId
+                  GROUP BY mid";
+
+        $data  = Array(":userId" => $userId);
+
+        $res   = Database::getInstance()->fetchAll($query, $data);
+        if(empty($res))
+            $unsubscribed = "0";
+        else {
+            $unsubscribed = "0";
+            $values = Array();
+            $subCount = 0;
+            foreach ($res as $user)
+            {
+                // Build the unsubscribed string
+                if(!in_array($user["unsubscribed"], $values))
+                {
+                    if($user["unsubscribed"] != '0')
+                    {
+                        $users = explode(", ", $user["unsubscribed"]);
+                        if(in_array($userId, $users))
+                        {
+                            $unsubscribed .= $user["mid"] . ", ";
+                            $subCount++;
+                        }
+                    }
+                }
+            }
+
+            $unsubscribed = rtrim($unsubscribed, ", ");
+        }
+
         // Get all of the comments between the two people.
-        $query = "SELECT mid, sender, receiver, Profile_Pic_Url, First_Name, Last_Name, message, msg_dt
+        $query = "SELECT mid, sender, receiver, Profile_Pic_Url, First_Name, Last_Name, Sex, message, msg_dt
                   FROM   entity
                   JOIN   chatmessages
                   ON     entity.Entity_Id = chatmessages.sender
                   WHERE  sender = :friendId
                   AND    receiver = :userId
+                  AND    mid NOT IN(".$unsubscribed.")
 
                   UNION ALL
 
-                  SELECT mid, sender, receiver, Profile_Pic_Url, First_Name, Last_Name, message, msg_dt
+                  SELECT mid, sender, receiver, Profile_Pic_Url, First_Name, Last_Name, Sex, message, msg_dt
                   FROM   entity
                   JOIN   chatmessages
                   ON     entity.Entity_Id = chatmessages.sender
                   WHERE  sender = :userId
                   AND    receiver = :friendId
+                  AND    mid NOT IN(".$unsubscribed.")
 
                   ORDER BY msg_dt ASC
                   ";
@@ -101,13 +139,48 @@ class Message
 
     public static function getConversations($userId)
     {
+        // Get unsubscribed messages for this thread
+        $query = "SELECT mid, unsubscribed, COUNT(mid)
+                  FROM chatmessages
+                  WHERE sender = :userId OR receiver = :userId
+                  GROUP BY mid";
+
+        $data  = Array(":userId" => $userId);
+
+        $res   = Database::getInstance()->fetchAll($query, $data);
+        if(empty($res))
+            $unsubscribed = "0";
+        else {
+            $unsubscribed = "0";
+            $values = Array();
+            $subCount = 0;
+            foreach ($res as $user)
+            {
+                // Build the unsubscribed string
+                if(!in_array($user["unsubscribed"], $values))
+                {
+                    if($user["unsubscribed"] != '0')
+                    {
+                        $users = explode(", ", $user["unsubscribed"]);
+                        if(in_array($userId, $users))
+                        {
+                            $unsubscribed .= $user["mid"] . ", ";
+                            $subCount++;
+                        }
+                    }
+                }
+            }
+
+            $unsubscribed = rtrim($unsubscribed, ", ");
+        }
+
         // Construct a query that will collect all of the entity information about users
         // that are in a conversation with each other.
         $query = "
                   SELECT * FROM
                   (
 
-                      SELECT Entity_Id, First_Name, Last_Name, Profile_Pic_Url, mid, message, msg_dt
+                      SELECT Entity_Id, First_Name, Last_Name, Sex, Profile_Pic_Url, mid, message, msg_dt
                       FROM   entity
                       JOIN   friends
                       ON     Entity_Id1 = Entity_Id OR Entity_Id2 = Entity_Id
@@ -115,10 +188,11 @@ class Message
                       ON     entity.Entity_Id = chatmessages.sender
                       WHERE  receiver = :userId
                       AND    Category != 4
+                      AND    mid NOT IN(".$unsubscribed.")
 
                       UNION ALL
 
-                      SELECT Entity_Id, First_Name, Last_Name, Profile_Pic_Url, mid, message, msg_dt
+                      SELECT Entity_Id, First_Name, Last_Name, Sex, Profile_Pic_Url, mid, message, msg_dt
                       FROM   entity
                       JOIN   friends
                       ON     Entity_Id2 = Entity_Id OR Entity_Id1 = Entity_Id
@@ -126,6 +200,7 @@ class Message
                       ON     entity.Entity_Id = chatmessages.receiver
                       WHERE  sender = :userId
                       AND    Category != 4
+                      AND    mid NOT IN(".$unsubscribed.")
 
                       ORDER BY mid DESC
 
@@ -197,9 +272,9 @@ class Message
             // Configure the push payload, we trim the name so that if it was Alexander John, it becomes Alexander.
             $pushPayload = Array(
                 "senderId" => $user['entityId'],
-                "senderName" => $user['firstName'] . " " . $user['lastName'],
+                "senderName" => $user['firstName'],
                 "receiver" => $friendId,
-                "message" => $user['firstName']. " " . $user['lastName'] . " sent you a message.",
+                "message" => $user['firstName']. " sent you a message.",
                 "type" => 2,
                 "date" => $now,
                 "messageId" => $res,
@@ -331,14 +406,15 @@ class Message
             return Array("error" => "401", "You are not authorised to delete this message as you did not send it.");
 
         // Prepare a query that's purpose will be to delete one message.
-        $query = "DELETE FROM chatmessages WHERE mid = :messageId AND sender = :senderId";
+        $updateString = ", " . $user["entityId"];
+        $query = "UPDATE chatmessages SET unsubscribed = CONCAT(unsubscribed, '".$updateString."') WHERE mid = :messageId AND sender = :senderId";
 
         // Bind the parameters to the query
-        $data = Array(":messageId" => $messageId, $user["entityId"]);
+        $data = Array(":messageId" => $messageId, ":senderId" => $user["entityId"]);
 
         // Delete a message using the mid.
         // If the query runs successfully, return a success 200 message.
-        if (Database::getInstance()->delete($query, $data))
+        if (Database::getInstance()->update($query, $data))
             return Array("error" => "200", "message" => "The message has been removed from the conversation.");
         else
             return Array("error" => "401", "message" => "You are not authorised to delete this message as you did not send it.");
@@ -367,18 +443,17 @@ class Message
         if(empty($user))
             return Array("error" => "401", "message" => "You are not authorised to delete this conversation as you did not create it.");
 
-        // Prepare a query that's purpose will be to delete all conversation records between two people.
-        $query = " DELETE FROM chatmessages
-                   WHERE receiver = :userId   AND sender = :friendId
-                   OR    receiver = :friendId AND sender = :userId
-                   ";
- 
         // Bind the parameters to the query
-        $data = Array(":userId" => $user['entityId'], ":friendId" => $friendId);
+        $data = Array(":userId" => $user["entityId"], ":friendId" => $friendId);
+
+        $updateString = ", " . $user["entityId"];
+        $query = "UPDATE chatmessages SET unsubscribed = CONCAT(unsubscribed, '".$updateString."')
+                  WHERE sender = :userId AND receiver = :friendId
+                  OR sender = :friendId AND receiver = :userId";
 
         // Delete all records of friendship between the two users.
         // If the query runs successfully, return a success 200 message.
-        if (Database::getInstance()->delete($query, $data))
+        if (Database::getInstance()->update($query, $data))
             return Array("error" => "200", "message" => "The conversation has been deleted successfully.");
         else
             return Array("error" => "401", "message" => "You are not authorised to delete this conversation as you did not create it.");

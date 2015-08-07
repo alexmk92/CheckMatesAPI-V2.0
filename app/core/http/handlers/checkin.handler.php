@@ -35,7 +35,7 @@ class Checkin
     |
     */
 
-    public static function getCheckins($args, $user, $limit = 50)
+    public static function getCheckins($args, $user, $limit = 500)
     {
         if(empty($user))
             return Array("error" => "401", "message" => "You are not authorised to access this resource, please re-login to generate a new session token.");
@@ -73,6 +73,8 @@ class Checkin
 
         // Determine the radius that the spatial query will be set too
         $userFilter    = "";
+        $kinektFriends   = "";
+        $facebookFriends = "";
         $users         = "";
         $data          = Array();
 
@@ -91,33 +93,31 @@ class Checkin
 
         // Get a string of our friends that we can use to include or exclude them from the query
         $userData = Array();
-        if(empty($userData[":category"]))
-        {
-            if(($userPreferences["facebook"] == 1 && $userPreferences["kinekt"] == 1) ||
-               ($userPreferences["facebook"] == 0 && $userPreferences["kinekt"] == 0)
-            )
-                $userData[":category"] = "1 OR Category = 2";
-            else
-            {
-                if($userPreferences["facebook"] == 1)
-                    $userData[":category"] = "1";
-                if($userPreferences["kinekt"] == 1)
-                    $userData[":category"] = "2";
-            }
-        }
+        $category = "";
         if(empty($userData[":entityId"]))
             $userData[":entityId"] = $user["entityId"];
 
-        $userQuery = "SELECT DISTINCT Entity_Id1 AS id FROM friends WHERE Entity_Id2 = :entityId AND Category = :category GROUP BY Entity_Id1";
+        $userQuery = "SELECT Entity_Id1 AS id, Category
+                      FROM friends
+                      WHERE (Entity_Id2 = :entityId OR Entity_Id1 = :entityId)
+                        AND (Category = 1 OR Category = 2)
+                   GROUP BY Entity_Id1";
+
         $res = Database::getInstance()->fetchAll($userQuery, $userData);
         if(count($res) > 0)
         {
             foreach($res as $friend)
             {
-                $users .= $friend["id"] .= ", ";
+                $users .= $friend["id"] . ", ";
+                if($friend["Category"] == 1)
+                    $facebookFriends .= $friend["id"] . ", ";
+                else if($friend["Category"] == 2)
+                    $kinektFriends .= $friend["id"] . ", ";
             }
 
-            $users = rtrim($users, ", ");
+            $facebookFriends = rtrim($facebookFriends, ", ");
+            $kinektFriends   = rtrim($kinektFriends, ", ");
+            $users           = rtrim($users, ", ");
         }
 
         // Check if we need to get everyone
@@ -129,8 +129,12 @@ class Checkin
             if($users == "")
                 $users = 0;
 
-            if($userPreferences["facebook"] == 0 || $userPreferences["kinekt"] == 0)
+            if($userPreferences["facebook"] == 0 && $userPreferences["kinekt"] == 0)
                 $userFilter .= " AND ent.Entity_Id NOT IN ( " . $users . " )";
+            else if($userPreferences["facebook"] == 0)
+                $userFilter .= " AND ent.Entity_Id NOT IN ( " . $facebookFriends . " )";
+            else if($userPreferences["kinekt"] == 0)
+                $userFilter .= " AND ent.Entity_Id NOT IN ( " . $kinektFriends . " )";
 
             // Bind the new params to our data array
             if(empty($data[":lowerAge"]))
@@ -145,10 +149,22 @@ class Checkin
             {
                 $userFilter = " AND ent.Entity_Id IN ( " . $user["entityId"] . " )";
             }
-            else
-            {
-                $users .= $user["entityId"];
-                $userFilter = " AND ent.Entity_Id IN ( " . $users . " )";
+            else {
+                if ($userPreferences["kinekt"] == 1 && $userPreferences["facebook"] == 1)
+                {
+                    $users .= ", " . $user["entityId"];
+                    $userFilter = " AND ent.Entity_Id IN ( " . $users . " )";
+                }
+                else if ($userPreferences["kinekt"] == 1)
+                {
+                    $kinektFriends .= ", " . $user["entityId"];
+                    $userFilter = " AND ent.Entity_Id IN ( " . $kinektFriends . " )";
+                }
+                else if ($userPreferences["facebook"] == 1)
+                {
+                    $facebookFriends .= ", " . $user["entityId"];
+                    $userFilter = " AND ent.Entity_Id IN ( " . $facebookFriends . " )";
+                }
             }
 
         }
@@ -174,6 +190,9 @@ class Checkin
         if(empty($data[":expiry"]))
             $data[":expiry"] = (int)$userPreferences["expiry"];
 
+        if($data[":expiry"] == 8)
+            $data[":expiry"] = 1000;
+
         // Get the users based on their preferences
         $query = "SELECT
                         ent.Entity_Id,
@@ -183,15 +202,16 @@ class Checkin
                         ent.First_Name AS first_name,
                         ent.Last_CheckIn_Dt AS last_checkin,
                         ent.Last_Name AS last_name,
+                        ent.Sex AS Sex,
                         checkins.Place_Name,
                         checkins.Place_Lat,
                         checkins.Place_Long,
                         checkins.Chk_Dt,
                         (
-                              SELECT COUNT(DISTINCT entityId)
-                                FROM checkinArchive
-                               WHERE placeLat = checkins.Place_Lat
-                                 AND placeLng = checkins.Place_Long
+                              SELECT COUNT(DISTINCT Entity_Id)
+                                FROM checkins x
+                               WHERE x.Place_Lat  = checkins.Place_Lat
+                                 AND x.Place_Long = checkins.Place_Long
                          ) AS place_people,
                         checkins.Chk_Id AS checkin_id,
                         checkins.Img_Url AS checkin_photo,
@@ -204,7 +224,6 @@ class Checkin
                             LIMIT 1
                         ) AS FC,
                         checkins.Chk_Dt AS date,
-                        MAX(checkins.Chk_Dt) AS highestDate,
                         TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) AS ago
                   FROM  entity ent
                   JOIN  checkins
@@ -221,6 +240,9 @@ class Checkin
                   OR    ent.Entity_Id = :entityId
                   AND   TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) <= :expiry
                   AND   TIMESTAMPDIFF(HOUR, checkins.Chk_Dt, NOW()) >= 0
+                  AND   checkins.Chk_Dt = ent.Last_CheckIn_Dt
+                  AND   ent.Create_Dt != ent.Last_CheckIn_Dt
+                  AND   ent.Last_CheckIn_Place IS NOT NULL
                   GROUP BY ent.Entity_Id
                   ORDER BY distance ASC
                   ";
@@ -232,7 +254,7 @@ class Checkin
         // Ensure all privacy is taken care of here...i.e. no facebook friends must be returned with no last name
         else
         {
-            $res = array_splice($res, 0, 50);
+            $res = array_splice($res, 0, $limit);
             $users = Array();
 
             if($res[0]["distance"] > 0)
@@ -278,7 +300,7 @@ class Checkin
             return Array("error" => "401", "message" => "You are not authorised to access this resource.");
 
         // Get the friends of this user
-        $query = "SELECT Entity_Id1 AS id FROM friends WHERE Entity_Id2 = :userId";
+        $query = "SELECT Entity_Id1 AS id FROM friends WHERE Entity_Id2 = :userId AND Category <> 4";
         $data  = Array(":userId" => $userId);
         $friends = "";
 
@@ -287,7 +309,7 @@ class Checkin
         {
             foreach($res as $friend)
                 $friends .= $friend["id"] .= ", ";
-            $friends = rtrim($friends, ', ');
+            $friends .= $userId;
         }
 
         // Build the query
@@ -296,6 +318,7 @@ class Checkin
                         E.Entity_Id,
                         E.Fb_Id AS facebook_id,
                         E.Profile_Pic_Url,
+                        E.Sex AS Sex,
                         E.Last_CheckIn_Lat,
                         E.Last_CheckIn_Long,
                         E.First_Name AS first_name,
@@ -311,10 +334,10 @@ class Checkin
                         C.Chk_Dt AS date,
                         C.Tagged_Ids,
                         (
-                            SELECT COUNT(*) FROM checkin_comments cc WHERE cc.Chk_Id = C.Chk_Id
+                            SELECT COUNT(DISTINCT cc.Entity_Id) FROM checkin_comments cc WHERE cc.Chk_Id = C.Chk_Id
                         ) AS num_comments,
                         (
-                            SELECT COUNT(*) FROM checkin_likes cl WHERE cl.Chk_Id = C.Chk_Id
+                            SELECT COUNT(DISTINCT cl.Entity_Id) FROM checkin_likes cl WHERE cl.Chk_Id = C.Chk_Id
                         ) AS num_likes
                   FROM
                         checkins C
@@ -330,13 +353,11 @@ class Checkin
                         checkin_likes CL
                     ON
                         C.Chk_Id = CL.Chk_Id
-                  LEFT JOIN
+                  JOIN
                         setting s
                     ON
                         s.Entity_Id = E.Entity_Id
                   WHERE
-                        s.Pri_Visability = 2
-                    OR
                         E.Entity_Id IN (
                             ".$friends."
                         )
@@ -347,44 +368,45 @@ class Checkin
                   ";
 
 
+
         $res = Database::getInstance()->fetchAll($query, $data);
         if(count($res) > 0)
         {
             // Return tagged user ID's
             $arr = json_decode(json_encode($res), true);
             $arr = array_splice($arr, 0, $limit);
+
             for($i = 0; $i < count($arr); $i++)
             {
+                $arr[$i]["last_name"] = "";
                 $tagged    = str_replace(Array("[", "]"), "", $arr[$i]["Tagged_Ids"]);
                 $taggedArr = explode(", ", $tagged);
 
-                $data = Array();
-                $query  = "SELECT first_name, last_name, email, profile_pic_url, entity_id
+                if(!empty($taggedArr)) {
+                    $data = Array();
+                    $query = "SELECT first_name, last_name, email, profile_pic_url, entity_id
                            FROM entity
                            WHERE entity_id IN (
                           ";
 
-                if(count($taggedArr) > 0 && !empty($taggedArr))
-                {
-                    // binds the users to the IN query
-                    for($j = 0; $j < count($taggedArr); $j++)
-                    {
-                        $query .= ":allow_" . $j;
-                        $data[":allow_".$j] = $taggedArr[$j];
-                        if($j < count($taggedArr)-1)
-                            $query .= ",";
-                        else
-                            $query .= ")";
+                    if (count($taggedArr) > 0 && !empty($taggedArr)) {
+                        // binds the users to the IN query
+                        for ($j = 0; $j < count($taggedArr); $j++) {
+                            $query .= ":allow_" . $j;
+                            $data[":allow_" . $j] = $taggedArr[$j];
+                            if ($j < count($taggedArr) - 1)
+                                $query .= ",";
+                            else
+                                $query .= ")";
+                        }
+                    } else
+                        $query .= "0)";
+
+
+                    $res = Database::getInstance()->fetchAll($query, $data);
+                    if (count($res) > 0) {
+                        $arr[$i]["Tagged_Users"] = json_decode(json_encode($res), true);
                     }
-                }
-                else
-                    $query .= "0)";
-
-
-                $res = Database::getInstance()->fetchAll($query, $data);
-                if(count($res) > 0)
-                {
-                    $arr[$i]["Tagged_Users"] = json_decode(json_encode($res), true);
                 }
 
                 // Set the liked flag
@@ -395,7 +417,7 @@ class Checkin
 
         }
         else
-            return Array("error" => "203", "message" => "There were not activities to be returned for this user. Make a checkin!");
+            return Array("error" => "203", "message" => "There were not activities to be returned for this user. Make a Check-In!");
     }
 
     /*
@@ -447,10 +469,10 @@ class Checkin
                          checkins.Tagged_Ids,
                          checkins.Chk_Dt,
                          (
-                              SELECT COUNT(DISTINCT entityId)
-                                FROM checkinArchive
-                               WHERE placeLat = checkins.Place_Lat
-                                 AND placeLng = checkins.Place_Long
+                              SELECT COUNT(DISTINCT Entity_Id)
+                                FROM checkins x
+                               WHERE x.Place_Lat  = checkins.Place_Lat
+                                 AND x.Place_Long = checkins.Place_Long
                          ) AS Place_People,
                          entity.First_Name,
                          entity.Fb_Id AS facebook_id,
@@ -461,10 +483,10 @@ class Checkin
                          entity.Sex,
                          entity.Score,
                          (
-                            SELECT COUNT(*) FROM checkin_comments WHERE checkin_comments.Chk_Id = checkins.Chk_Id
+                            SELECT COUNT(DISTINCT Entity_Id) FROM checkin_comments WHERE checkin_comments.Chk_Id = checkins.Chk_Id
                          ) AS comment_count,
                          (
-                            SELECT COUNT(*) FROM checkin_likes WHERE checkin_likes.Chk_Id = checkins.Chk_Id
+                            SELECT COUNT(DISTINCT Entity_Id) FROM checkin_likes WHERE checkin_likes.Chk_Id = checkins.Chk_Id
                          ) AS like_count
                   FROM checkins
                   JOIN entity
@@ -569,7 +591,7 @@ class Checkin
         $checkinImageURL = "";
 
         // Check all required fields are set
-        if(empty($args["place_name"]) || empty($args["place_lat"]) || empty($args["place_long"]) || empty($args["place_country"]) || empty($args["place_people"]))
+        if(empty($args["place_name"]) || empty($args["place_lat"]) || empty($args["place_long"]) || empty($args["place_country"]) || (empty($args["place_people"]) && $args["place_people"] != 0))
             return Array("error" => "400", "message" => "The checkin provided must have its [place_name], [place_long], [place_lat], [place_country] and [place_people] set, check the data you sent in the payload.", "payload" => $args);
 
         // Format unset fields for the checkin object
@@ -648,7 +670,6 @@ class Checkin
                  ";
 
 
-
         $placeData = Array(
             ":entityId"      => $token["entityId"],
             ":placeName"     => $args["place_name"],
@@ -668,6 +689,7 @@ class Checkin
         $res = Database::getInstance()->insert($query, $placeData);
         if($res > 0)
         {
+            $checkinId = $res;
             // Everything has succeeded so far, proceed to do scoring and update the user here...
             $query = "UPDATE entity
                       SET score = Score + 10,
@@ -688,36 +710,6 @@ class Checkin
             );
 
             Database::getInstance()->update($query, $data);
-
-            $query = "
-                    INSERT INTO checkinArchive
-                    (
-                        entityId,
-                        placeName,
-                        placeLat,
-                        placeLng,
-                        Chk_Dt
-                    )
-                    VALUES
-                    (
-                        :entityId,
-                        :placeName,
-                        :placeLat,
-                        :placeLng,
-                        :chkDate
-                    )
-                 ";
-
-            $data = Array(
-                ":entityId"  => $token["entityId"],
-                ":placeName" => $args["place_name"],
-                ":placeLat"  => $args["place_lat"],
-                ":placeLng"  => $args["place_long"],
-                ":chkDate"   => $now
-            );
-            // Check if the archive insert succeeded
-            if(Database::getInstance()->insert($query, $data) == 0)
-                return Array("error" => "500", "message" => "Internal server error when attempting to create the new Checkin. Please try again.");
         }
         else
         {
@@ -759,13 +751,13 @@ class Checkin
                         // Configure the push payload, we trim the name so that if it was Alexander John, it becomes Alexander.
                         $pushPayload = Array(
                             "senderId" => $token["entityId"],
-                            "senderName" => $token["firstName"] . " " . $token["lastName"],
+                            "senderName" => $token["firstName"],
                             "receiver" => (int)$taggedUser,
-                            "message" => $token["firstName"] . " " . $token["lastName"] . " has tagged you in a checkin.",
+                            "message" => $token["firstName"] . " has tagged you in a Check-In.",
                             "type" => 4,
                             "date" => $now,
-                            "messageId" => NULL,
-                            "messageType" => NULL
+                            "messageId" => $checkinId,
+                            "messageType" => 4
                         );
 
                         $res = $server->sendNotification($pushPayload);
@@ -803,13 +795,13 @@ class Checkin
                     // Configure the push payload, we trim the name so that if it was Alexander John, it becomes Alexander.
                     $pushPayload = Array(
                         "senderId" => $token["entityId"],
-                        "senderName" => $token["firstName"] . " " . $token["lastName"],
+                        "senderName" => $token["firstName"],
                         "receiver" => $recipient->entity_id,
-                        "message" => $token["firstName"] . " " . $token["lastName"] . " just checked in to " . $args["place_name"],
+                        "message" => $token["firstName"] . " just checked in to " . $args["place_name"],
                         "type" => 1,
                         "date" => $now,
-                        "messageId" => NULL,
-                        "messageType" => NULL
+                        "messageId" => $checkinId,
+                        "messageType" => 1
                     );
 
                     $res = $server->sendNotification($pushPayload);
@@ -878,15 +870,17 @@ class Checkin
         $query = "SELECT DISTINCT entity.Entity_Id,
                                   entity.First_Name AS first_name,
                                   entity.Last_Name AS last_name,
+                                  entity.Sex,
                                   entity.Profile_Pic_Url AS profilePic,
-                                  checkinArchive.placeLat AS latitude,
-                                  checkinArchive.placeLng AS longitude,
-                                  checkinArchive.placeName
+                                  checkins.Place_Lat AS latitude,
+                                  checkins.Place_Long AS longitude,
+                                  checkins.Place_Name,
+                                  checkins.Chk_Dt
                   FROM entity
-                  JOIN checkinArchive
-                    ON checkinArchive.entityId = entity.Entity_Id
-                  WHERE placeLat = :latitude
-                  AND   placeLng = :longitude
+                  JOIN checkins
+                    ON checkins.Entity_Id = entity.Entity_Id
+                  WHERE Place_Lat = :latitude
+                  AND   Place_Long = :longitude
                   GROUP BY entity.Entity_Id
                   ORDER BY first_name ASC
                   ";
@@ -971,7 +965,10 @@ class Checkin
                 if($_FILES['file']['error'] > 0)
                     $flag = 400;
                 else
+                {
+                    //self::fit_image_file_to_width($_FILES["file"]["tmp_name"], 720, $_FILES["file"]["type"]);
                     $flag = move_uploaded_file($_FILES['file']['tmp_name'], $imageURL);
+                }
 
                 if ($flag == 1)
                     $flag = 201;
@@ -980,6 +977,64 @@ class Checkin
 
         // Final return type, should be 204, if 0 or array then the upload failed and we return an error back to the client.
         return Array("error" => $flag, "imageUrl" => "public/img/checkins/" . "c" . $filename);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Compress Image
+    |--------------------------------------------------------------------------
+    |
+    | Compresses the image before we upload, this accounts for all mime types
+    | but will default to image/jpeg.  This method will compress to a given
+    | size so that we don't store super large images on the server.
+    |
+    | @param $file - The path to the file to be upload from $_FILES array
+    |
+    */
+
+    private static function fit_image_file_to_width($file, $w, $mime = 'image/jpeg') {
+        list($width, $height) = getimagesize($file);
+        $newwidth = $w;
+        $newheight = $w * $height / $width;
+
+        switch ($mime) {
+            case 'image/jpeg':
+                $src = imagecreatefromjpeg($file);
+                break;
+            case 'image/png';
+                $src = imagecreatefrompng($file);
+                break;
+            case 'image/bmp';
+                $src = imagecreatefromwbmp($file);
+                break;
+            case 'image/gif';
+                $src = imagecreatefromgif($file);
+                break;
+        }
+
+        $rotate = imagerotate($src, -90, 0);
+        $dst = imagecreatetruecolor($newwidth, $newheight);
+
+        imagecopyresampled($dst, $rotate, 0, 0, 0, 0, $newwidth, $newheight, $width, $height);
+
+        switch ($mime) {
+            case 'image/jpeg':
+                imagejpeg($dst, $file);
+                break;
+            case 'image/png';
+                imagealphablending($dst, false);
+                imagesavealpha($dst, true);
+                imagepng($dst, $file);
+                break;
+            case 'image/bmp';
+                imagewbmp($dst, $file);
+                break;
+            case 'image/gif';
+                imagegif($dst, $file);
+                break;
+        }
+
+        imagedestroy($dst);
     }
 
     /*
@@ -997,6 +1052,7 @@ class Checkin
                          entity.First_Name,
                          entity.Last_Name,
                          entity.Profile_Pic_Url,
+                         entity.Sex,
                          checkins.Chk_Id,
                          checkins.Entity_Id,
                          checkins.Place_Name,
@@ -1016,15 +1072,15 @@ class Checkin
                             SELECT COUNT(1) FROM checkin_likes WHERE Chk_Id = :checkinId
                          ) AS like_count,
                          (
-                              SELECT COUNT(DISTINCT entityId)
-                                FROM checkinArchive
-                               WHERE placeLat = checkins.Place_Lat
-                                 AND placeLng = checkins.Place_Long
+                              SELECT COUNT(DISTINCT Entity_Id)
+                                FROM checkins x
+                               WHERE x.Place_Lat  = checkins.Place_Lat
+                                 AND x.Place_Long = checkins.Place_Long
                          ) AS Place_People
                   FROM checkins
                   JOIN entity
                   ON checkins.Entity_Id = entity.Entity_Id
-                  WHERE chk_id = :checkinId";
+                  WHERE Chk_Id = :checkinId";
 
         $data  = Array(":checkinId" => $args["checkinId"], ":entityId" => $user["entityId"]);
 
@@ -1035,8 +1091,7 @@ class Checkin
         else {
             $res = json_decode(json_encode($res), true);
             $comments = self::getComments($args["checkinId"], $user["entityId"], $user);
-            if (empty($res["comments"]))
-                $res["comments"] = $comments["payload"];
+            $res["comments"] = $comments["payload"];
             $like = self::getLikes($args["checkinId"]);
             $res["likes"] = $like;
 
@@ -1049,7 +1104,7 @@ class Checkin
                 $taggedArr = explode(", ", $tagged);
 
                 $data = Array();
-                $query = "SELECT first_name, last_name, email, profile_pic_url, entity_id
+                $query = "SELECT first_name, last_name, email, profile_pic_url, entity_id, Sex
                            FROM entity
                            WHERE entity_id IN (
                           ";
@@ -1113,9 +1168,9 @@ class Checkin
                     if (!empty($res)) {
                         $pushPayload = Array(
                             "senderId" => (int)$entId,
-                            "senderName" => $res->First_Name . " " . $res->Last_Name,
+                            "senderName" => $res->First_Name,
                             "receiver" => (int)$checkinOwner,
-                            "message" => $res->First_Name . " " . $res->Last_Name . " liked your checkin.",
+                            "message" => $res->First_Name . " liked your Check-In.",
                             "type" => 4,
                             "date" => gmdate('Y-m-d H:i:s', time()),
                             "messageId" => $checkinId,
@@ -1154,7 +1209,7 @@ class Checkin
     {
 
         // Get all of the comments
-        $query = "SELECT DISTINCT ent.Entity_Id, ent.Profile_Pic_Url, ent.First_Name, ent.Last_Name, ent.Last_CheckIn_Place, comments.Content, comments.Comment_Dt
+        $query = "SELECT DISTINCT ent.Entity_Id, ent.Profile_Pic_Url, ent.First_Name, ent.Last_Name, ent.Sex AS Sex, ent.Last_CheckIn_Place, comments.Content, comments.Comment_Dt
                   FROM   checkin_comments comments
                   JOIN   entity ent
                   ON     comments.Entity_Id = ent.Entity_Id
@@ -1231,11 +1286,12 @@ class Checkin
 
     private static function getLikes($chkId)
     {
-        $query = "SELECT entity.Entity_Id, entity.First_Name, entity.Last_Name, entity.Profile_Pic_Url, entity.Last_CheckIn_Place
+        $query = "SELECT entity.Entity_Id, entity.First_Name, entity.Last_Name, entity.Sex AS Sex, entity.Profile_Pic_Url, entity.Last_CheckIn_Place
                   FROM checkin_likes
                   LEFT JOIN entity
                   ON entity.Entity_Id = checkin_likes.Entity_Id
-                  WHERE Chk_Id = :checkinId";
+                  WHERE Chk_Id = :checkinId
+                  GROUP BY Entity_Id";
 
         $data  = Array(":checkinId" => $chkId);
 
@@ -1294,9 +1350,9 @@ class Checkin
                     if (!empty($res)) {
                         $pushPayload = Array(
                             "senderId" => (int)$user["entityId"],
-                            "senderName" => $res->First_Name . " " . $res->Last_Name,
+                            "senderName" => $res->First_Name,
                             "receiver" => (int)$checkinOwner,
-                            "message" => $res->First_Name . " " . $res->Last_Name . " commented on your checkin!",
+                            "message" => $res->First_Name . " commented on your Check-In!",
                             "type" => 4,
                             "date" => gmdate('Y-m-d H:i:s', time()),
                             "messageId" => $checkInId,
@@ -1304,7 +1360,41 @@ class Checkin
                         );
 
                         $server = new \PushServer();
-                        return $server->sendNotification($pushPayload);
+                        $server->sendNotification($pushPayload);
+                    }
+                }
+
+                // Send a message to each user who was at the checkin
+                $query = "SELECT e.First_Name, e.Last_Name, e.Entity_Id AS Entity_Id, s.Notif_CheckIn_Activity
+                              FROM entity e
+                              JOIN checkin_comments cc
+                              ON e.Entity_Id = cc.Entity_Id
+                              JOIN setting s
+                              ON e.Entity_Id = s.Entity_Id
+                              WHERE e.Entity_Id <> :user_id
+                              AND e.Entity_Id <> :checkin_owner
+                              AND s.Notif_CheckIn_Activity = 1
+                              AND Chk_Id = :checkin_id";
+
+                $data  = Array(":user_id" => (int)$user["entityId"], ":checkin_id" => $checkInId, ":checkin_owner" => (int)$checkinOwner);
+                $res = Database::getInstance()->fetchAll($query, $data);
+                if(!empty($res))
+                {
+                    foreach($res as $recipient)
+                    {
+                        $pushPayload = Array(
+                            "senderId" => (int)$user["entityId"],
+                            "senderName" => $user["firstName"],
+                            "receiver" => (int)$recipient["Entity_Id"],
+                            "message" => $user["firstName"] . " commented on a Check-In you were active on!",
+                            "type" => 4,
+                            "date" => gmdate('Y-m-d H:i:s', time()),
+                            "messageId" => $checkInId,
+                            "messageType" => 4
+                        );
+
+                        $server = new \PushServer();
+                        $server->sendNotification($pushPayload);
                     }
                 }
             }

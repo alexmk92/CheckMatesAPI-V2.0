@@ -26,33 +26,33 @@ abstract class API
     * Defines the HTTP method that the request shall be made in (GET, PUT, POST or DELETE)
     */
     protected $method = '';
-    
+
     /*
     * Property: Endpoint
     * The Model requested by the URI i.e. /users
     */
     protected $endpoint = '';
-    
+
     /*
     * Property: Verb
     * Optional request parameter to further filter the results from the handler, for example
     * /users/AUS would target all Australian users
     */
     protected $verb = '';
-    
+
     /*
     * Property: Args
     * An array of additional URI components which are appended to the endpoint to get a further
     * refined query. I.e. /<endpoint>/<verb>/<arg0>/<arg1> or /<endpoint>/<arg0>
     */
     protected $args = Array();
-    
+
     /*
     * Property: File
     * Stores the input file from the request
     */
     protected $file = Null;
-    
+
     /*
     --------------------------------------------------------------------------
     | Constructor: __construct
@@ -72,12 +72,11 @@ abstract class API
         */
         header("Access-Control-Allow-Origin: *");
         header("Access-Control-Allow-Methods: *");
-        header("Content-Type: application/json; charset=utf8mb4");
-        ini_set("default-charset", "utf8mb4");
+        header("Content-Type: application/json;");
 
-       /*
-        * Set the key specified in the request sent from the client
-        */
+        /*
+         * Set the key specified in the request sent from the client
+         */
 
         if(array_key_exists('HTTP_APIKEY', $_SERVER))
             $_REQUEST['apiKey'] = $_SERVER['HTTP_APIKEY'];
@@ -101,39 +100,39 @@ abstract class API
         {
             switch($_SERVER['HTTP_X_HTTP_METHOD'])
             {
-                case 'PUT': 
+                case 'PUT':
                     $this->method = 'PUT'; break;
-                case 'DELETE' : 
+                case 'DELETE' :
                     $this->method = 'DELETE'; break;
-                default: 
+                default:
                     throw new Exception("Unexpected Header"); break;
             }
-        } 
-        
+        }
+
         /*
         * Set the request method (GET, PUT, POST or DELETE)
         */
         switch($this->method)
         {
-            case 'GET': 
+            case 'GET':
                 $this->_sanitiseResource($_GET); break;
-            case 'PUT': 
+            case 'PUT':
                 $this->_sanitiseResource($_GET);
                 $this->file = file_get_contents("php://input"); break;
-            case 'POST': 
+            case 'POST':
                 $this->_sanitiseResource($_POST); break;
             case 'DELETE': break;
-            default: 
+            default:
                 $this->_setResponse('Invalid Method', 405); break;
         }
 
-       /*
-        * Reset the request object and write it back to the caller
-        */
+        /*
+         * Reset the request object and write it back to the caller
+         */
 
         $request = $_REQUEST;
     }
-    
+
     /*
     |--------------------------------------------------------------------------
     | Call Resource
@@ -149,7 +148,7 @@ abstract class API
     | @return xml/json : The response object, either XML or JSON
     |
     */
-    
+
     public function _callResource()
     {
         /*
@@ -188,7 +187,7 @@ abstract class API
         // By default, return an error that the endpoint doesn't exist.
         return $this->_setResponse("The Endpoint: $this->endpoint does not exist.", 404);
     }
-    
+
     /*
     |--------------------------------------------------------------------------
     | Send Response
@@ -207,11 +206,11 @@ abstract class API
     |                principles as outlined in Roy Fieldings thesis.
     |
     */
-    
+
     private function _setResponse($data, $statusCode = 200)
     {
         // Set default payload and message values
-        $payload = json_encode(Array());
+        $payload = json_encode("[]");
         $message = json_encode($data);
 
         // This isn't an exception, set the message and payload appropriately
@@ -234,14 +233,14 @@ abstract class API
 
         // Set the response object
         $response = array(
-                            'error'   => $statusCode,
-                            'message' => json_decode($message),
-                            'data'    => json_decode($payload)
-                         );
+            'error'   => $statusCode,
+            'message' => json_decode($message),
+            'data'    => json_decode($payload)
+        );
 
         return json_encode($response);
     }
-    
+
     /*
     |--------------------------------------------------------------------------
     | Sanitise Resource
@@ -257,12 +256,12 @@ abstract class API
     |                stripped to ensure the data is secure
     |
     */
-    
+
     private function _sanitiseResource($data)
     {
         // create output array
         $outputResource = Array();
-        
+
         // check if we are on the array, if so then for each key call this
         // method recursively 
         if(is_array($data))
@@ -293,14 +292,14 @@ abstract class API
     public function _getInfo()
     {
         return array (
-                        'endpoint' => $this->endpoint,
-                        'verb' => $this->verb,
-                        'args' => $this->args,
-                        'method' => $this->method,
-                        'file' => $this->file
-                     );
+            'endpoint' => $this->endpoint,
+            'verb' => $this->verb,
+            'args' => $this->args,
+            'method' => $this->method,
+            'file' => $this->file
+        );
     }
-    
+
     /*
     |--------------------------------------------------------------------------
     | Request Status
@@ -315,7 +314,7 @@ abstract class API
     | @return string : The message associated with that key
     |
     */
-    
+
     private function _getStatus($errCode)
     {
         $message = array(
@@ -361,7 +360,7 @@ abstract class API
             504 => 'Gateway Timeout',
             505 => 'HTTP Version Not Supported'
         );
-        
+
         // Return the correct messages, assert based on the input code given
         return ($message[$errCode]) ? $message[$errCode] : $message[500];
     }

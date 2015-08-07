@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="DataSourceManagerImpl" format="xml" hash="4199539670">
+  <component name="DataSourceManagerImpl" format="xml" hash="1447827542">
     <data-source source="LOCAL" name="MySQL - kinekt@localhost" uuid="21c1972e-41ff-48ca-81e3-37a12e3208f0">
       <driver-ref>mysql</driver-ref>
       <synchronize>true</synchronize>

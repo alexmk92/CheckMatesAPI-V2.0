@@ -78,9 +78,14 @@ class PushServer
                   WHERE s.Entity_Id = :entityId";
         $settings = Database::getInstance()->fetchAll($query, $data);
 
+        // Get the sender details
+        $query    = "SELECT Sex FROM entity WHERE Entity_Id = :entityId";
+        $sexData  = Array(":entityId" => $payload["senderId"]);
+        $sex      = Database::getInstance()->fetch($query, $sexData);
+
         // Checkin Activity
         if(((int)$payload["type"] == 1 && (int)$settings[0]["checkin_activity"] == 0))
-            return Array("error" => "200", "message" => "This user does not wish to receive checkin notifications.");
+            return Array("error" => "200", "message" => "This user does not wish to receive Check-In notifications.");
         // Message received
         if(((int)$payload["type"] == 2 && (int)$settings[0]["message"] == 0))
             return Array("error" => "200", "message" => "This user does not wish to receive message notifications.");
@@ -92,6 +97,10 @@ class PushServer
         if(((int)$payload["type"] == 4 && (int)$settings[0]["checkin_activity"] == 0) ||
            ((int)$payload["type"] == 4 && (int)$settings[0]["tag"] == 0))
             return Array("error" => "200", "message" => "This user does not wish to receive tag or activity notifications.");
+
+        // Add sex to payload
+        if(empty($payload["sex"]))
+            $payload["sex"] = $sex->Sex;
 
         // If we get here then we know we need to send the notification
         // Find a list of all destination devices
@@ -158,7 +167,7 @@ class PushServer
             $body['aps'] = Array(
                 "content-available" => 1,
                 "alert"             => $payload["message"],
-                "sound"             => "default",
+                "sound"             => "",
                 "nt"                => $payload["type"],
                 "sid"               => $payload["senderId"],
                 "sname"             => $payload["senderName"],
@@ -166,8 +175,10 @@ class PushServer
                 "mt"                => $payload["messageType"],
                 "mid"               => $payload["messageId"],
                 "message"           => $payload["sentMessage"],
+                "sex"               => $payload["sex"],
                 "badge"             => "1"
             );
+
             $pushPayload = json_encode($body);
             $msg = chr(0) . pack('n', 32) . pack('H*', $deviceToken) . pack('n', strlen($pushPayload)) . $pushPayload;
 
@@ -220,6 +231,7 @@ class PushServer
             "sname"      => $payload["senderName"],
             "dt"         => $payload["date"],
             "mt"         => $payload["messageType"],
+            "sex"        => $payload["sex"],
             "mid"        => $payload["messageId"]
         );
         $body = Array("registration_ids" => $pushToken, "data" => $data);
