@@ -123,4 +123,19 @@ class CheckmatesAPI extends API
         return $checkinHandler->_handleRequest();
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Endpoint: Follower
+    |--------------------------------------------------------------------------
+    |
+    | Handle the request in a new Follower endpoint.
+    |
+    */
+
+    protected function Follower() {
+        require "./app/core/http/endpoints/follower.endpoint.php";
+        $followerHandler = new Endpoints\Follower($this);
+        return $followerHandler->_handleRequest();
+    }
+
 }

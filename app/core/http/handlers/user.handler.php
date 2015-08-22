@@ -18,7 +18,7 @@ use Models\Database;
 
 // Include the session handler object and any other handler bridges
 require_once "./app/core/http/handlers/session.handler.php";
-require_once "friend.handler.php";
+require_once "follower.handler.php";
 
 class User
 {
@@ -533,7 +533,7 @@ class User
             // Check if there are any mutual friends to add - we do that here instead of on sign up as every time
             // we log in to the app more of our friends may have signed up to the app through FB
             if($args["friends"] != "")
-                $response = Friend::addFriends($args['friends'], 1, $userExists["payload"]["entity_id"]);
+                $response = Follower::addFollowers($args['friends'], 1, $userExists["payload"]["entity_id"]);
 
             // Set values so that they are not null
             if(empty($userExists["payload"]["last_checkin_place"]))
@@ -625,7 +625,7 @@ class User
 
         // Add all of the friends this user has.
         if($args["friends"] != "")
-            Friend::addFriends($args["friends"], 1, $id);
+            Follower::addFollowers($args["friends"], 1, $id);
 
         // Insert the user into the preferences table
         $query = "INSERT INTO preferences(entity_id)
